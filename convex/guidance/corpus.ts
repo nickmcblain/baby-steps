@@ -80,7 +80,23 @@ export const GUIDANCE_DOCS: GuidanceDoc[] = [
     title: "Medicines and dosing",
     source: "Baby Steps safety policy",
     tags: ["medicine", "calpol", "paracetamol", "ibuprofen", "dose", "medication"],
-    body: `Baby Steps Ask will not give medicine names with doses, schedules, or whether a medicine is appropriate. For fever, pain, or illness, contact a pharmacist, GP, midwife, or NHS 111. In an emergency call 999.`,
+    body: `Baby Steps is not a medical or healthcare service. Ask will not give medicine names with doses, schedules, or whether a medicine is appropriate. For fever, pain, or illness, contact a pharmacist, GP, midwife, or NHS 111. In an emergency call 999.`,
+  },
+  {
+    id: "refuse-clinical",
+    title: "No diagnosis or clinical triage",
+    source: "Baby Steps safety policy",
+    tags: [
+      "diagnose",
+      "diagnosis",
+      "clinical",
+      "triage",
+      "symptom",
+      "doctor",
+      "a&e",
+      "ill",
+    ],
+    body: `Baby Steps Ask must not diagnose conditions, interpret symptoms clinically, or triage how urgent a situation is beyond directing emergencies to 999 and otherwise to midwife, GP, health visitor, pharmacist, or NHS 111. It cannot say whether something is “normal” in a medical sense or whether A&E is needed.`,
   },
   {
     id: "emergencies",
@@ -88,7 +104,7 @@ export const GUIDANCE_DOCS: GuidanceDoc[] = [
     source: "NHS (summarised)",
     url: "https://www.nhs.uk/conditions/baby/caring-for-a-newborn/baby-first-aid/",
     tags: ["emergency", "breathing", "blue", "floppy", "unresponsive", "111", "999"],
-    body: `Get emergency help (999) if a baby is not breathing normally, is blue/grey, unresponsive, or having a seizure. Use NHS 111 for urgent advice when unsure. This chat cannot triage emergencies.`,
+    body: `Get emergency help (999) if a baby is not breathing normally, is blue/grey, unresponsive, or having a seizure. Use NHS 111 for urgent advice when unsure. This chat cannot triage emergencies and is not a healthcare service.`,
   },
 ];
 

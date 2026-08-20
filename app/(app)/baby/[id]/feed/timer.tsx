@@ -1,7 +1,7 @@
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { PrimaryButton, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
@@ -10,6 +10,7 @@ import {
   clearPersistedTimer,
   feedSideElapsed,
   formatTimerClock,
+  liveActivityUnavailableReason,
   loadPersistedTimer,
   stopLiveTimer,
   syncLiveTimer,
@@ -66,13 +67,13 @@ export default function FeedTimerScreen() {
     tickOrigin: number | null,
   ) {
     const running = activeSide != null && tickOrigin != null;
+    const sideBase =
+      activeSide === "right" ? rightBaseRef.current : leftBaseRef.current;
     const displayElapsed = running
-      ? activeSide === "left"
-        ? leftBaseRef.current
-        : rightBaseRef.current
+      ? sideBase + (Date.now() - (tickOrigin as number))
       : leftBaseRef.current + rightBaseRef.current;
 
-    await syncLiveTimer({
+    const result = await syncLiveTimer({
       kind: "feed",
       babyId: String(babyId),
       babyName: baby?.name,
@@ -83,6 +84,14 @@ export default function FeedTimerScreen() {
         (rightBaseRef.current > leftBaseRef.current ? "right" : "left"),
       persist: persistSnapshot(activeSide, tickOrigin),
     });
+    if (running && !result.ok) {
+      Alert.alert(
+        "Lock Screen timer unavailable",
+        result.error ??
+          liveActivityUnavailableReason() ??
+          "Could not start Dynamic Island / Lock Screen timer. Check Settings → Face ID & Passcode → Live Activities, then rebuild the native app.",
+      );
+    }
   }
 
   useEffect(() => {

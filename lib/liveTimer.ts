@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { Platform } from "react-native";
 import type { LiveActivity } from "expo-widgets";
 import BabyTimerActivity, {
@@ -33,7 +34,20 @@ type ActivityHandle = LiveActivity<BabyTimerProps>;
 let activity: ActivityHandle | null = null;
 
 function canUseLiveActivity(): boolean {
-  return Platform.OS === "ios";
+  if (Platform.OS !== "ios") return false;
+  // Expo Go has no widget extension — Live Activities will never show.
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    return false;
+  }
+  return true;
+}
+
+export function liveActivityUnavailableReason(): string | null {
+  if (Platform.OS !== "ios") return "Live Activities are iOS-only.";
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    return "Live Activities need a native build (Baby Steps app), not Expo Go.";
+  }
+  return null;
 }
 
 export function formatTimerClock(ms: number): string {
@@ -139,7 +153,11 @@ export async function syncLiveTimer(args: {
   await savePersisted(args.persist);
 
   if (!canUseLiveActivity()) {
-    return { ok: false, error: "Live Activities need iOS" };
+    return {
+      ok: false,
+      error:
+        liveActivityUnavailableReason() ?? "Live Activities need iOS",
+    };
   }
 
   const props = buildProps({
@@ -157,8 +175,18 @@ export async function syncLiveTimer(args: {
       activity = existing[0] ?? null;
     }
     if (activity) {
-      await activity.update(props);
-      return { ok: true };
+      try {
+        await activity.update(props);
+        return { ok: true };
+      } catch {
+        // Stale handle — end and recreate below.
+        try {
+          await activity.end("immediate");
+        } catch {
+          // ignore
+        }
+        activity = null;
+      }
     }
     activity = BabyTimerActivity.start(props, url);
     return { ok: true };

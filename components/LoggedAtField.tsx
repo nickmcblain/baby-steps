@@ -36,19 +36,23 @@ export function LoggedAtField({
   value,
   onChange,
   label = "When",
+  allowFuture = false,
 }: {
   value: number;
   onChange: (ms: number) => void;
   label?: string;
+  /** Allow dates ahead of now (appointments). */
+  allowFuture?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const today = new Date();
-  const maxYear = today.getFullYear();
+  const maxYear = today.getFullYear() + (allowFuture ? 2 : 0);
+  const minYear = today.getFullYear() - 3;
   const years = useMemo(() => {
     const list: number[] = [];
-    for (let y = maxYear; y >= maxYear - 3; y -= 1) list.push(y);
+    for (let y = maxYear; y >= minYear; y -= 1) list.push(y);
     return list;
-  }, [maxYear]);
+  }, [maxYear, minYear]);
 
   const [parts, setParts] = useState<LoggedAtParts>(() =>
     partsFromLoggedAt(value || nowSnapped()),
@@ -65,7 +69,8 @@ export function LoggedAtField({
       ...parts,
       day: Math.min(parts.day, maxDay),
     };
-    const ms = Math.min(snapToHalfHour(loggedAtFromParts(safe)), nowSnapped());
+    const snapped = snapToHalfHour(loggedAtFromParts(safe));
+    const ms = allowFuture ? snapped : Math.min(snapped, nowSnapped());
     onChange(ms);
     setOpen(false);
   }

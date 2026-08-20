@@ -27,17 +27,7 @@ export type BabyTimerProps = {
   pausedLabel: string;
 };
 
-const TEAL = "#14C4B2";
-const PURPLE = "#6D5EF5";
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function accentFor(kind: BabyTimerProps["kind"]): string {
-  return kind === "sleep" ? PURPLE : TEAL;
-}
-
-function symbolFor(kind: BabyTimerProps["kind"]): "moon.fill" | "drop.fill" {
-  return kind === "sleep" ? "moon.fill" : "drop.fill";
-}
 
 /**
  * Live Activity for sleep / feed timers.
@@ -49,8 +39,10 @@ const BabyTimerActivity = (
 ) => {
   "widget";
 
-  const accent = accentFor(props.kind);
-  const symbol = symbolFor(props.kind);
+  const TEAL = "#14C4B2";
+  const PURPLE = "#6D5EF5";
+  const accent = props.kind === "sleep" ? PURPLE : TEAL;
+  const symbol = props.kind === "sleep" ? "moon.fill" : "drop.fill";
   const start = new Date(props.startEpochMs);
   const end = new Date(props.endEpochMs);
 
@@ -105,12 +97,12 @@ const BabyTimerActivity = (
             {props.running ? "Timing…" : "Paused"}
           </Text>
         </VStack>
-        <Clock size={28} width={90} />
+        <Clock size={28} width={100} />
       </HStack>
     ),
     compactLeading: <Image systemName={symbol} color={accent} />,
-    compactTrailing: <Clock size={15} width={52} />,
-    minimal: <Image systemName={symbol} color={accent} />,
+    compactTrailing: <Clock size={16} width={72} />,
+    minimal: <Clock size={12} width={44} />,
     expandedLeading: (
       <VStack modifiers={[padding({ all: 10 })]}>
         <Image systemName={symbol} color={accent} />
@@ -123,7 +115,7 @@ const BabyTimerActivity = (
     ),
     expandedTrailing: (
       <VStack modifiers={[padding({ all: 10 })]}>
-        <Clock size={22} width={80} />
+        <Clock size={24} width={96} />
         <Text
           modifiers={[font({ size: 11 }), foregroundStyle("#FFFFFF99")]}
         >

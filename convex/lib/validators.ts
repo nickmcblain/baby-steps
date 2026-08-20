@@ -6,6 +6,7 @@ export const eventKindValidator = v.union(
   v.literal("weight"),
   v.literal("height"),
   v.literal("sleep"),
+  v.literal("custom"),
 );
 
 export const feedKindValidator = v.union(
@@ -72,6 +73,8 @@ export const babyValidator = v.object({
   gestationWeeks: v.optional(v.number()),
   feedingMode: v.optional(feedingModeValidator),
   createdBy: v.id("users"),
+  careDataConsentAt: v.optional(v.number()),
+  careDataConsentVersion: v.optional(v.string()),
 });
 
 export const citationValidator = v.object({
@@ -105,6 +108,17 @@ export const chatMessageValidator = v.object({
   createdAt: v.number(),
 });
 
+export const babyMemoryValidator = v.object({
+  _id: v.id("babyMemories"),
+  _creationTime: v.number(),
+  babyId: v.id("babies"),
+  key: v.string(),
+  content: v.string(),
+  sourceThreadId: v.optional(v.id("chatThreads")),
+  updatedAt: v.number(),
+  createdBy: v.id("users"),
+});
+
 export const eventValidator = v.object({
   _id: v.id("events"),
   _creationTime: v.number(),
@@ -122,5 +136,6 @@ export const eventValidator = v.object({
   pooSize: v.optional(sizeValidator),
   weightGrams: v.optional(v.number()),
   heightCm: v.optional(v.number()),
+  title: v.optional(v.string()),
   note: v.optional(v.string()),
 });

@@ -47,6 +47,8 @@ function normalizeHeightCm(heightCm: number | undefined): number | undefined {
   return Math.round(heightCm * 10) / 10;
 }
 
+export const CARE_DATA_CONSENT_VERSION = "care-data-v1";
+
 export const create = authedMutation({
   args: {
     name: v.string(),
@@ -55,6 +57,7 @@ export const create = authedMutation({
     heightCm: v.optional(v.number()),
     sex: v.optional(sexValidator),
     notes: v.optional(v.string()),
+    careDataConsent: v.literal(true),
   },
   returns: v.id("babies"),
   handler: async (ctx, args) => {
@@ -81,6 +84,8 @@ export const create = authedMutation({
       notes: args.notes?.trim() || undefined,
       inviteCode,
       createdBy: ctx.user._id,
+      careDataConsentAt: Date.now(),
+      careDataConsentVersion: CARE_DATA_CONSENT_VERSION,
     });
     await ctx.db.insert("babyMembers", {
       babyId,

@@ -131,6 +131,7 @@ export default function BabyHome() {
           value={lastSleep ? formatRelative(lastSleep.loggedAt, now) : "Not yet"}
           detail={lastSleep ? eventTitle(lastSleep) : "Log a nap"}
           tint={colors.purpleSoft}
+          onPress={() => router.push(`/baby/${id}/sleep/patterns`)}
         />
       </View>
       {feedHint ? <Text style={styles.feedHint}>{feedHint}</Text> : null}
@@ -216,18 +217,33 @@ function StatusCard({
   value,
   detail,
   tint,
+  onPress,
 }: {
   label: string;
   value: string;
   detail: string;
   tint: string;
+  onPress?: () => void;
 }) {
-  return (
-    <View style={[styles.status, { backgroundColor: tint }]}>
+  const content = (
+    <>
       <Text style={styles.statusLabel}>{label}</Text>
       <Text style={styles.statusValue}>{value}</Text>
       <Text style={styles.statusDetail}>{detail}</Text>
-    </View>
+    </>
+  );
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={[styles.status, { backgroundColor: tint }]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+  return (
+    <View style={[styles.status, { backgroundColor: tint }]}>{content}</View>
   );
 }
 

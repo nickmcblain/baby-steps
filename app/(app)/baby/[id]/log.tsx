@@ -1,9 +1,10 @@
-import { usePaginatedQuery } from "convex/react";
+import { usePaginatedQuery, useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
-import { Title } from "@/components/ui";
+import { WeekRhythmChart } from "@/components/WeekRhythmChart";
+import { IconButton, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { eventKindLabel, eventTitle } from "@/lib/eventCopy";
@@ -12,9 +13,11 @@ import {
   formatTimelineDay,
   timelineDayKey,
 } from "@/lib/loggedAt";
+import { addDays, startOfWeekMonday } from "@/lib/weekGrid";
 import { colors, fonts } from "@/lib/theme";
 
 type Event = Doc<"events">;
+type Mode = "list" | "week";
 
 function tintFor(kind: Event["kind"]): string {
   switch (kind) {
@@ -28,6 +31,8 @@ function tintFor(kind: Event["kind"]): string {
       return colors.skySoft;
     case "sleep":
       return colors.purpleSoft;
+    case "custom":
+      return colors.roseSoft;
   }
 }
 
@@ -43,107 +48,237 @@ function inkFor(kind: Event["kind"]): string {
       return colors.sky;
     case "sleep":
       return colors.purple;
+    case "custom":
+      return colors.rose;
   }
+}
+
+function PlusGlyph() {
+  return (
+    <View style={styles.plusGlyph} accessibilityLabel="Add event">
+      <View style={styles.plusH} />
+      <View style={styles.plusV} />
+    </View>
+  );
 }
 
 export default function TimelineScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const babyId = id as Id<"babies">;
   const now = Date.now();
+  const [mode, setMode] = useState<Mode>("list");
+  const [weekStartMs, setWeekStartMs] = useState(() => startOfWeekMonday(now));
+
   const { results, status, loadMore } = usePaginatedQuery(
     api.events.list,
-    { babyId: id as Id<"babies"> },
+    { babyId },
     { initialNumItems: 40 },
   );
 
+  const weekGrid = useQuery(
+    api.events.weekGrid,
+    mode === "week" ? { babyId, weekStartMs } : "skip",
+  );
+
   const sections = useMemo(() => {
-    const groups: { key: string; label: string; items: Event[] }[] = [];
+    const groups: { key: string; label: string; items: Event[]; dayStart: number }[] =
+      [];
     for (const event of results) {
       const key = timelineDayKey(event.loggedAt);
       const last = groups[groups.length - 1];
       if (last && last.key === key) {
         last.items.push(event);
       } else {
+        const d = new Date(event.loggedAt);
+        const dayStart = new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate(),
+        ).getTime();
         groups.push({
           key,
           label: formatTimelineDay(event.loggedAt, now),
           items: [event],
+          dayStart,
         });
       }
     }
-    return groups;
+
+    const todayStart = new Date(
+      new Date(now).getFullYear(),
+      new Date(now).getMonth(),
+      new Date(now).getDate(),
+    ).getTime();
+
+    const upcoming = groups
+      .filter((g) => g.dayStart > todayStart)
+      .sort((a, b) => a.dayStart - b.dayStart);
+    const rest = groups.filter((g) => g.dayStart <= todayStart);
+    return [...upcoming, ...rest];
   }, [results, now]);
 
   return (
-    <Screen onBack={() => router.back()}>
+    <Screen
+      scroll={mode === "list"}
+      onBack={() => router.back()}
+      headerRight={
+        <IconButton
+          onPress={() => router.push(`/baby/${id}/event`)}
+          accessibilityLabel="Add event"
+        >
+          <PlusGlyph />
+        </IconButton>
+      }
+    >
       <Title>Timeline</Title>
       <Text style={styles.subtitle}>
-        Feeds, nappies, weigh-ins, and height — newest first.
+        {mode === "list"
+          ? "Care logs and appointments — upcoming first, then recent."
+          : "Sleep blocks and care markers for the week."}
       </Text>
 
-      {sections.map((section) => (
-        <View key={section.key} style={styles.section}>
-          <Text style={styles.day}>{section.label}</Text>
-          <View style={styles.rail}>
-            {section.items.map((event, index) => (
-              <View key={event._id} style={styles.row}>
-                <View style={styles.railCol}>
-                  <View
-                    style={[
-                      styles.dot,
-                      { backgroundColor: inkFor(event.kind) },
-                    ]}
-                  />
-                  {index < section.items.length - 1 ? (
-                    <View style={styles.line} />
-                  ) : null}
-                </View>
-                <View
-                  style={[
-                    styles.card,
-                    { backgroundColor: tintFor(event.kind) },
-                  ]}
-                >
-                  <View style={styles.cardTop}>
-                    <Text style={[styles.kind, { color: inkFor(event.kind) }]}>
-                      {eventKindLabel(event)}
-                    </Text>
-                    <Text style={styles.time}>
-                      {formatLoggedAt(event.loggedAt).split(" · ")[1]}
-                    </Text>
-                  </View>
-                  <Text style={styles.title}>{eventTitle(event)}</Text>
-                  {event.note ? (
-                    <Text style={styles.note}>{event.note}</Text>
-                  ) : null}
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      ))}
-
-      {status === "CanLoadMore" ? (
-        <Pressable onPress={() => loadMore(20)} style={styles.more}>
-          <Text style={styles.moreText}>Load older</Text>
+      <View style={styles.modeRow}>
+        <Pressable
+          onPress={() => setMode("list")}
+          style={[styles.modePill, mode === "list" && styles.modePillOn]}
+        >
+          <Text style={[styles.modeText, mode === "list" && styles.modeTextOn]}>
+            List
+          </Text>
         </Pressable>
-      ) : null}
-      {results.length === 0 ? (
-        <Text style={styles.empty}>
-          Nothing yet. Log a feed, nappy, weigh-in, or height to start the
-          timeline.
-        </Text>
-      ) : null}
+        <Pressable
+          onPress={() => setMode("week")}
+          style={[styles.modePill, mode === "week" && styles.modePillOn]}
+        >
+          <Text style={[styles.modeText, mode === "week" && styles.modeTextOn]}>
+            Week
+          </Text>
+        </Pressable>
+      </View>
+
+      {mode === "week" ? (
+        weekGrid == null ? (
+          <Text style={styles.empty}>Loading week…</Text>
+        ) : (
+          <WeekRhythmChart
+            weekStartMs={weekGrid.weekStartMs}
+            sleeps={weekGrid.sleeps}
+            markers={weekGrid.markers}
+            onPrevWeek={() => setWeekStartMs((w) => addDays(w, -7))}
+            onNextWeek={() => setWeekStartMs((w) => addDays(w, 7))}
+          />
+        )
+      ) : (
+        <>
+          {sections.map((section) => (
+            <View key={section.key} style={styles.section}>
+              <Text style={styles.day}>{section.label}</Text>
+              <View style={styles.rail}>
+                {section.items.map((event, index) => (
+                  <View key={event._id} style={styles.row}>
+                    <View style={styles.railCol}>
+                      <View
+                        style={[
+                          styles.dot,
+                          { backgroundColor: inkFor(event.kind) },
+                        ]}
+                      />
+                      {index < section.items.length - 1 ? (
+                        <View style={styles.line} />
+                      ) : null}
+                    </View>
+                    <View
+                      style={[
+                        styles.card,
+                        { backgroundColor: tintFor(event.kind) },
+                      ]}
+                    >
+                      <View style={styles.cardTop}>
+                        <Text
+                          style={[styles.kind, { color: inkFor(event.kind) }]}
+                        >
+                          {eventKindLabel(event)}
+                        </Text>
+                        <Text style={styles.time}>
+                          {formatLoggedAt(event.loggedAt).split(" · ")[1]}
+                        </Text>
+                      </View>
+                      <Text style={styles.title}>{eventTitle(event)}</Text>
+                      {event.note ? (
+                        <Text style={styles.note}>{event.note}</Text>
+                      ) : null}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))}
+
+          {status === "CanLoadMore" ? (
+            <Pressable onPress={() => loadMore(20)} style={styles.more}>
+              <Text style={styles.moreText}>Load older</Text>
+            </Pressable>
+          ) : null}
+          {results.length === 0 ? (
+            <Text style={styles.empty}>
+              Nothing yet. Log care, or tap + to add a midwife visit or jab date.
+            </Text>
+          ) : null}
+        </>
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  plusGlyph: {
+    width: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  plusH: {
+    position: "absolute",
+    width: 14,
+    height: 2.5,
+    borderRadius: 2,
+    backgroundColor: colors.ink,
+  },
+  plusV: {
+    position: "absolute",
+    width: 2.5,
+    height: 14,
+    borderRadius: 2,
+    backgroundColor: colors.ink,
+  },
   subtitle: {
     fontFamily: fonts.body,
     color: colors.muted,
     fontSize: 15,
     marginTop: -8,
+  },
+  modeRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignSelf: "flex-start",
+  },
+  modePill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: colors.card,
+  },
+  modePillOn: {
+    backgroundColor: colors.ink,
+  },
+  modeText: {
+    fontFamily: fonts.bold,
+    fontSize: 14,
+    color: colors.muted,
+  },
+  modeTextOn: {
+    color: colors.card,
   },
   section: { gap: 12 },
   day: {

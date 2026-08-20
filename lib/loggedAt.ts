@@ -85,6 +85,7 @@ export function formatTimelineDay(ms: number, now: number): string {
   const yesterdayStart = todayStart - 86_400_000;
   if (dayStart === todayStart) return "Today";
   if (dayStart === yesterdayStart) return "Yesterday";
+  if (dayStart === todayStart + 86_400_000) return "Tomorrow";
   return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
 }
 

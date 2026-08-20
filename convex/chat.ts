@@ -1,18 +1,30 @@
-import { v } from "convex/values";
-import { ConvexError } from "convex/values";
-import {
-  internalMutation,
-  internalQuery,
-} from "./_generated/server";
+import { ConvexError, v } from "convex/values";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { buildBabyContext } from "./lib/babyContext";
 import { requireBabyMember } from "./lib/access";
 import { requireUser } from "./lib/auth";
 import { authedMutation, authedQuery } from "./lib/functions";
 import {
+  babyMemoryValidator,
   chatMessageValidator,
+  chatThreadValidator,
   citationValidator,
 } from "./lib/validators";
 
+function titleFromMessage(text: string): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return "New chat";
+  // Prefer first sentence / clause as a short chat name.
+  const sentence = cleaned.split(/(?<=[.!?])\s+/)[0] ?? cleaned;
+  const base = sentence.length > 0 && sentence.length <= cleaned.length ? sentence : cleaned;
+  if (base.length <= 56) return base;
+  const clipped = base.slice(0, 53);
+  const lastSpace = clipped.lastIndexOf(" ");
+  const soft = lastSpace > 24 ? clipped.slice(0, lastSpace) : clipped;
+  return `${soft.trim()}…`;
+}
+
+/** Open the most recent thread, or create one. */
 export const ensureThread = authedMutation({
   args: { babyId: v.id("babies") },
   returns: v.id("chatThreads"),
@@ -29,6 +41,52 @@ export const ensureThread = authedMutation({
       createdBy: ctx.user._id,
       updatedAt: Date.now(),
     });
+  },
+});
+
+export const createThread = authedMutation({
+  args: { babyId: v.id("babies") },
+  returns: v.id("chatThreads"),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return await ctx.db.insert("chatThreads", {
+      babyId: args.babyId,
+      createdBy: ctx.user._id,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const listThreads = authedQuery({
+  args: { babyId: v.id("babies") },
+  returns: v.array(chatThreadValidator),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const threads = await ctx.db
+      .query("chatThreads")
+      .withIndex("by_baby", (q) => q.eq("babyId", args.babyId))
+      .order("desc")
+      .take(50);
+
+    // Fill missing titles from the first user message (chat name = first query).
+    const withTitles = [];
+    for (const thread of threads) {
+      if (thread.title?.trim()) {
+        withTitles.push(thread);
+        continue;
+      }
+      const firstUser = await ctx.db
+        .query("chatMessages")
+        .withIndex("by_thread", (q) => q.eq("threadId", thread._id))
+        .collect();
+      firstUser.sort((a, b) => a.createdAt - b.createdAt);
+      const first = firstUser.find((m) => m.role === "user");
+      withTitles.push({
+        ...thread,
+        title: first ? titleFromMessage(first.content) : thread.title,
+      });
+    }
+    return withTitles;
   },
 });
 
@@ -50,35 +108,15 @@ export const listMessages = authedQuery({
   },
 });
 
-export const contextChip = authedQuery({
-  args: { babyId: v.id("babies"), now: v.number() },
-  returns: v.object({
-    summaryLine: v.string(),
-    name: v.string(),
-  }),
+export const listMemories = authedQuery({
+  args: { babyId: v.id("babies") },
+  returns: v.array(babyMemoryValidator),
   handler: async (ctx, args) => {
-    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    const feeds = await ctx.db
-      .query("events")
-      .withIndex("by_baby_kind_loggedAt", (q) =>
-        q.eq("babyId", args.babyId).eq("kind", "feed"),
-      )
-      .order("desc")
-      .take(5);
-    const nappies = await ctx.db
-      .query("events")
-      .withIndex("by_baby_kind_loggedAt", (q) =>
-        q.eq("babyId", args.babyId).eq("kind", "nappy"),
-      )
-      .order("desc")
-      .take(5);
-    const snapshot = buildBabyContext({
-      baby,
-      feeds,
-      nappies,
-      now: args.now,
-    });
-    return { summaryLine: snapshot.summaryLine, name: baby.name };
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return await ctx.db
+      .query("babyMemories")
+      .withIndex("by_baby", (q) => q.eq("babyId", args.babyId))
+      .collect();
   },
 });
 
@@ -94,6 +132,12 @@ export const loadAgentBundle = internalQuery({
     history: v.array(
       v.object({
         role: v.union(v.literal("user"), v.literal("assistant")),
+        content: v.string(),
+      }),
+    ),
+    memories: v.array(
+      v.object({
+        key: v.string(),
         content: v.string(),
       }),
     ),
@@ -138,7 +182,15 @@ export const loadAgentBundle = internalQuery({
         role: m.role as "user" | "assistant",
         content: m.content,
       }));
-    return { context, history };
+    const memoryDocs = await ctx.db
+      .query("babyMemories")
+      .withIndex("by_baby", (q) => q.eq("babyId", args.babyId))
+      .collect();
+    const memories = memoryDocs.map((m) => ({
+      key: m.key,
+      content: m.content,
+    }));
+    return { context, history, memories };
   },
 });
 
@@ -153,6 +205,8 @@ export const appendTurn = internalMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const now = Date.now();
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) throw new ConvexError("Thread not found");
     await ctx.db.insert("chatMessages", {
       threadId: args.threadId,
       babyId: args.babyId,
@@ -168,7 +222,83 @@ export const appendTurn = internalMutation({
       citations: args.citations,
       createdAt: now + 1,
     });
-    await ctx.db.patch(args.threadId, { updatedAt: now + 1 });
+    const patch: { updatedAt: number; title?: string } = {
+      updatedAt: now + 1,
+    };
+    if (!thread.title) {
+      patch.title = titleFromMessage(args.userContent);
+    }
+    await ctx.db.patch(args.threadId, patch);
+    return null;
+  },
+});
+
+export const upsertMemory = internalMutation({
+  args: {
+    babyId: v.id("babies"),
+    userId: v.id("users"),
+    threadId: v.optional(v.id("chatThreads")),
+    key: v.string(),
+    content: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, args.userId);
+    const key = args.key
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_")
+      .slice(0, 64);
+    const content = args.content.trim().slice(0, 500);
+    if (!key || !content) {
+      throw new ConvexError("Memory key and content required");
+    }
+    const existing = await ctx.db
+      .query("babyMemories")
+      .withIndex("by_baby_and_key", (q) =>
+        q.eq("babyId", args.babyId).eq("key", key),
+      )
+      .unique();
+    const now = Date.now();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        content,
+        updatedAt: now,
+        sourceThreadId: args.threadId,
+      });
+    } else {
+      await ctx.db.insert("babyMemories", {
+        babyId: args.babyId,
+        key,
+        content,
+        sourceThreadId: args.threadId,
+        updatedAt: now,
+        createdBy: args.userId,
+      });
+    }
+    return null;
+  },
+});
+
+export const deleteMemory = internalMutation({
+  args: {
+    babyId: v.id("babies"),
+    userId: v.id("users"),
+    key: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, args.userId);
+    const key = args.key.trim().toLowerCase().replace(/\s+/g, "_");
+    const existing = await ctx.db
+      .query("babyMemories")
+      .withIndex("by_baby_and_key", (q) =>
+        q.eq("babyId", args.babyId).eq("key", key),
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
     return null;
   },
 });
@@ -212,5 +342,26 @@ export const getBabyForTools = internalQuery({
       nappies,
       now: args.now,
     });
+  },
+});
+
+export const getMemoriesForTools = internalQuery({
+  args: {
+    babyId: v.id("babies"),
+    userId: v.id("users"),
+  },
+  returns: v.array(
+    v.object({
+      key: v.string(),
+      content: v.string(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, args.userId);
+    const docs = await ctx.db
+      .query("babyMemories")
+      .withIndex("by_baby", (q) => q.eq("babyId", args.babyId))
+      .collect();
+    return docs.map((m) => ({ key: m.key, content: m.content }));
   },
 });

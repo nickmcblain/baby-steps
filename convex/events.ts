@@ -18,15 +18,20 @@ import {
 } from "./lib/validators";
 
 const HALF_HOUR_MS = 30 * 60_000;
+/** Appointments can be scheduled up to ~18 months ahead. */
+const MAX_FUTURE_MS = 550 * 86_400_000;
 
-function snapLoggedAt(loggedAt: number): number {
+function snapLoggedAt(loggedAt: number, allowFuture = false): number {
   if (!Number.isFinite(loggedAt)) {
     throw new ConvexError("When is required");
   }
   const snapped = Math.round(loggedAt / HALF_HOUR_MS) * HALF_HOUR_MS;
   const now = Date.now() + HALF_HOUR_MS; // allow current half-hour slot
-  if (snapped > now) {
+  if (!allowFuture && snapped > now) {
     throw new ConvexError("Time can't be in the future");
+  }
+  if (allowFuture && snapped > Date.now() + MAX_FUTURE_MS) {
+    throw new ConvexError("Date is too far in the future");
   }
   return snapped;
 }
@@ -308,5 +313,195 @@ export const logHeight = authedMutation({
     });
     await syncBabyHeight(ctx, args.babyId);
     return eventId;
+  },
+});
+
+export const logCustom = authedMutation({
+  args: {
+    babyId: v.id("babies"),
+    loggedAt: v.number(),
+    title: v.string(),
+    note: v.optional(v.string()),
+  },
+  returns: v.id("events"),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const title = args.title.trim();
+    if (title.length < 1 || title.length > 80) {
+      throw new ConvexError("Give the event a short title");
+    }
+    return await ctx.db.insert("events", {
+      babyId: args.babyId,
+      createdBy: ctx.user._id,
+      loggedAt: snapLoggedAt(args.loggedAt, true),
+      kind: "custom",
+      title,
+      note: args.note?.trim() || undefined,
+    });
+  },
+});
+
+const weekSleepSegmentValidator = v.object({
+  kind: v.literal("sleep"),
+  eventId: v.id("events"),
+  startMs: v.number(),
+  endMs: v.number(),
+});
+
+const weekMarkerKindValidator = v.union(
+  v.literal("feed"),
+  v.literal("nappy"),
+  v.literal("weight"),
+  v.literal("height"),
+  v.literal("custom"),
+);
+
+const weekMarkerValidator = v.object({
+  kind: weekMarkerKindValidator,
+  eventId: v.id("events"),
+  atMs: v.number(),
+});
+
+export const weekGrid = authedQuery({
+  args: {
+    babyId: v.id("babies"),
+    weekStartMs: v.number(),
+  },
+  returns: v.object({
+    weekStartMs: v.number(),
+    sleeps: v.array(weekSleepSegmentValidator),
+    markers: v.array(weekMarkerValidator),
+  }),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const weekStartMs = args.weekStartMs;
+    const weekEndMs = weekStartMs + 7 * 86_400_000;
+    // Include sleeps that may have started slightly before the week but still
+    // show overnight spill — fetch a 24h lookback of sleeps.
+    const lookback = weekStartMs - 86_400_000;
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_baby_and_loggedAt", (q) =>
+        q
+          .eq("babyId", args.babyId)
+          .gte("loggedAt", lookback)
+          .lt("loggedAt", weekEndMs),
+      )
+      .take(500);
+
+    const sleeps: {
+      kind: "sleep";
+      eventId: Id<"events">;
+      startMs: number;
+      endMs: number;
+    }[] = [];
+    const markers: {
+      kind: "feed" | "nappy" | "weight" | "height" | "custom";
+      eventId: Id<"events">;
+      atMs: number;
+    }[] = [];
+
+    for (const event of events) {
+      if (event.kind === "sleep" && event.durationMinutes != null) {
+        const startMs = event.loggedAt;
+        const endMs = startMs + event.durationMinutes * 60_000;
+        if (endMs <= weekStartMs || startMs >= weekEndMs) continue;
+        sleeps.push({
+          kind: "sleep",
+          eventId: event._id,
+          startMs,
+          endMs,
+        });
+        continue;
+      }
+      if (
+        event.kind === "feed" ||
+        event.kind === "nappy" ||
+        event.kind === "weight" ||
+        event.kind === "height" ||
+        event.kind === "custom"
+      ) {
+        if (event.loggedAt < weekStartMs || event.loggedAt >= weekEndMs) {
+          continue;
+        }
+        markers.push({
+          kind: event.kind,
+          eventId: event._id,
+          atMs: event.loggedAt,
+        });
+      }
+    }
+
+    return { weekStartMs, sleeps, markers };
+  },
+});
+
+const sleepPatternItemValidator = v.object({
+  startMs: v.number(),
+  endMs: v.number(),
+  durationMinutes: v.number(),
+});
+
+export const sleepPatterns = authedQuery({
+  args: {
+    babyId: v.id("babies"),
+    days: v.union(v.literal(7), v.literal(14), v.literal(30)),
+    rangeEndMs: v.number(),
+  },
+  returns: v.object({
+    sleeps: v.array(sleepPatternItemValidator),
+    stats: v.object({
+      avgSleepMinutesPerDay: v.number(),
+      avgSessionsPerDay: v.number(),
+    }),
+  }),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const rangeEndMs = args.rangeEndMs;
+    const rangeStartMs = rangeEndMs - args.days * 86_400_000;
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_baby_kind_loggedAt", (q) =>
+        q
+          .eq("babyId", args.babyId)
+          .eq("kind", "sleep")
+          .gte("loggedAt", rangeStartMs - 86_400_000)
+          .lt("loggedAt", rangeEndMs),
+      )
+      .order("asc")
+      .take(300);
+
+    const sleeps: {
+      startMs: number;
+      endMs: number;
+      durationMinutes: number;
+    }[] = [];
+
+    for (const event of events) {
+      if (event.durationMinutes == null) continue;
+      const startMs = event.loggedAt;
+      const endMs = startMs + event.durationMinutes * 60_000;
+      if (endMs <= rangeStartMs || startMs >= rangeEndMs) continue;
+      sleeps.push({
+        startMs,
+        endMs,
+        durationMinutes: event.durationMinutes,
+      });
+    }
+
+    let totalMinutes = 0;
+    for (const s of sleeps) {
+      const clippedStart = Math.max(s.startMs, rangeStartMs);
+      const clippedEnd = Math.min(s.endMs, rangeEndMs);
+      totalMinutes += Math.max(0, (clippedEnd - clippedStart) / 60_000);
+    }
+    const days = args.days;
+    return {
+      sleeps,
+      stats: {
+        avgSleepMinutesPerDay: days > 0 ? totalMinutes / days : 0,
+        avgSessionsPerDay: days > 0 ? sleeps.length / days : 0,
+      },
+    };
   },
 });

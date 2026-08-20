@@ -1,7 +1,7 @@
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { PrimaryButton, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
@@ -14,6 +14,7 @@ import {
 import {
   clearPersistedTimer,
   formatTimerClock,
+  liveActivityUnavailableReason,
   loadPersistedTimer,
   sleepElapsedFromPersisted,
   stopLiveTimer,
@@ -63,7 +64,7 @@ export default function SleepTimerScreen() {
     elapsed: number,
     tickOrigin: number | null,
   ) {
-    await syncLiveTimer({
+    const result = await syncLiveTimer({
       kind: "sleep",
       babyId: String(babyId),
       babyName: baby?.name,
@@ -71,6 +72,14 @@ export default function SleepTimerScreen() {
       elapsedMs: elapsed,
       persist: persistSnapshot(runningNow, tickOrigin),
     });
+    if (runningNow && !result.ok) {
+      Alert.alert(
+        "Lock Screen timer unavailable",
+        result.error ??
+          liveActivityUnavailableReason() ??
+          "Could not start Dynamic Island / Lock Screen timer. Check Settings → Face ID & Passcode → Live Activities, then rebuild the native app.",
+      );
+    }
   }
 
   useEffect(() => {

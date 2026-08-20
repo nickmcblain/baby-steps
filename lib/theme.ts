@@ -15,6 +15,8 @@ export const colors = {
   peachSoft: "#FFE8DF",
   amber: "#F5C84C",
   amberSoft: "#FFF6D9",
+  rose: "#E86B9A",
+  roseSoft: "#FCE8F1",
   danger: "#E15B4C",
 };
 

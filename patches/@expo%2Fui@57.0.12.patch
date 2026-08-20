@@ -1,0 +1,20 @@
+diff --git a/ios/TextView.swift b/ios/TextView.swift
+index 7dfe0a9dc9fafb625067dbb29f80d82f767d63e1..2f165728285dc1e951290314e3c8377d691c4556 100644
+--- a/ios/TextView.swift
++++ b/ios/TextView.swift
+@@ -50,10 +50,14 @@ public struct TextView: ExpoSwiftUI.View {
+        let lower = timerInterval.lower,
+        let upper = timerInterval.upper,
+        lower <= upper {
++      // Count-up (Live Activity / Dynamic Island) should omit hours until needed —
++      // default showsHours:true renders "0:00:05" and gets clipped in compact slots.
++      let countsDown = props.countsDown ?? true
+       text = Text(
+         timerInterval: ClosedRange(uncheckedBounds: (lower: lower, upper: upper)),
+         pauseTime: props.pauseTime,
+-        countsDown: props.countsDown ?? true
++        countsDown: countsDown,
++        showsHours: countsDown
+       )
+     } else if let date = props.date {
+       text = Text(date, style: props.dateStyle?.toSwiftUI() ?? .date)

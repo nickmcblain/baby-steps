@@ -9,18 +9,31 @@ import { searchGuidance } from "./guidance/corpus";
 import type { BabyContextSnapshot } from "./lib/babyContext";
 import { clothingAdvice } from "./lib/clothingAdvice";
 
-const INSTRUCTIONS = `You are Baby Steps Ask — a careful newborn-care helper for parents inside the Baby Steps app.
+const INSTRUCTIONS = `You are Baby Steps Ask — a practical newborn-care helper inside the Baby Steps app.
 
-Rules:
-- You help with broader newborn care: sleep/safer sleep, room temp/TOG/clothing, feeding patterns, nappies, settling/crying, jaundice red-flag pointers, prematurity/corrected-age notes, and after c-section practical tips.
-- Always call get_baby_context before giving advice that depends on this baby. Prefer tool facts over assumptions.
-- Prefer search_guidance for trusted snippets. Cite sources by name (and URL when provided) at the end of your answer.
-- For clothing/TOG questions, call get_clothing_advice and cite "Baby Steps clothing helper (Lullaby Trust-style)".
+IMPORTANT — Baby Steps is NOT a medical or healthcare service. You are NOT a clinician, midwife, GP, or triage nurse. You must never act like one.
+
+What you may help with (general, practical only):
+- Safer sleep basics, room temp / TOG / clothing layers, typical feeding patterns, nappy expectations, settling/crying tips, prematurity/corrected-age notes, and after c-section practical tips.
+- Pointing parents to trusted public guidance (NHS, Lullaby Trust, etc.) via search_guidance.
+- Using this baby's logged profile (age, weight, recent feeds/nappies) for context — not for clinical judgement.
+
+Hard refusals (do these every time they apply):
+- NEVER diagnose any condition (including jaundice, reflux, infection, allergy, failure to thrive, tongue-tie, etc.).
+- NEVER give clinical interpretation of symptoms, growth, labs, or "what this means medically".
+- NEVER triage how urgent something is beyond: emergency → call 999; otherwise suggest midwife / health visitor / GP / NHS 111 / pharmacist as appropriate. Do not rank severity, rule things in/out, or say "you're fine" / "this is serious" as a clinician would.
 - NEVER give medicine names with doses, schedules, or whether a drug is appropriate (including Calpol/paracetamol/ibuprofen). Refuse and redirect to pharmacist, GP, midwife, or NHS 111.
-- NEVER diagnose. Do not triage emergencies. If the user describes an emergency (not breathing, blue/grey, unresponsive, seizure), tell them to call 999 immediately.
-- Say clearly this is guidance, not medical advice.
+- If the user describes an emergency (not breathing, blue/grey, unresponsive, seizure), tell them to call 999 immediately — then stop. No further clinical advice.
+- If they ask for a diagnosis, clinical opinion, or triage ("is this normal?", "should I go to A&E?", "what does this symptom mean?"), refuse clearly: you cannot assess or advise clinically; contact a qualified professional.
+
+Tools & style:
+- Always call get_baby_context before advice that depends on this baby. Prefer tool facts over assumptions.
+- Use get_memories for durable non-clinical facts from past chats (preferences, settling tricks, midwife instructions the parent already shared). Call remember_fact for short durable notes; forget_fact if outdated.
+- Prefer search_guidance for trusted snippets. Cite sources by name (and URL when provided) at the end.
+- For clothing/TOG questions, call get_clothing_advice and cite "Baby Steps clothing helper (Lullaby Trust-style)".
 - Be calm, concise, and practical. Use the baby's name and age from tools.
-- If unsure, say so and recommend midwife / health visitor / NHS 111.`;
+- Keep answers short — a few tight paragraphs or bullets. Warm and empathetic, not gushing or over-reassuring.
+- Say clearly this is general guidance in an app, not medical advice. If unsure, say so and recommend midwife / health visitor / NHS 111.`;
 
 export const ask = action({
   args: {
@@ -165,9 +178,67 @@ export const ask = action({
       },
     });
 
+    const getMemoriesTool = tool({
+      name: "get_memories",
+      description:
+        "List durable facts remembered about this baby from past Ask chats.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        return await ctx.runQuery(internal.chat.getMemoriesForTools, {
+          babyId: args.babyId,
+          userId,
+        });
+      },
+    });
+
+    const rememberFactTool = tool({
+      name: "remember_fact",
+      description:
+        "Save a short durable fact for future chats (e.g. prefers side-lying feed, cow's milk protein allergy mentioned, midwife said wake every 3h).",
+      inputSchema: z.object({
+        key: z
+          .string()
+          .describe("Short snake_case label, e.g. settling_tip or allergy_note"),
+        content: z.string().describe("One clear sentence to remember"),
+      }),
+      execute: async ({ key, content }) => {
+        await ctx.runMutation(internal.chat.upsertMemory, {
+          babyId: args.babyId,
+          userId,
+          threadId: args.threadId,
+          key,
+          content,
+        });
+        return { ok: true, key, content };
+      },
+    });
+
+    const forgetFactTool = tool({
+      name: "forget_fact",
+      description: "Remove a remembered fact by key when the parent says it is outdated.",
+      inputSchema: z.object({
+        key: z.string().describe("The memory key to delete"),
+      }),
+      execute: async ({ key }) => {
+        await ctx.runMutation(internal.chat.deleteMemory, {
+          babyId: args.babyId,
+          userId,
+          key,
+        });
+        return { ok: true, key };
+      },
+    });
+
     const openrouter = new OpenRouter({ apiKey });
     const model =
       process.env.OPENROUTER_MODEL?.trim() || "google/gemini-2.5-flash";
+
+    const memoryBlock =
+      bundle.memories.length === 0
+        ? ""
+        : `\n\nRemembered facts across chats:\n${bundle.memories
+            .map((m: { key: string; content: string }) => `- ${m.key}: ${m.content}`)
+            .join("\n")}`;
 
     const historyBlock =
       bundle.history.length === 0
@@ -178,15 +249,18 @@ export const ask = action({
 
     const result = openrouter.callModel({
       model,
-      instructions: `${INSTRUCTIONS}\n\nCurrent baby snapshot (may refresh via tools):\n${JSON.stringify(context, null, 2)}${historyBlock}`,
+      instructions: `${INSTRUCTIONS}\n\nCurrent baby snapshot (may refresh via tools):\n${JSON.stringify(context, null, 2)}${memoryBlock}${historyBlock}`,
       input: message,
       tools: [
         getBabyContextTool,
         getRecentEventsTool,
         getClothingAdviceTool,
         searchGuidanceTool,
+        getMemoriesTool,
+        rememberFactTool,
+        forgetFactTool,
       ],
-      stopWhen: stepCountIs(6),
+      stopWhen: stepCountIs(8),
     });
 
     let content: string;

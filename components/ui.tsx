@@ -76,9 +76,18 @@ export function PrimaryButton({
 export function IconButton({
   children,
   onPress,
+  style,
+  ...rest
 }: PressableProps & { children: ReactNode }) {
   return (
-    <Pressable onPress={onPress} style={styles.iconBtn}>
+    <Pressable
+      onPress={onPress}
+      style={(state) => [
+        styles.iconBtn,
+        typeof style === "function" ? style(state) : style,
+      ]}
+      {...rest}
+    >
       {children}
     </Pressable>
   );

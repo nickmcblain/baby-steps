@@ -34,6 +34,9 @@ export default defineSchema({
     gestationWeeks: v.optional(v.number()),
     feedingMode: v.optional(feedingModeValidator),
     createdBy: v.id("users"),
+    /** Parent/guardian consented to store this baby's care details (UK GDPR). */
+    careDataConsentAt: v.optional(v.number()),
+    careDataConsentVersion: v.optional(v.string()),
   })
     .index("by_creator", ["createdBy"])
     .index("by_invite_code", ["inviteCode"]),
@@ -61,6 +64,7 @@ export default defineSchema({
     pooSize: v.optional(sizeValidator),
     weightGrams: v.optional(v.number()),
     heightCm: v.optional(v.number()),
+    title: v.optional(v.string()),
     note: v.optional(v.string()),
   })
     .index("by_baby_kind_loggedAt", ["babyId", "kind", "loggedAt"])
@@ -81,4 +85,16 @@ export default defineSchema({
     citations: v.optional(v.array(citationValidator)),
     createdAt: v.number(),
   }).index("by_thread", ["threadId"]),
+
+  /** Durable facts the Ask agent should recall across chat threads. */
+  babyMemories: defineTable({
+    babyId: v.id("babies"),
+    key: v.string(),
+    content: v.string(),
+    sourceThreadId: v.optional(v.id("chatThreads")),
+    updatedAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_baby", ["babyId"])
+    .index("by_baby_and_key", ["babyId", "key"]),
 });

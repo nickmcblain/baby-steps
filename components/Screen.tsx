@@ -10,32 +10,29 @@ export function Screen({
   stickyHeader,
   onBack,
   headerRight,
+  /** When true, content can run under floating controls (no reserved top bar). */
+  overlayChrome = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
-  /** Full custom sticky bar (overrides onBack / headerRight). */
+  /** Full custom sticky content (overrides onBack / headerRight). */
   stickyHeader?: ReactNode;
-  /** Sticky back chevron — same position on every screen. */
+  /** Floating back chevron — same position on every screen. */
   onBack?: () => void;
-  /** Optional right-side control next to back (e.g. Edit). */
+  /** Floating right-side control(s). */
   headerRight?: ReactNode;
+  overlayChrome?: boolean;
 }) {
-  const header =
-    stickyHeader ??
-    (onBack != null ? (
-      <View style={[styles.topBar, headerRight ? styles.topBarSpread : null]}>
-        <IconButton onPress={onBack}>
-          <Text style={styles.chev}>‹</Text>
-        </IconButton>
-        {headerRight}
-      </View>
-    ) : null);
+  const hasChrome = stickyHeader != null || onBack != null || headerRight != null;
+  const reserveChrome = hasChrome && !overlayChrome;
 
   const body = scroll ? (
     <ScrollView
       style={styles.flex}
-      contentContainerStyle={[styles.pad, header ? styles.padWithSticky : null]}
+      contentContainerStyle={[styles.pad, reserveChrome ? styles.padWithSticky : null]}
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
     >
       {children}
     </ScrollView>
@@ -44,7 +41,8 @@ export function Screen({
       style={[
         styles.pad,
         styles.padFill,
-        header ? styles.padWithSticky : null,
+        reserveChrome ? styles.padWithSticky : null,
+        overlayChrome ? styles.padOverlay : null,
       ]}
     >
       {children}
@@ -55,9 +53,22 @@ export function Screen({
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <View style={styles.flex}>
         {body}
-        {header ? (
+        {hasChrome ? (
           <View style={styles.sticky} pointerEvents="box-none">
-            {header}
+            {stickyHeader ?? (
+              <>
+                {onBack != null ? (
+                  <View style={styles.floatLeft}>
+                    <IconButton onPress={onBack} accessibilityLabel="Back">
+                      <Text style={styles.chev}>‹</Text>
+                    </IconButton>
+                  </View>
+                ) : null}
+                {headerRight != null ? (
+                  <View style={styles.floatRight}>{headerRight}</View>
+                ) : null}
+              </>
+            )}
           </View>
         ) : null}
       </View>
@@ -73,17 +84,24 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 20,
-    paddingHorizontal: 20,
+    zIndex: 30,
+    elevation: 30,
     paddingTop: 4,
-    paddingBottom: 8,
+    minHeight: 52,
   },
-  topBar: {
+  floatLeft: {
+    position: "absolute",
+    left: 16,
+    top: 4,
+    zIndex: 31,
+  },
+  floatRight: {
+    position: "absolute",
+    right: 16,
+    top: 4,
+    zIndex: 31,
     flexDirection: "row",
     alignItems: "center",
-  },
-  topBarSpread: {
-    justifyContent: "space-between",
   },
   chev: {
     fontSize: 22,
@@ -93,5 +111,7 @@ const styles = StyleSheet.create({
   },
   pad: { padding: 20, paddingBottom: 40, gap: 16, flexGrow: 1 },
   padWithSticky: { paddingTop: 60 },
+  /** Content under floating chips — only horizontal/bottom pad from Screen. */
+  padOverlay: { paddingTop: 8 },
   padFill: { flex: 1 },
 });

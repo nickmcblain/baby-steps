@@ -61,6 +61,8 @@ export function eventKindLabel(event: Doc<"events">): string {
       return "Height";
     case "sleep":
       return "Sleep";
+    case "custom":
+      return event.loggedAt > Date.now() ? "Upcoming" : "Event";
   }
 }
 
@@ -78,5 +80,7 @@ export function eventTitle(event: Doc<"events">): string {
       return event.heightCm != null ? formatHeight(event.heightCm) : "Height";
     case "sleep":
       return sleepSummary(event);
+    case "custom":
+      return event.title?.trim() || "Event";
   }
 }
