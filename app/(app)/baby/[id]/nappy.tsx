@@ -2,10 +2,12 @@ import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
+import { LoggedAtField } from "@/components/LoggedAtField";
 import { Screen } from "@/components/Screen";
-import { Field, IconButton, Pill, PrimaryButton, Title } from "@/components/ui";
+import { Field, Pill, PrimaryButton, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { nowSnapped } from "@/lib/loggedAt";
 import { colors, fonts } from "@/lib/theme";
 
 type Kind = "wee" | "poo" | "both";
@@ -15,6 +17,7 @@ export default function NappyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const logNappy = useMutation(api.events.logNappy);
+  const [loggedAt, setLoggedAt] = useState(nowSnapped);
   const [kind, setKind] = useState<Kind>("wee");
   const [wee, setWee] = useState<Size>("medium");
   const [poo, setPoo] = useState<Size>("medium");
@@ -24,7 +27,7 @@ export default function NappyScreen() {
     try {
       await logNappy({
         babyId: id as Id<"babies">,
-        loggedAt: Date.now(),
+        loggedAt,
         nappy: kind,
         weeSize: kind === "wee" || kind === "both" ? wee : undefined,
         pooSize: kind === "poo" || kind === "both" ? poo : undefined,
@@ -37,11 +40,9 @@ export default function NappyScreen() {
   }
 
   return (
-    <Screen>
-      <IconButton onPress={() => router.back()}>
-        <Text style={{ fontSize: 20 }}>‹</Text>
-      </IconButton>
+    <Screen onBack={() => router.back()}>
       <Title>Nappy</Title>
+      <LoggedAtField value={loggedAt} onChange={setLoggedAt} />
       <View style={styles.row}>
         <Pill label="Wee" selected={kind === "wee"} onPress={() => setKind("wee")} tint={colors.amberSoft} ink={colors.ink} />
         <Pill label="Poo" selected={kind === "poo"} onPress={() => setKind("poo")} tint={colors.peachSoft} ink={colors.peach} />

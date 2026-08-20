@@ -16,7 +16,14 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.babysteps.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSSupportsLiveActivities": true,
+        "NSSupportsLiveActivitiesFrequentUpdates": true
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.babysteps.app"
+        ]
       }
     },
     "android": {
@@ -26,7 +33,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.babysteps.app",
+      "package": "com.nickmcblain.babysteps",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -44,10 +51,39 @@
         {
           "backgroundColor": "#F3F4F6"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#0F766E"
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "com.babysteps.app.widgets",
+          "groupIdentifier": "group.com.babysteps.app",
+          "frequentUpdates": true,
+          "widgets": [
+            {
+              "name": "BabyTimerActivity",
+              "displayName": "Baby Timer",
+              "description": "Shows an active feed or sleep timer on the Lock Screen and Dynamic Island",
+              "supportedFamilies": ["systemSmall"]
+            }
+          ]
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "804e508a-e06e-4986-82b3-6a293ca7699d"
+      }
+    },
+    "owner": "nickmcblain"
   }
 }

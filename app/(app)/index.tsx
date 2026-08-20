@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { setActiveBabyId } from "@/lib/activeBaby";
 import { formatAge, formatKg } from "@/lib/format";
+import { useMarkInteractive } from "@/lib/useMarkInteractive";
 import { colors, fonts, radius, shadow } from "@/lib/theme";
 
 export default function BabiesScreen() {
@@ -18,6 +19,7 @@ export default function BabiesScreen() {
   const joinByCode = useMutation(api.babies.joinByCode);
   const [code, setCode] = useState("");
   const now = Date.now();
+  useMarkInteractive(isAuthenticated && babies !== undefined);
 
   async function openBaby(id: Id<"babies">) {
     await setActiveBabyId(id);
@@ -66,6 +68,7 @@ export default function BabiesScreen() {
             <Text style={styles.tileMeta}>
               {formatAge(baby.dateOfBirth, now)} · {formatKg(baby.weightGrams)}
             </Text>
+            <Text style={styles.invite}>Code {baby.inviteCode}</Text>
           </Pressable>
         ))}
         <Pressable onPress={() => router.push("/babies/new")} style={[styles.tile, styles.addTile]}>
@@ -149,5 +152,11 @@ const styles = StyleSheet.create({
   },
   tileName: { fontFamily: fonts.bold, fontSize: 18, color: colors.ink },
   tileMeta: { fontFamily: fonts.body, color: colors.muted, fontSize: 13 },
+  invite: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: colors.purple,
+    marginTop: 2,
+  },
   cardLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink, marginBottom: 8 },
 });

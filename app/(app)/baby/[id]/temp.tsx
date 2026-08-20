@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
-import { Card, IconButton, Pill, PrimaryButton, Subtitle, Title } from "@/components/ui";
+import { Card, Pill, Subtitle, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clothingAdvice } from "@/lib/clothingAdvice";
@@ -37,12 +37,27 @@ export default function TempScreen() {
   const [unit, setUnit] = useState<TempUnit>("C");
   const [tempC, setTempC] = useState(DEFAULT_C);
   const [hydrated, setHydrated] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!baby || hydrated) return;
     setTempC(baby.lastRoomTempC ?? DEFAULT_C);
     setHydrated(true);
   }, [baby, hydrated]);
+
+  // Advice is live from tempC; persist quietly for next visit / Ask context.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void saveRoomTemp({ babyId, tempC }).catch(() => {
+        // Silent — user still sees live advice
+      });
+    }, 500);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [tempC, hydrated, babyId, saveRoomTemp]);
 
   const advice = useMemo(() => {
     if (!baby) return null;
@@ -59,22 +74,11 @@ export default function TempScreen() {
     );
   }
 
-  async function save() {
-    try {
-      await saveRoomTemp({ babyId, tempC });
-    } catch (error) {
-      Alert.alert("Could not save", error instanceof Error ? error.message : "Try again");
-    }
-  }
-
   return (
-    <Screen>
-      <IconButton onPress={() => router.back()}>
-        <Text style={{ fontSize: 20 }}>‹</Text>
-      </IconButton>
+    <Screen onBack={() => router.back()}>
       <Title>Clothing</Title>
       <Subtitle>
-        What is the room now? We map it to Lullaby Trust-style TOG layers for
+        What is the room now? Layers update as you adjust the temperature for
         {baby ? ` ${baby.name}` : " baby"}.
       </Subtitle>
 
@@ -113,7 +117,6 @@ export default function TempScreen() {
         </View>
       </View>
 
-      <PrimaryButton label="Check layers" onPress={() => void save()} />
       {advice ? (
         <Card>
           <Text style={styles.tog}>{advice.tog}</Text>

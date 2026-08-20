@@ -9,6 +9,8 @@ export const colors = {
   tealSoft: "#E6FAF7",
   purple: "#6D5EF5",
   purpleSoft: "#EEEBFF",
+  sky: "#4BA3E3",
+  skySoft: "#E5F3FC",
   peach: "#FF8A65",
   peachSoft: "#FFE8DF",
   amber: "#F5C84C",

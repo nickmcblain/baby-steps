@@ -31,7 +31,7 @@ export function BottomSheet({
   contentStyle,
 }: {
   visible: boolean;
-  title: string;
+  title?: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
@@ -95,13 +95,17 @@ export function BottomSheet({
           ]}
         >
           <View style={styles.handle} />
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
-              <Text style={styles.close}>Done</Text>
-            </Pressable>
+          {title ? (
+            <View style={styles.header}>
+              <Text style={styles.title}>{title}</Text>
+              <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
+                <Text style={styles.close}>Done</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          <View style={[styles.body, !title && styles.bodyCompact, contentStyle]}>
+            {children}
           </View>
-          <View style={[styles.body, contentStyle]}>{children}</View>
           {footer}
         </Animated.View>
       </View>
@@ -148,4 +152,5 @@ const styles = StyleSheet.create({
     color: colors.tealDark,
   },
   body: { minHeight: 220 },
+  bodyCompact: { minHeight: 0 },
 });

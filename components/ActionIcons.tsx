@@ -40,6 +40,35 @@ export function LogIcon({ color = "#fff" }: { color?: string }) {
   );
 }
 
+export function AskIcon({ color = "#fff" }: { color?: string }) {
+  return (
+    <View style={styles.box}>
+      <View style={[styles.bubble, { borderColor: color }]} />
+      <View style={[styles.bubbleTail, { backgroundColor: color }]} />
+      <View style={[styles.dotRow]}>
+        <View style={[styles.dot, { backgroundColor: color }]} />
+        <View style={[styles.dot, { backgroundColor: color }]} />
+        <View style={[styles.dot, { backgroundColor: color }]} />
+      </View>
+    </View>
+  );
+}
+
+export function SleepIcon({
+  color = "#fff",
+  cutColor = "#6D5EF5",
+}: {
+  color?: string;
+  cutColor?: string;
+}) {
+  return (
+    <View style={styles.box}>
+      <View style={[styles.moon, { backgroundColor: color }]} />
+      <View style={[styles.moonCut, { backgroundColor: cutColor }]} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   box: {
     width: 22,
@@ -113,5 +142,46 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     left: 10,
     top: 5,
+  },
+  bubble: {
+    width: 18,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2.5,
+    position: "absolute",
+    top: 1,
+  },
+  bubbleTail: {
+    position: "absolute",
+    width: 4,
+    height: 4,
+    borderRadius: 1,
+    left: 4,
+    bottom: 1,
+    transform: [{ rotate: "45deg" }],
+  },
+  dotRow: {
+    position: "absolute",
+    top: 5,
+    flexDirection: "row",
+    gap: 2,
+  },
+  dot: {
+    width: 2.5,
+    height: 2.5,
+    borderRadius: 2,
+  },
+  moon: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  moonCut: {
+    position: "absolute",
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    right: 0,
+    top: 1,
   },
 });

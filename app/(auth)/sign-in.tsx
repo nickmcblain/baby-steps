@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useMarkInteractive } from "@/lib/useMarkInteractive";
 import { colors, fonts } from "@/lib/theme";
 import { LoadingScreen } from "@/providers/AppProviders";
 
@@ -12,6 +13,8 @@ export default function SignIn() {
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const router = useRouter();
   const [showAuthView, setShowAuthView] = useState(false);
+  const ready = isLoaded && !isSignedIn && showAuthView;
+  useMarkInteractive(ready);
 
   useEffect(() => {
     if (!isSignedIn) return;

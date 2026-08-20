@@ -1,7 +1,12 @@
 import { ConvexError, v } from "convex/values";
 import { authedMutation, authedQuery } from "./lib/functions";
 import { getMembership, requireBabyMember, uniqueInviteCode } from "./lib/access";
-import { babyValidator } from "./lib/validators";
+import {
+  babyValidator,
+  deliveryTypeValidator,
+  feedingModeValidator,
+  sexValidator,
+} from "./lib/validators";
 
 export const list = authedQuery({
   args: {},
@@ -48,6 +53,7 @@ export const create = authedMutation({
     dateOfBirth: v.number(),
     weightGrams: v.number(),
     heightCm: v.optional(v.number()),
+    sex: v.optional(sexValidator),
     notes: v.optional(v.string()),
   },
   returns: v.id("babies"),
@@ -65,11 +71,13 @@ export const create = authedMutation({
     const heightCm = normalizeHeightCm(args.heightCm);
 
     const inviteCode = await uniqueInviteCode(ctx);
+    const weightGrams = Math.round(args.weightGrams);
     const babyId = await ctx.db.insert("babies", {
       name,
       dateOfBirth: args.dateOfBirth,
-      weightGrams: Math.round(args.weightGrams),
+      weightGrams,
       heightCm,
+      sex: args.sex,
       notes: args.notes?.trim() || undefined,
       inviteCode,
       createdBy: ctx.user._id,
@@ -78,6 +86,23 @@ export const create = authedMutation({
       babyId,
       userId: ctx.user._id,
     });
+    const loggedAt = Math.round(Date.now() / (30 * 60_000)) * (30 * 60_000);
+    await ctx.db.insert("events", {
+      babyId,
+      createdBy: ctx.user._id,
+      loggedAt,
+      kind: "weight",
+      weightGrams,
+    });
+    if (heightCm != null) {
+      await ctx.db.insert("events", {
+        babyId,
+        createdBy: ctx.user._id,
+        loggedAt,
+        kind: "height",
+        heightCm,
+      });
+    }
     return babyId;
   },
 });
@@ -87,9 +112,11 @@ export const update = authedMutation({
     babyId: v.id("babies"),
     name: v.string(),
     dateOfBirth: v.number(),
-    weightGrams: v.number(),
-    heightCm: v.optional(v.number()),
     notes: v.optional(v.string()),
+    sex: v.optional(sexValidator),
+    deliveryType: v.optional(deliveryTypeValidator),
+    gestationWeeks: v.optional(v.number()),
+    feedingMode: v.optional(feedingModeValidator),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -98,16 +125,22 @@ export const update = authedMutation({
     if (!name) {
       throw new ConvexError("Name is required");
     }
-    if (!Number.isFinite(args.weightGrams) || args.weightGrams <= 0) {
-      throw new ConvexError("Weight must be greater than 0");
+    if (
+      args.gestationWeeks !== undefined &&
+      (!Number.isFinite(args.gestationWeeks) ||
+        args.gestationWeeks < 22 ||
+        args.gestationWeeks > 44)
+    ) {
+      throw new ConvexError("Gestation weeks look out of range");
     }
-    const heightCm = normalizeHeightCm(args.heightCm);
     await ctx.db.patch(args.babyId, {
       name,
       dateOfBirth: args.dateOfBirth,
-      weightGrams: Math.round(args.weightGrams),
-      heightCm,
       notes: args.notes?.trim() || undefined,
+      sex: args.sex,
+      deliveryType: args.deliveryType,
+      gestationWeeks: args.gestationWeeks,
+      feedingMode: args.feedingMode,
     });
     return null;
   },
