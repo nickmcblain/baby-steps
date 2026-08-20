@@ -1,4 +1,5 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { fonts } from "@/lib/theme";
 
 /** Geometric action glyphs — no emoji fonts (broken on some iOS simulators). */
 
@@ -43,13 +44,7 @@ export function LogIcon({ color = "#fff" }: { color?: string }) {
 export function AskIcon({ color = "#fff" }: { color?: string }) {
   return (
     <View style={styles.box}>
-      <View style={[styles.bubble, { borderColor: color }]} />
-      <View style={[styles.bubbleTail, { backgroundColor: color }]} />
-      <View style={[styles.dotRow]}>
-        <View style={[styles.dot, { backgroundColor: color }]} />
-        <View style={[styles.dot, { backgroundColor: color }]} />
-        <View style={[styles.dot, { backgroundColor: color }]} />
-      </View>
+      <Text style={[styles.askMark, { color }]}>?</Text>
     </View>
   );
 }
@@ -143,33 +138,12 @@ const styles = StyleSheet.create({
     left: 10,
     top: 5,
   },
-  bubble: {
-    width: 18,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2.5,
-    position: "absolute",
-    top: 1,
-  },
-  bubbleTail: {
-    position: "absolute",
-    width: 4,
-    height: 4,
-    borderRadius: 1,
-    left: 4,
-    bottom: 1,
-    transform: [{ rotate: "45deg" }],
-  },
-  dotRow: {
-    position: "absolute",
-    top: 5,
-    flexDirection: "row",
-    gap: 2,
-  },
-  dot: {
-    width: 2.5,
-    height: 2.5,
-    borderRadius: 2,
+  askMark: {
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    lineHeight: 22,
+    fontWeight: "700",
+    textAlign: "center",
   },
   moon: {
     width: 16,
