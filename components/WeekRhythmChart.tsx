@@ -16,16 +16,19 @@ import {
 } from "@/lib/weekGrid";
 import { colors, fonts } from "@/lib/theme";
 
-const PAD = { top: 22, right: 10, bottom: 12, left: 28 };
+const PAD = { top: 22, right: 10, bottom: 12, left: 36 };
 const HOUR_TICKS = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 const DOT_R = 6.5;
 
-export type WeekSleep = {
-  kind: "sleep";
+export type WeekDuration = {
+  kind: "sleep" | "tummy";
   eventId: string;
   startMs: number;
   endMs: number;
 };
+
+/** @deprecated Prefer WeekDuration */
+export type WeekSleep = WeekDuration;
 
 export type WeekMarkerKind = "feed" | "nappy" | "weight" | "height" | "custom";
 
@@ -43,8 +46,14 @@ const MARKER_COLOR: Record<WeekMarkerKind, string> = {
   custom: colors.rose,
 };
 
+const DURATION_COLOR: Record<WeekDuration["kind"], string> = {
+  sleep: colors.purple,
+  tummy: colors.sky,
+};
+
 const LEGEND: { label: string; color: string; shape: "bar" | "dot" }[] = [
   { label: "Sleep", color: colors.purple, shape: "bar" },
+  { label: "Tummy", color: colors.sky, shape: "bar" },
   { label: "Feed", color: colors.teal, shape: "dot" },
   { label: "Nappy", color: colors.peach, shape: "dot" },
   { label: "Weight", color: colors.amber, shape: "dot" },
@@ -64,12 +73,14 @@ const KIND_OFFSET: Record<WeekMarkerKind, number> = {
 export function WeekRhythmChart({
   weekStartMs,
   sleeps,
+  tummies = [],
   markers,
   onPrevWeek,
   onNextWeek,
 }: {
   weekStartMs: number;
-  sleeps: WeekSleep[];
+  sleeps: WeekDuration[];
+  tummies?: WeekDuration[];
   markers: WeekMarker[];
   onPrevWeek: () => void;
   onNextWeek: () => void;
@@ -95,33 +106,40 @@ export function WeekRhythmChart({
     return PAD.top + (min / 1440) * plotH;
   }
 
-  const sleepRects = useMemo(() => {
+  const durationRects = useMemo(() => {
     const out: {
       key: string;
       x: number;
       y: number;
       w: number;
       h: number;
+      color: string;
     }[] = [];
     if (colW <= 0 || plotH <= 0) return out;
-    for (const sleep of sleeps) {
-      for (const slice of splitAcrossLocalDays(sleep.startMs, sleep.endMs)) {
+    const blocks = [...sleeps, ...tummies];
+    for (const block of blocks) {
+      for (const slice of splitAcrossLocalDays(block.startMs, block.endMs)) {
         const dayIndex = days.findIndex((d) => d.dayStartMs === slice.dayStartMs);
         if (dayIndex < 0) continue;
         const y = yForMin(slice.startMin);
         const h = Math.max(4, yForMin(slice.endMin) - y);
-        const inset = Math.max(2, colW * 0.12);
+        // Tummy bars inset more so they sit beside sleep when overlapping.
+        const inset =
+          block.kind === "tummy"
+            ? Math.max(4, colW * 0.28)
+            : Math.max(2, colW * 0.12);
         out.push({
-          key: `${sleep.eventId}-${slice.dayStartMs}`,
+          key: `${block.kind}-${block.eventId}-${slice.dayStartMs}`,
           x: PAD.left + dayIndex * colW + inset,
           y,
           w: Math.max(4, colW - inset * 2),
           h,
+          color: DURATION_COLOR[block.kind],
         });
       }
     }
     return out;
-  }, [sleeps, days, colW, plotH]);
+  }, [sleeps, tummies, days, colW, plotH]);
 
   const markerDots = useMemo(() => {
     const out: { key: string; cx: number; cy: number; color: string }[] = [];
@@ -219,7 +237,7 @@ export function WeekRhythmChart({
                 />
               );
             })}
-            {sleepRects.map((r) => (
+            {durationRects.map((r) => (
               <Rect
                 key={r.key}
                 x={r.x}
@@ -227,7 +245,7 @@ export function WeekRhythmChart({
                 width={r.w}
                 height={r.h}
                 rx={Math.min(6, r.w / 2)}
-                fill={colors.purple}
+                fill={r.color}
                 opacity={0.85}
               />
             ))}

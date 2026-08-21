@@ -9,7 +9,7 @@ import {
 } from "@/lib/weekGrid";
 import { colors, fonts, radius } from "@/lib/theme";
 
-const PAD = { top: 8, right: 8, bottom: 28, left: 32 };
+const PAD = { top: 8, right: 8, bottom: 28, left: 38 };
 const CHART_H = 320;
 const HOUR_TICKS = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -24,10 +24,14 @@ export function SleepPatternChart({
   sleeps,
   days,
   rangeEndMs,
+  barColor = colors.purple,
+  emptyText = "No sleeps in this range yet.",
 }: {
   sleeps: SleepPatternItem[];
   days: 7 | 14 | 30;
   rangeEndMs: number;
+  barColor?: string;
+  emptyText?: string;
 }) {
   const [chartW, setChartW] = useState(0);
 
@@ -92,7 +96,7 @@ export function SleepPatternChart({
   if (sleeps.length === 0) {
     return (
       <View style={styles.emptyBox}>
-        <Text style={styles.emptyText}>No sleeps in this range yet.</Text>
+        <Text style={styles.emptyText}>{emptyText}</Text>
       </View>
     );
   }
@@ -155,7 +159,7 @@ export function SleepPatternChart({
               width={r.w}
               height={r.h}
               rx={Math.min(5, r.w / 2)}
-              fill={colors.purple}
+              fill={barColor}
               opacity={0.85}
             />
           ))}

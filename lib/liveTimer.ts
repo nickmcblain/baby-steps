@@ -7,7 +7,7 @@ import BabyTimerActivity, {
   type BabyTimerProps,
 } from "@/widgets/BabyTimerActivity";
 
-export type TimerKind = "sleep" | "feed";
+export type TimerKind = "sleep" | "feed" | "tummy";
 export type FeedSide = "left" | "right";
 
 const STORAGE_KEY = "baby-steps:live-timer-v1";
@@ -18,9 +18,9 @@ export type PersistedTimer = {
   babyName?: string;
   /** Wall-clock when the overall session first started */
   sessionStartedAt: number;
-  /** Sleep: accumulated ms while paused */
+  /** Sleep / tummy: accumulated ms while paused */
   sleepBaseMs?: number;
-  /** Sleep: Date.now() when current run segment started; null if paused */
+  /** Sleep / tummy: Date.now() when current run segment started; null if paused */
   sleepTickOrigin?: number | null;
   /** Feed */
   leftBaseMs?: number;
@@ -76,11 +76,13 @@ function buildProps(args: {
   const title =
     kind === "sleep"
       ? "Sleep"
-      : side === "right"
-        ? "Feed · Right"
-        : side === "left"
-          ? "Feed · Left"
-          : "Feed";
+      : kind === "tummy"
+        ? "Tummy time"
+        : side === "right"
+          ? "Feed · Right"
+          : side === "left"
+            ? "Feed · Left"
+            : "Feed";
   const startEpochMs = running ? Date.now() - elapsedMs : Date.now() - elapsedMs;
   return {
     kind,

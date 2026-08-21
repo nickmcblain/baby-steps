@@ -1,5 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
-import { fonts } from "@/lib/theme";
+import { StyleSheet, View } from "react-native";
 
 /** Geometric action glyphs — no emoji fonts (broken on some iOS simulators). */
 
@@ -44,7 +43,19 @@ export function LogIcon({ color = "#fff" }: { color?: string }) {
 export function AskIcon({ color = "#fff" }: { color?: string }) {
   return (
     <View style={styles.box}>
-      <Text style={[styles.askMark, { color }]}>?</Text>
+      <View style={[styles.bubble, { backgroundColor: color }]} />
+      <View style={[styles.bubbleTail, { borderTopColor: color }]} />
+    </View>
+  );
+}
+
+/** Simple mic glyph for voice log FAB. */
+export function MicIcon({ color = "#fff" }: { color?: string }) {
+  return (
+    <View style={styles.box}>
+      <View style={[styles.micCapsule, { backgroundColor: color }]} />
+      <View style={[styles.micStand, { backgroundColor: color }]} />
+      <View style={[styles.micBase, { backgroundColor: color }]} />
     </View>
   );
 }
@@ -60,6 +71,17 @@ export function SleepIcon({
     <View style={styles.box}>
       <View style={[styles.moon, { backgroundColor: color }]} />
       <View style={[styles.moonCut, { backgroundColor: cutColor }]} />
+    </View>
+  );
+}
+
+/** Play-mat + baby silhouette — geometric, no emoji. */
+export function TummyIcon({ color = "#fff" }: { color?: string }) {
+  return (
+    <View style={styles.box}>
+      <View style={[styles.mat, { backgroundColor: color, opacity: 0.45 }]} />
+      <View style={[styles.tummyBody, { backgroundColor: color }]} />
+      <View style={[styles.tummyHead, { backgroundColor: color }]} />
     </View>
   );
 }
@@ -138,12 +160,37 @@ const styles = StyleSheet.create({
     left: 10,
     top: 5,
   },
-  askMark: {
-    fontFamily: fonts.bold,
-    fontSize: 20,
-    lineHeight: 22,
-    fontWeight: "700",
-    textAlign: "center",
+  bubble: {
+    width: 16,
+    height: 12,
+    borderRadius: 5,
+    marginTop: -2,
+  },
+  bubbleTail: {
+    width: 0,
+    height: 0,
+    marginTop: -1,
+    marginLeft: -6,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
+    borderTopWidth: 5,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+  },
+  micCapsule: {
+    width: 10,
+    height: 14,
+    borderRadius: 5,
+  },
+  micStand: {
+    width: 2,
+    height: 4,
+    marginTop: 1,
+  },
+  micBase: {
+    width: 12,
+    height: 2,
+    borderRadius: 1,
   },
   moon: {
     width: 16,
@@ -157,5 +204,26 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     right: 0,
     top: 1,
+  },
+  mat: {
+    position: "absolute",
+    width: 20,
+    height: 12,
+    borderRadius: 4,
+    bottom: 2,
+  },
+  tummyBody: {
+    width: 14,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 2,
+  },
+  tummyHead: {
+    position: "absolute",
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    top: 1,
+    right: 2,
   },
 });

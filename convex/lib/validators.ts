@@ -6,6 +6,7 @@ export const eventKindValidator = v.union(
   v.literal("weight"),
   v.literal("height"),
   v.literal("sleep"),
+  v.literal("tummy"),
   v.literal("custom"),
 );
 

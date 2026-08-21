@@ -10,7 +10,7 @@ import { createLiveActivity, type LiveActivityEnvironment } from "expo-widgets";
 
 /** Props must be JSON-serializable — use epoch ms, not Date objects. */
 export type BabyTimerProps = {
-  kind: "sleep" | "feed";
+  kind: "sleep" | "feed" | "tummy";
   /** e.g. "Sleep" or "Feed · Left" */
   title: string;
   /** Optional baby name */
@@ -30,7 +30,7 @@ export type BabyTimerProps = {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Live Activity for sleep / feed timers.
+ * Live Activity for sleep / feed / tummy timers.
  * All helpers must live inside this function — `'widget'` serializes the body only.
  */
 const BabyTimerActivity = (
@@ -41,8 +41,15 @@ const BabyTimerActivity = (
 
   const TEAL = "#14C4B2";
   const PURPLE = "#6D5EF5";
-  const accent = props.kind === "sleep" ? PURPLE : TEAL;
-  const symbol = props.kind === "sleep" ? "moon.fill" : "drop.fill";
+  const SKY = "#4BA3E3";
+  const accent =
+    props.kind === "sleep" ? PURPLE : props.kind === "tummy" ? SKY : TEAL;
+  const symbol =
+    props.kind === "sleep"
+      ? "moon.fill"
+      : props.kind === "tummy"
+        ? "figure.arms.open"
+        : "drop.fill";
   const start = new Date(props.startEpochMs);
   const end = new Date(props.endEpochMs);
 
@@ -109,7 +116,11 @@ const BabyTimerActivity = (
         <Text
           modifiers={[font({ size: 12 }), foregroundStyle("#FFFFFF")]}
         >
-          {props.kind === "sleep" ? "Sleep" : "Feed"}
+          {props.kind === "sleep"
+            ? "Sleep"
+            : props.kind === "tummy"
+              ? "Tummy"
+              : "Feed"}
         </Text>
       </VStack>
     ),

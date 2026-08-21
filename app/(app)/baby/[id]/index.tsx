@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   AskIcon,
   FeedIcon,
@@ -10,30 +11,32 @@ import {
   NappyIcon,
   SleepIcon,
   TempIcon,
+  TummyIcon,
 } from "@/components/ActionIcons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { Screen } from "@/components/Screen";
 import { IconButton, Title } from "@/components/ui";
+import { VoiceLogFab } from "@/components/VoiceLogFab";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { eventTitle } from "@/lib/eventCopy";
 import { toFeedReminderBaby } from "@/lib/feedReminders";
 import { formatAge, formatHeight, formatRelative, formatWeight } from "@/lib/format";
 import { useMarkInteractive } from "@/lib/useMarkInteractive";
-import {
-  feedReminderHint,
-  useFeedReminderSync,
-} from "@/lib/useFeedReminderSync";
+import { useFeedReminderSync } from "@/lib/useFeedReminderSync";
 import { colors, fonts, radius, shadow } from "@/lib/theme";
 
 export default function BabyHome() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const babyId = id as Id<"babies">;
   const data = useQuery(api.events.dashboard, { babyId });
   const now = Date.now();
   const [feedSheetOpen, setFeedSheetOpen] = useState(false);
   const [sleepSheetOpen, setSleepSheetOpen] = useState(false);
+  const [tummySheetOpen, setTummySheetOpen] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   useMarkInteractive(data != null);
 
   const reminderBaby = useMemo(
@@ -55,17 +58,7 @@ export default function BabyHome() {
     );
   }
 
-  const { baby, lastFeed, lastSleep } = data;
-  const feedHint =
-    reminderBaby != null
-      ? feedReminderHint(
-          reminderBaby,
-          lastFeed
-            ? lastFeed.loggedAt + (lastFeed.durationMinutes ?? 0) * 60_000
-            : null,
-          now,
-        )
-      : null;
+  const { baby, lastFeed, lastSleep, lastNappy, lastTummy } = data;
 
   function openFeed(path: "timer" | "manual") {
     setFeedSheetOpen(false);
@@ -77,7 +70,13 @@ export default function BabyHome() {
     router.push(`/baby/${id}/sleep/${path}`);
   }
 
+  function openTummy(path: "timer" | "manual") {
+    setTummySheetOpen(false);
+    router.push(`/baby/${id}/tummy/${path}`);
+  }
+
   return (
+    <View style={styles.root}>
     <Screen
       onBack={() => {
         if (router.canGoBack()) router.back();
@@ -103,7 +102,6 @@ export default function BabyHome() {
         >
           <Text style={styles.statusLabel}>Weight</Text>
           <Text style={styles.statusValue}>{formatWeight(baby.weightGrams)}</Text>
-          <Text style={styles.statusDetail}>Tap to log weigh-in</Text>
         </Pressable>
         <Pressable
           style={[styles.status, { backgroundColor: colors.skySoft }]}
@@ -113,46 +111,52 @@ export default function BabyHome() {
           <Text style={styles.statusValue}>
             {baby.heightCm != null ? formatHeight(baby.heightCm) : "—"}
           </Text>
-          <Text style={styles.statusDetail}>
-            {baby.heightCm != null ? "Tap to log height" : "Add a height"}
-          </Text>
         </Pressable>
       </View>
-
-      <View style={styles.statusRow}>
-        <StatusCard
-          label="Last feed"
-          value={lastFeed ? formatRelative(lastFeed.loggedAt, now) : "Not yet"}
-          detail={lastFeed ? eventTitle(lastFeed) : "Log the first one"}
-          tint={colors.amberSoft}
-        />
-        <StatusCard
-          label="Last sleep"
-          value={lastSleep ? formatRelative(lastSleep.loggedAt, now) : "Not yet"}
-          detail={lastSleep ? eventTitle(lastSleep) : "Log a nap"}
-          tint={colors.purpleSoft}
-          onPress={() => router.push(`/baby/${id}/sleep/patterns`)}
-        />
-      </View>
-      {feedHint ? <Text style={styles.feedHint}>{feedHint}</Text> : null}
 
       <View style={styles.actions}>
         <ActionTile
           icon={<FeedIcon />}
           label="Feed"
           color={colors.teal}
+          last={
+            lastFeed
+              ? `${formatRelative(lastFeed.loggedAt, now)} · ${eventTitle(lastFeed)}`
+              : undefined
+          }
           onPress={() => setFeedSheetOpen(true)}
         />
         <ActionTile
           icon={<SleepIcon cutColor={colors.purple} />}
           label="Sleep"
           color={colors.purple}
+          last={
+            lastSleep
+              ? `${formatRelative(lastSleep.loggedAt, now)} · ${eventTitle(lastSleep)}`
+              : undefined
+          }
           onPress={() => setSleepSheetOpen(true)}
+        />
+        <ActionTile
+          icon={<TummyIcon />}
+          label="Tummy"
+          color={colors.sky}
+          last={
+            lastTummy
+              ? `${formatRelative(lastTummy.loggedAt, now)} · ${eventTitle(lastTummy)}`
+              : undefined
+          }
+          onPress={() => setTummySheetOpen(true)}
         />
         <ActionTile
           icon={<NappyIcon />}
           label="Nappy"
           color={colors.peach}
+          last={
+            lastNappy
+              ? `${formatRelative(lastNappy.loggedAt, now)} · ${eventTitle(lastNappy)}`
+              : undefined
+          }
           onPress={() => router.push(`/baby/${id}/nappy`)}
         />
         <ActionTile
@@ -167,12 +171,6 @@ export default function BabyHome() {
           color={colors.amber}
           onPress={() => router.push(`/baby/${id}/log`)}
         />
-        <ActionTile
-          icon={<AskIcon />}
-          label="Ask"
-          color={colors.ink}
-          onPress={() => router.push(`/baby/${id}/ask`)}
-        />
       </View>
 
       <BottomSheet
@@ -185,6 +183,15 @@ export default function BabyHome() {
           </Pressable>
           <Pressable style={styles.sheetSecondary} onPress={() => openFeed("manual")}>
             <Text style={styles.sheetSecondaryText}>Log manually</Text>
+          </Pressable>
+          <Pressable
+            style={styles.sheetSecondary}
+            onPress={() => {
+              setFeedSheetOpen(false);
+              router.push(`/baby/${id}/feed/patterns`);
+            }}
+          >
+            <Text style={styles.sheetSecondaryText}>Feed patterns</Text>
           </Pressable>
         </View>
       </BottomSheet>
@@ -206,44 +213,56 @@ export default function BabyHome() {
           >
             <Text style={styles.sheetSecondaryText}>Log manually</Text>
           </Pressable>
+          <Pressable
+            style={[styles.sheetSecondary, { backgroundColor: colors.purpleSoft }]}
+            onPress={() => {
+              setSleepSheetOpen(false);
+              router.push(`/baby/${id}/sleep/patterns`);
+            }}
+          >
+            <Text style={styles.sheetSecondaryText}>Sleep patterns</Text>
+          </Pressable>
+        </View>
+      </BottomSheet>
+
+      <BottomSheet
+        visible={tummySheetOpen}
+        onClose={() => setTummySheetOpen(false)}
+      >
+        <View style={styles.sheetStack}>
+          <Pressable
+            style={[styles.sheetPrimary, { backgroundColor: colors.sky }]}
+            onPress={() => openTummy("timer")}
+          >
+            <Text style={styles.sheetPrimaryText}>Start timer</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.sheetSecondary, { backgroundColor: colors.skySoft }]}
+            onPress={() => openTummy("manual")}
+          >
+            <Text style={styles.sheetSecondaryText}>Log manually</Text>
+          </Pressable>
         </View>
       </BottomSheet>
     </Screen>
-  );
-}
-
-function StatusCard({
-  label,
-  value,
-  detail,
-  tint,
-  onPress,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  tint: string;
-  onPress?: () => void;
-}) {
-  const content = (
-    <>
-      <Text style={styles.statusLabel}>{label}</Text>
-      <Text style={styles.statusValue}>{value}</Text>
-      <Text style={styles.statusDetail}>{detail}</Text>
-    </>
-  );
-  if (onPress) {
-    return (
-      <Pressable
-        onPress={onPress}
-        style={[styles.status, { backgroundColor: tint }]}
+      {voiceStatus ? (
+        <View style={styles.voiceBanner} pointerEvents="none">
+          <Text style={styles.voiceBannerText}>{voiceStatus}</Text>
+        </View>
+      ) : null}
+      <VoiceLogFab babyId={babyId} onStatus={setVoiceStatus} />
+      <View
+        style={[styles.fab, { bottom: Math.max(insets.bottom, 12) + 8 }]}
+        pointerEvents="box-none"
       >
-        {content}
-      </Pressable>
-    );
-  }
-  return (
-    <View style={[styles.status, { backgroundColor: tint }]}>{content}</View>
+        <IconButton
+          onPress={() => router.push(`/baby/${id}/ask`)}
+          accessibilityLabel="Ask"
+        >
+          <AskIcon color={colors.ink} />
+        </IconButton>
+      </View>
+    </View>
   );
 }
 
@@ -251,22 +270,53 @@ function ActionTile({
   icon,
   label,
   color,
+  last,
   onPress,
 }: {
   icon: ReactNode;
   label: string;
   color: string;
+  last?: string;
   onPress: () => void;
 }) {
   return (
     <Pressable onPress={onPress} style={styles.action}>
       <View style={[styles.actionIcon, { backgroundColor: color }]}>{icon}</View>
       <Text style={styles.actionLabel}>{label}</Text>
+      <Text style={styles.actionLast} numberOfLines={2}>
+        {last ?? " "}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
+  fab: {
+    position: "absolute",
+    right: 16,
+    zIndex: 40,
+    elevation: 40,
+  },
+  voiceBanner: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    bottom: 72,
+    zIndex: 45,
+    backgroundColor: colors.ink,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...shadow,
+  },
+  voiceBannerText: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: "#fff",
+    textAlign: "center",
+    lineHeight: 20,
+  },
   editMark: {
     fontFamily: fonts.bold,
     fontSize: 13,
@@ -287,13 +337,6 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   statusRow: { flexDirection: "row", gap: 12 },
-  feedHint: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.muted,
-    marginTop: -8,
-    lineHeight: 18,
-  },
   status: {
     flex: 1,
     borderRadius: radius.tile,
@@ -302,14 +345,13 @@ const styles = StyleSheet.create({
   },
   statusLabel: { fontFamily: fonts.medium, color: colors.muted, fontSize: 13 },
   statusValue: { fontFamily: fonts.displayBold, fontSize: 22, color: colors.ink },
-  statusDetail: { fontFamily: fonts.body, color: colors.ink, opacity: 0.7 },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   action: {
     width: "47.5%",
     backgroundColor: colors.card,
     borderRadius: radius.tile,
     padding: 18,
-    minHeight: 130,
+    minHeight: 168,
     ...shadow,
     gap: 12,
   },
@@ -321,6 +363,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   actionLabel: { fontFamily: fonts.bold, fontSize: 18, color: colors.ink },
+  actionLast: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.muted,
+    lineHeight: 18,
+    minHeight: 36,
+  },
   sheetStack: { gap: 10 },
   sheetPrimary: {
     backgroundColor: colors.teal,

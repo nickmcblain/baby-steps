@@ -49,6 +49,11 @@ export function sleepSummary(event: Doc<"events">): string {
   return formatDurationMinutes(event.durationMinutes);
 }
 
+export function tummySummary(event: Doc<"events">): string {
+  if (event.durationMinutes == null) return "Tummy time";
+  return formatDurationMinutes(event.durationMinutes);
+}
+
 export function eventKindLabel(event: Doc<"events">): string {
   switch (event.kind) {
     case "feed":
@@ -61,6 +66,8 @@ export function eventKindLabel(event: Doc<"events">): string {
       return "Height";
     case "sleep":
       return "Sleep";
+    case "tummy":
+      return "Tummy time";
     case "custom":
       return event.loggedAt > Date.now() ? "Upcoming" : "Event";
   }
@@ -80,6 +87,8 @@ export function eventTitle(event: Doc<"events">): string {
       return event.heightCm != null ? formatHeight(event.heightCm) : "Height";
     case "sleep":
       return sleepSummary(event);
+    case "tummy":
+      return tummySummary(event);
     case "custom":
       return event.title?.trim() || "Event";
   }

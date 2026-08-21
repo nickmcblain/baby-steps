@@ -14,15 +14,16 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.babysteps.app",
+      "bundleIdentifier": "com.nickmcblain.babysteps",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSSupportsLiveActivities": true,
-        "NSSupportsLiveActivitiesFrequentUpdates": true
+        "NSSupportsLiveActivitiesFrequentUpdates": true,
+        "NSMicrophoneUsageDescription": "Baby Steps uses the microphone so you can log feeds, sleeps, and nappies hands-free."
       },
       "entitlements": {
         "com.apple.security.application-groups": [
-          "group.com.babysteps.app"
+          "group.com.nickmcblain.babysteps"
         ]
       }
     },
@@ -47,6 +48,12 @@
       "expo-font",
       "@clerk/expo",
       [
+        "expo-audio",
+        {
+          "microphonePermission": "Baby Steps uses the microphone so you can log feeds, sleeps, and nappies hands-free."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#F3F4F6"
@@ -61,8 +68,8 @@
       [
         "expo-widgets",
         {
-          "bundleIdentifier": "com.babysteps.app.widgets",
-          "groupIdentifier": "group.com.babysteps.app",
+          "bundleIdentifier": "com.nickmcblain.babysteps.widgets",
+          "groupIdentifier": "group.com.nickmcblain.babysteps",
           "frequentUpdates": true,
           "widgets": [
             {

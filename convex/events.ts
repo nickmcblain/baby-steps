@@ -3,10 +3,20 @@ import {
   paginationResultValidator,
 } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import type { MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { authedMutation, authedQuery } from "./lib/functions";
 import { requireBabyMember } from "./lib/access";
+import {
+  insertCustom,
+  insertFeed,
+  insertHeight,
+  insertNappy,
+  insertSleep,
+  insertTummy,
+  insertWeight,
+  syncBabyHeight,
+  syncBabyWeight,
+} from "./lib/logEvents";
 import {
   babyValidator,
   eventValidator,
@@ -17,57 +27,6 @@ import {
   sizeValidator,
 } from "./lib/validators";
 
-const HALF_HOUR_MS = 30 * 60_000;
-/** Appointments can be scheduled up to ~18 months ahead. */
-const MAX_FUTURE_MS = 550 * 86_400_000;
-
-function snapLoggedAt(loggedAt: number, allowFuture = false): number {
-  if (!Number.isFinite(loggedAt)) {
-    throw new ConvexError("When is required");
-  }
-  const snapped = Math.round(loggedAt / HALF_HOUR_MS) * HALF_HOUR_MS;
-  const now = Date.now() + HALF_HOUR_MS; // allow current half-hour slot
-  if (!allowFuture && snapped > now) {
-    throw new ConvexError("Time can't be in the future");
-  }
-  if (allowFuture && snapped > Date.now() + MAX_FUTURE_MS) {
-    throw new ConvexError("Date is too far in the future");
-  }
-  return snapped;
-}
-
-async function syncBabyWeight(
-  ctx: MutationCtx,
-  babyId: Id<"babies">,
-): Promise<void> {
-  const latest = await ctx.db
-    .query("events")
-    .withIndex("by_baby_kind_loggedAt", (q) =>
-      q.eq("babyId", babyId).eq("kind", "weight"),
-    )
-    .order("desc")
-    .first();
-  if (latest?.weightGrams != null) {
-    await ctx.db.patch(babyId, { weightGrams: latest.weightGrams });
-  }
-}
-
-async function syncBabyHeight(
-  ctx: MutationCtx,
-  babyId: Id<"babies">,
-): Promise<void> {
-  const latest = await ctx.db
-    .query("events")
-    .withIndex("by_baby_kind_loggedAt", (q) =>
-      q.eq("babyId", babyId).eq("kind", "height"),
-    )
-    .order("desc")
-    .first();
-  if (latest?.heightCm != null) {
-    await ctx.db.patch(babyId, { heightCm: latest.heightCm });
-  }
-}
-
 export const dashboard = authedQuery({
   args: { babyId: v.id("babies") },
   returns: v.object({
@@ -75,6 +34,7 @@ export const dashboard = authedQuery({
     lastFeed: v.union(eventValidator, v.null()),
     lastNappy: v.union(eventValidator, v.null()),
     lastSleep: v.union(eventValidator, v.null()),
+    lastTummy: v.union(eventValidator, v.null()),
   }),
   handler: async (ctx, args) => {
     const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
@@ -99,7 +59,14 @@ export const dashboard = authedQuery({
       )
       .order("desc")
       .first();
-    return { baby, lastFeed, lastNappy, lastSleep };
+    const lastTummy = await ctx.db
+      .query("events")
+      .withIndex("by_baby_kind_loggedAt", (q) =>
+        q.eq("babyId", args.babyId).eq("kind", "tummy"),
+      )
+      .order("desc")
+      .first();
+    return { baby, lastFeed, lastNappy, lastSleep, lastTummy };
   },
 });
 
@@ -175,26 +142,7 @@ export const logFeed = authedMutation({
   returns: v.id("events"),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    if (args.feedKind === "breast" && !args.side) {
-      throw new ConvexError("Choose a breast side");
-    }
-    if (args.feedKind === "bottle") {
-      if (!args.amountMl || args.amountMl <= 0) {
-        throw new ConvexError("Bottle amount is required");
-      }
-    }
-    return await ctx.db.insert("events", {
-      babyId: args.babyId,
-      createdBy: ctx.user._id,
-      loggedAt: snapLoggedAt(args.loggedAt),
-      kind: "feed",
-      feedKind: args.feedKind,
-      side: args.feedKind === "breast" ? args.side : undefined,
-      durationMinutes: args.durationMinutes,
-      amountMl: args.feedKind === "bottle" ? args.amountMl : undefined,
-      milk: args.feedKind === "bottle" ? args.milk : undefined,
-      note: args.note?.trim() || undefined,
-    });
+    return await insertFeed(ctx, ctx.user._id, args);
   },
 });
 
@@ -210,24 +158,7 @@ export const logNappy = authedMutation({
   returns: v.id("events"),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    if ((args.nappy === "wee" || args.nappy === "both") && !args.weeSize) {
-      throw new ConvexError("Wee size is required");
-    }
-    if ((args.nappy === "poo" || args.nappy === "both") && !args.pooSize) {
-      throw new ConvexError("Poo size is required");
-    }
-    return await ctx.db.insert("events", {
-      babyId: args.babyId,
-      createdBy: ctx.user._id,
-      loggedAt: snapLoggedAt(args.loggedAt),
-      kind: "nappy",
-      nappy: args.nappy,
-      weeSize:
-        args.nappy === "wee" || args.nappy === "both" ? args.weeSize : undefined,
-      pooSize:
-        args.nappy === "poo" || args.nappy === "both" ? args.pooSize : undefined,
-      note: args.note?.trim() || undefined,
-    });
+    return await insertNappy(ctx, ctx.user._id, args);
   },
 });
 
@@ -241,20 +172,7 @@ export const logWeight = authedMutation({
   returns: v.id("events"),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    if (!Number.isFinite(args.weightGrams) || args.weightGrams <= 0) {
-      throw new ConvexError("Weight must be greater than 0");
-    }
-    const weightGrams = Math.round(args.weightGrams);
-    const eventId = await ctx.db.insert("events", {
-      babyId: args.babyId,
-      createdBy: ctx.user._id,
-      loggedAt: snapLoggedAt(args.loggedAt),
-      kind: "weight",
-      weightGrams,
-      note: args.note?.trim() || undefined,
-    });
-    await syncBabyWeight(ctx, args.babyId);
-    return eventId;
+    return await insertWeight(ctx, ctx.user._id, args);
   },
 });
 
@@ -268,21 +186,21 @@ export const logSleep = authedMutation({
   returns: v.id("events"),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    if (
-      !Number.isFinite(args.durationMinutes) ||
-      args.durationMinutes < 1 ||
-      args.durationMinutes > 24 * 60
-    ) {
-      throw new ConvexError("Sleep duration must be between 1 minute and 24 hours");
-    }
-    return await ctx.db.insert("events", {
-      babyId: args.babyId,
-      createdBy: ctx.user._id,
-      loggedAt: snapLoggedAt(args.loggedAt),
-      kind: "sleep",
-      durationMinutes: Math.round(args.durationMinutes),
-      note: args.note?.trim() || undefined,
-    });
+    return await insertSleep(ctx, ctx.user._id, args);
+  },
+});
+
+export const logTummy = authedMutation({
+  args: {
+    babyId: v.id("babies"),
+    loggedAt: v.number(),
+    durationMinutes: v.number(),
+    note: v.optional(v.string()),
+  },
+  returns: v.id("events"),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return await insertTummy(ctx, ctx.user._id, args);
   },
 });
 
@@ -296,23 +214,7 @@ export const logHeight = authedMutation({
   returns: v.id("events"),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    if (!Number.isFinite(args.heightCm) || args.heightCm <= 0) {
-      throw new ConvexError("Height must be greater than 0");
-    }
-    if (args.heightCm < 30 || args.heightCm > 130) {
-      throw new ConvexError("Height looks out of range");
-    }
-    const heightCm = Math.round(args.heightCm * 10) / 10;
-    const eventId = await ctx.db.insert("events", {
-      babyId: args.babyId,
-      createdBy: ctx.user._id,
-      loggedAt: snapLoggedAt(args.loggedAt),
-      kind: "height",
-      heightCm,
-      note: args.note?.trim() || undefined,
-    });
-    await syncBabyHeight(ctx, args.babyId);
-    return eventId;
+    return await insertHeight(ctx, ctx.user._id, args);
   },
 });
 
@@ -326,23 +228,41 @@ export const logCustom = authedMutation({
   returns: v.id("events"),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    const title = args.title.trim();
-    if (title.length < 1 || title.length > 80) {
-      throw new ConvexError("Give the event a short title");
+    return await insertCustom(ctx, ctx.user._id, args);
+  },
+});
+
+export const remove = authedMutation({
+  args: { eventId: v.id("events") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new ConvexError("Event not found");
     }
-    return await ctx.db.insert("events", {
-      babyId: args.babyId,
-      createdBy: ctx.user._id,
-      loggedAt: snapLoggedAt(args.loggedAt, true),
-      kind: "custom",
-      title,
-      note: args.note?.trim() || undefined,
-    });
+    await requireBabyMember(ctx, event.babyId, ctx.user._id);
+    const kind = event.kind;
+    const babyId = event.babyId;
+    await ctx.db.delete(args.eventId);
+    if (kind === "weight") {
+      await syncBabyWeight(ctx, babyId);
+    }
+    if (kind === "height") {
+      await syncBabyHeight(ctx, babyId);
+    }
+    return null;
   },
 });
 
 const weekSleepSegmentValidator = v.object({
   kind: v.literal("sleep"),
+  eventId: v.id("events"),
+  startMs: v.number(),
+  endMs: v.number(),
+});
+
+const weekTummySegmentValidator = v.object({
+  kind: v.literal("tummy"),
   eventId: v.id("events"),
   startMs: v.number(),
   endMs: v.number(),
@@ -370,14 +290,14 @@ export const weekGrid = authedQuery({
   returns: v.object({
     weekStartMs: v.number(),
     sleeps: v.array(weekSleepSegmentValidator),
+    tummies: v.array(weekTummySegmentValidator),
     markers: v.array(weekMarkerValidator),
   }),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
     const weekStartMs = args.weekStartMs;
     const weekEndMs = weekStartMs + 7 * 86_400_000;
-    // Include sleeps that may have started slightly before the week but still
-    // show overnight spill — fetch a 24h lookback of sleeps.
+    // Include duration blocks that may have started slightly before the week.
     const lookback = weekStartMs - 86_400_000;
     const events = await ctx.db
       .query("events")
@@ -395,6 +315,12 @@ export const weekGrid = authedQuery({
       startMs: number;
       endMs: number;
     }[] = [];
+    const tummies: {
+      kind: "tummy";
+      eventId: Id<"events">;
+      startMs: number;
+      endMs: number;
+    }[] = [];
     const markers: {
       kind: "feed" | "nappy" | "weight" | "height" | "custom";
       eventId: Id<"events">;
@@ -402,16 +328,23 @@ export const weekGrid = authedQuery({
     }[] = [];
 
     for (const event of events) {
-      if (event.kind === "sleep" && event.durationMinutes != null) {
+      if (
+        (event.kind === "sleep" || event.kind === "tummy") &&
+        event.durationMinutes != null
+      ) {
         const startMs = event.loggedAt;
         const endMs = startMs + event.durationMinutes * 60_000;
         if (endMs <= weekStartMs || startMs >= weekEndMs) continue;
-        sleeps.push({
-          kind: "sleep",
+        const segment = {
           eventId: event._id,
           startMs,
           endMs,
-        });
+        };
+        if (event.kind === "sleep") {
+          sleeps.push({ kind: "sleep", ...segment });
+        } else {
+          tummies.push({ kind: "tummy", ...segment });
+        }
         continue;
       }
       if (
@@ -432,7 +365,7 @@ export const weekGrid = authedQuery({
       }
     }
 
-    return { weekStartMs, sleeps, markers };
+    return { weekStartMs, sleeps, tummies, markers };
   },
 });
 
@@ -501,6 +434,76 @@ export const sleepPatterns = authedQuery({
       stats: {
         avgSleepMinutesPerDay: days > 0 ? totalMinutes / days : 0,
         avgSessionsPerDay: days > 0 ? sleeps.length / days : 0,
+      },
+    };
+  },
+});
+
+/** Bottle feeds without a timer still plot as a short mark on the day chart. */
+const FEED_POINT_MINUTES = 5;
+
+export const feedPatterns = authedQuery({
+  args: {
+    babyId: v.id("babies"),
+    days: v.union(v.literal(7), v.literal(14), v.literal(30)),
+    rangeEndMs: v.number(),
+  },
+  returns: v.object({
+    feeds: v.array(sleepPatternItemValidator),
+    stats: v.object({
+      avgFeedMinutesPerDay: v.number(),
+      avgSessionsPerDay: v.number(),
+    }),
+  }),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const rangeEndMs = args.rangeEndMs;
+    const rangeStartMs = rangeEndMs - args.days * 86_400_000;
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_baby_kind_loggedAt", (q) =>
+        q
+          .eq("babyId", args.babyId)
+          .eq("kind", "feed")
+          .gte("loggedAt", rangeStartMs - 86_400_000)
+          .lt("loggedAt", rangeEndMs),
+      )
+      .order("asc")
+      .take(400);
+
+    const feeds: {
+      startMs: number;
+      endMs: number;
+      durationMinutes: number;
+    }[] = [];
+    let totalTimedMinutes = 0;
+
+    for (const event of events) {
+      const hasTimer =
+        event.durationMinutes != null && event.durationMinutes > 0;
+      const durationMinutes = hasTimer
+        ? event.durationMinutes!
+        : FEED_POINT_MINUTES;
+      const startMs = event.loggedAt;
+      const endMs = startMs + durationMinutes * 60_000;
+      if (endMs <= rangeStartMs || startMs >= rangeEndMs) continue;
+      feeds.push({ startMs, endMs, durationMinutes });
+      if (hasTimer) {
+        const clippedStart = Math.max(startMs, rangeStartMs);
+        const clippedEnd = Math.min(endMs, rangeEndMs);
+        totalTimedMinutes += Math.max(
+          0,
+          (clippedEnd - clippedStart) / 60_000,
+        );
+      }
+    }
+
+    const days = args.days;
+    return {
+      feeds,
+      stats: {
+        avgFeedMinutesPerDay: days > 0 ? totalTimedMinutes / days : 0,
+        avgSessionsPerDay: days > 0 ? feeds.length / days : 0,
       },
     };
   },

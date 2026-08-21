@@ -1,7 +1,9 @@
-import { usePaginatedQuery, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { BottomSheet } from "@/components/BottomSheet";
 import { Screen } from "@/components/Screen";
 import { WeekRhythmChart } from "@/components/WeekRhythmChart";
 import { IconButton, Title } from "@/components/ui";
@@ -31,6 +33,8 @@ function tintFor(kind: Event["kind"]): string {
       return colors.skySoft;
     case "sleep":
       return colors.purpleSoft;
+    case "tummy":
+      return colors.skySoft;
     case "custom":
       return colors.roseSoft;
   }
@@ -48,6 +52,8 @@ function inkFor(kind: Event["kind"]): string {
       return colors.sky;
     case "sleep":
       return colors.purple;
+    case "tummy":
+      return colors.sky;
     case "custom":
       return colors.rose;
   }
@@ -69,6 +75,9 @@ export default function TimelineScreen() {
   const now = Date.now();
   const [mode, setMode] = useState<Mode>("list");
   const [weekStartMs, setWeekStartMs] = useState(() => startOfWeekMonday(now));
+  const [pendingDelete, setPendingDelete] = useState<Event | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const removeEvent = useMutation(api.events.remove);
 
   const { results, status, loadMore } = usePaginatedQuery(
     api.events.list,
@@ -118,6 +127,32 @@ export default function TimelineScreen() {
     return [...upcoming, ...rest];
   }, [results, now]);
 
+  async function confirmDelete() {
+    if (!pendingDelete || deleting) return;
+    setDeleting(true);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
+      () => undefined,
+    );
+    try {
+      await removeEvent({ eventId: pendingDelete._id });
+      setPendingDelete(null);
+    } catch (error) {
+      Alert.alert(
+        "Couldn’t delete",
+        error instanceof Error ? error.message : "Try again",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function onLongPressEvent(event: Event) {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+      () => undefined,
+    );
+    setPendingDelete(event);
+  }
+
   return (
     <Screen
       scroll={mode === "list"}
@@ -134,7 +169,7 @@ export default function TimelineScreen() {
       <Title>Timeline</Title>
       <Text style={styles.subtitle}>
         {mode === "list"
-          ? "Care logs and appointments — upcoming first, then recent."
+          ? "Care logs and appointments — upcoming first, then recent. Press and hold to delete."
           : "Sleep blocks and care markers for the week."}
       </Text>
 
@@ -164,6 +199,7 @@ export default function TimelineScreen() {
           <WeekRhythmChart
             weekStartMs={weekGrid.weekStartMs}
             sleeps={weekGrid.sleeps}
+            tummies={weekGrid.tummies}
             markers={weekGrid.markers}
             onPrevWeek={() => setWeekStartMs((w) => addDays(w, -7))}
             onNextWeek={() => setWeekStartMs((w) => addDays(w, 7))}
@@ -188,11 +224,14 @@ export default function TimelineScreen() {
                         <View style={styles.line} />
                       ) : null}
                     </View>
-                    <View
+                    <Pressable
+                      onLongPress={() => onLongPressEvent(event)}
+                      delayLongPress={380}
                       style={[
                         styles.card,
                         { backgroundColor: tintFor(event.kind) },
                       ]}
+                      accessibilityHint="Press and hold to delete"
                     >
                       <View style={styles.cardTop}>
                         <Text
@@ -208,7 +247,7 @@ export default function TimelineScreen() {
                       {event.note ? (
                         <Text style={styles.note}>{event.note}</Text>
                       ) : null}
-                    </View>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -227,6 +266,43 @@ export default function TimelineScreen() {
           ) : null}
         </>
       )}
+
+      <BottomSheet
+        visible={pendingDelete != null}
+        title="Delete entry?"
+        onClose={() => {
+          if (!deleting) setPendingDelete(null);
+        }}
+      >
+        {pendingDelete ? (
+          <View style={styles.deleteBody}>
+            <Text style={styles.deleteKind}>
+              {eventKindLabel(pendingDelete)}
+            </Text>
+            <Text style={styles.deleteTitle}>{eventTitle(pendingDelete)}</Text>
+            <Text style={styles.deleteWhen}>
+              {formatLoggedAt(pendingDelete.loggedAt)}
+            </Text>
+            <Text style={styles.deleteHint}>This can’t be undone.</Text>
+            <Pressable
+              onPress={() => void confirmDelete()}
+              disabled={deleting}
+              style={[styles.deleteBtn, deleting && styles.deleteBtnDisabled]}
+            >
+              <Text style={styles.deleteBtnText}>
+                {deleting ? "Deleting…" : "Delete"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setPendingDelete(null)}
+              disabled={deleting}
+              style={styles.cancelBtn}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        ) : null}
+      </BottomSheet>
     </Screen>
   );
 }
@@ -359,5 +435,51 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 15,
     lineHeight: 22,
+  },
+  deleteBody: { gap: 8 },
+  deleteKind: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: colors.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  deleteTitle: {
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    color: colors.ink,
+  },
+  deleteWhen: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.muted,
+  },
+  deleteHint: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.muted,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  deleteBtn: {
+    backgroundColor: colors.danger,
+    borderRadius: 999,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  deleteBtnDisabled: { opacity: 0.45 },
+  deleteBtnText: {
+    fontFamily: fonts.bold,
+    fontSize: 17,
+    color: "#fff",
+  },
+  cancelBtn: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  cancelText: {
+    fontFamily: fonts.bold,
+    fontSize: 16,
+    color: colors.muted,
   },
 });

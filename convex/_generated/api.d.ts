@@ -18,8 +18,11 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_babyContext from "../lib/babyContext.js";
 import type * as lib_clothingAdvice from "../lib/clothingAdvice.js";
 import type * as lib_functions from "../lib/functions.js";
+import type * as lib_logEvents from "../lib/logEvents.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as users from "../users.js";
+import type * as voiceLog from "../voiceLog.js";
+import type * as voiceTools from "../voiceTools.js";
 
 import type {
   ApiFromModules,
@@ -38,8 +41,11 @@ declare const fullApi: ApiFromModules<{
   "lib/babyContext": typeof lib_babyContext;
   "lib/clothingAdvice": typeof lib_clothingAdvice;
   "lib/functions": typeof lib_functions;
+  "lib/logEvents": typeof lib_logEvents;
   "lib/validators": typeof lib_validators;
   users: typeof users;
+  voiceLog: typeof voiceLog;
+  voiceTools: typeof voiceTools;
 }>;
 
 /**

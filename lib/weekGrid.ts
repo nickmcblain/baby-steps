@@ -90,8 +90,8 @@ export function splitAcrossLocalDays(
 
 export function formatHourLabel(hour: number): string {
   const h = ((hour % 24) + 24) % 24;
-  if (h === 0) return "12a";
-  if (h === 12) return "12p";
-  if (h < 12) return `${h}a`;
-  return `${h - 12}p`;
+  if (h === 0) return "12am";
+  if (h === 12) return "12pm";
+  if (h < 12) return `${h}am`;
+  return `${h - 12}pm`;
 }

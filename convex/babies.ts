@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { authedMutation, authedQuery } from "./lib/functions";
 import { getMembership, requireBabyMember, uniqueInviteCode } from "./lib/access";
+import { patchRoomTemp } from "./lib/logEvents";
 import {
   babyValidator,
   deliveryTypeValidator,
@@ -159,10 +160,7 @@ export const saveRoomTemp = authedMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    if (!Number.isFinite(args.tempC) || args.tempC < 5 || args.tempC > 40) {
-      throw new ConvexError("Room temperature must be between 5 and 40°C");
-    }
-    await ctx.db.patch(args.babyId, { lastRoomTempC: args.tempC });
+    await patchRoomTemp(ctx, args.babyId, args.tempC);
     return null;
   },
 });
