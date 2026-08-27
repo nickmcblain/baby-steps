@@ -135,38 +135,40 @@ export default function HomeScreen() {
 
       <WeekStrip selectedDayStart={dayStart} onSelect={setDayStart} />
 
-      {napWhen && baby ? (
-        <Pressable
-          style={styles.nap}
-          onPress={() => router.push(`/baby/${baby._id}/sleep/timer`)}
-        >
-          <Text style={styles.napLabel}>Next nap</Text>
-          <Text style={styles.napValue}>{napWhen}</Text>
-        </Pressable>
-      ) : null}
+      <View style={[styles.sleepBlock, !napWhen && styles.sleepBlockSolo]}>
+        {napWhen && baby ? (
+          <Pressable
+            style={styles.nap}
+            onPress={() => router.push(`/baby/${baby._id}/sleep/timer`)}
+          >
+            <Text style={styles.napLabel}>Next nap</Text>
+            <Text style={styles.napValue}>{napWhen}</Text>
+          </Pressable>
+        ) : null}
 
-      <Pressable
-        style={styles.hero}
-        onPress={() => {
-          if (baby) router.push(`/baby/${baby._id}/sleep/patterns`);
-        }}
-      >
-        <View style={styles.heroCopy}>
-          <Text style={styles.heroValue}>
-            {formatHours(sleepH)}
-            <Text style={styles.heroGoal}> / {formatHours(sleepGoalH)}</Text>
-          </Text>
-          <Text style={styles.heroLabel}>Sleep today</Text>
-        </View>
-        <ProgressRing
-          progress={sleepGoalH > 0 ? sleepH / sleepGoalH : 0}
-          size={72}
-          color={colors.purple}
-          track={colors.purpleSoft}
+        <Pressable
+          style={styles.hero}
+          onPress={() => {
+            if (baby) router.push(`/baby/${baby._id}/sleep/patterns`);
+          }}
         >
-          <View style={[styles.ringGlyph, { backgroundColor: colors.purple }]} />
-        </ProgressRing>
-      </Pressable>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroValue}>
+              {formatHours(sleepH)}
+              <Text style={styles.heroGoal}> / {formatHours(sleepGoalH)}</Text>
+            </Text>
+            <Text style={styles.heroLabel}>Sleep today</Text>
+          </View>
+          <ProgressRing
+            progress={sleepGoalH > 0 ? sleepH / sleepGoalH : 0}
+            size={72}
+            color={colors.purple}
+            track={colors.purpleSoft}
+          >
+            <View style={[styles.ringGlyph, { backgroundColor: colors.purple }]} />
+          </ProgressRing>
+        </Pressable>
+      </View>
 
       <View style={styles.macros}>
         <MacroCard
@@ -285,11 +287,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   ctaText: { fontFamily: fonts.bold, fontSize: 16, color: "#fff" },
-  nap: {
+  sleepBlock: {
     backgroundColor: colors.purpleSoft,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: radius.tile,
+    padding: 6,
+    paddingTop: 0,
+  },
+  sleepBlockSolo: {
+    paddingTop: 6,
+  },
+  nap: {
+    paddingHorizontal: 10,
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
