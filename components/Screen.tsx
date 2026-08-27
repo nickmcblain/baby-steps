@@ -1,7 +1,9 @@
 import { colors, tabDockInset } from "@/lib/theme";
 import { ReactNode } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useDockScrollHandler } from "@/components/DockScroll";
 import { IconButton } from "@/components/ui";
 
 export function Screen({
@@ -32,9 +34,10 @@ export function Screen({
   const dockPad = clearDock
     ? { paddingBottom: tabDockInset + Math.max(insets.bottom, 10) }
     : null;
+  const onDockScroll = useDockScrollHandler(clearDock);
 
   const body = scroll ? (
-    <ScrollView
+    <Animated.ScrollView
       style={styles.flex}
       contentContainerStyle={[
         styles.pad,
@@ -44,9 +47,11 @@ export function Screen({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
+      onScroll={clearDock ? onDockScroll : undefined}
+      scrollEventThrottle={16}
     >
       {children}
-    </ScrollView>
+    </Animated.ScrollView>
   ) : (
     <View
       style={[

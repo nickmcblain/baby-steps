@@ -16,6 +16,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.nickmcblain.babysteps",
       "infoPlist": {
+        "CADisableMinimumFrameDurationOnPhone": true,
         "ITSAppUsesNonExemptEncryption": false,
         "NSSupportsLiveActivities": true,
         "NSSupportsLiveActivitiesFrequentUpdates": true,
