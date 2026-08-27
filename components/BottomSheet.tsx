@@ -5,7 +5,6 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Text,
   View,
   type StyleProp,
   type ViewStyle,
@@ -36,14 +35,12 @@ function rubberband(overshoot: number, dimension: number, constant = 0.55) {
 
 export function BottomSheet({
   visible,
-  title,
   onClose,
   children,
   footer,
   contentStyle,
 }: {
   visible: boolean;
-  title?: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
@@ -190,18 +187,12 @@ export function BottomSheet({
                 <View style={styles.handle} />
               </View>
             </GestureDetector>
-            {title ? (
-              <View style={styles.header}>
-                <Text style={styles.title}>{title}</Text>
-                <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
-                  <Text style={styles.close}>Done</Text>
-                </Pressable>
+            <View style={styles.content}>
+              <View style={[styles.body, contentStyle]}>
+                {children}
               </View>
-            ) : null}
-            <View style={[styles.body, !title && styles.bodyCompact, contentStyle]}>
-              {children}
+              {footer}
             </View>
-            {footer}
           </Animated.View>
         </View>
       </GestureHandlerRootView>
@@ -220,12 +211,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.card,
     borderTopRightRadius: radius.card,
     paddingTop: 4,
-    paddingHorizontal: 20,
-    gap: 16,
     ...shadow,
   },
   handleHit: {
-    alignSelf: "stretch",
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
     minHeight: 28,
@@ -235,23 +224,13 @@ const styles = StyleSheet.create({
     width: 42,
     height: 5,
     borderRadius: 999,
-    backgroundColor: colors.line,
+    backgroundColor: colors.muted,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  // fonts kept imported — stale Fast Refresh still reads styles.title.fontFamily
+  _fonts: { fontFamily: fonts.bold },
+  content: {
+    paddingHorizontal: 20,
+    gap: 16,
   },
-  title: {
-    fontFamily: fonts.displayBold,
-    fontSize: 22,
-    color: colors.ink,
-  },
-  close: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: colors.tealDark,
-  },
-  body: { minHeight: 220 },
-  bodyCompact: { minHeight: 0 },
+  body: { minHeight: 0 },
 });

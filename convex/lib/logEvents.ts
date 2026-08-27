@@ -2,7 +2,7 @@ import { ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 
-const HALF_HOUR_MS = 30 * 60_000;
+const MINUTE_MS = 60_000;
 /** Appointments can be scheduled up to ~18 months ahead. */
 const MAX_FUTURE_MS = 550 * 86_400_000;
 
@@ -10,8 +10,8 @@ export function snapLoggedAt(loggedAt: number, allowFuture = false): number {
   if (!Number.isFinite(loggedAt)) {
     throw new ConvexError("When is required");
   }
-  const snapped = Math.round(loggedAt / HALF_HOUR_MS) * HALF_HOUR_MS;
-  const now = Date.now() + HALF_HOUR_MS;
+  const snapped = Math.round(loggedAt / MINUTE_MS) * MINUTE_MS;
+  const now = Date.now() + MINUTE_MS;
   if (!allowFuture && snapped > now) {
     throw new ConvexError("Time can't be in the future");
   }

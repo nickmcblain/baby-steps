@@ -9,17 +9,25 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useActiveBabyId } from "@/lib/activeBaby";
 import { formatAge, formatHeight, formatWeight } from "@/lib/format";
+import { loadPersistedTimer } from "@/lib/liveTimer";
 import { typicalFeedCount, typicalNappyCount, typicalSleepHours } from "@/lib/sleepGoals";
 import { colors, fonts, radius, shadow } from "@/lib/theme";
+import { predictedNapLabel } from "@/lib/wakeWindows";
 import { addDays, startOfLocalDay } from "@/lib/weekGrid";
 import { useMarkInteractive } from "@/lib/useMarkInteractive";
 
-export default function HomeTab() {
+export default function HomeScreen() {
   const router = useRouter();
   const babies = useQuery(api.babies.list);
   const { activeBabyId, ready, select } = useActiveBabyId();
   const [dayStart, setDayStart] = useState(() => startOfLocalDay(Date.now()));
-  const now = Date.now();
+  const [now, setNow] = useState(() => Date.now());
+  const [asleep, setAsleep] = useState(false);
+
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(tick);
+  }, []);
 
   useEffect(() => {
     if (!ready || !babies?.length) return;
@@ -36,6 +44,22 @@ export default function HomeTab() {
   if (summary) lastSummary.current = summary;
   const shown = summary ?? lastSummary.current;
   useMarkInteractive(babies !== undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadPersistedTimer().then((timer) => {
+      if (cancelled) return;
+      setAsleep(
+        timer != null &&
+          timer.babyId === String(activeBabyId) &&
+          timer.kind === "sleep" &&
+          timer.sleepTickOrigin != null,
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeBabyId, shown?.sleepMinutes]);
 
   if (babies !== undefined && babies.length === 0) {
     return (
@@ -57,6 +81,14 @@ export default function HomeTab() {
   const feedGoal = baby ? typicalFeedCount(baby.dateOfBirth, now) : 6;
   const nappyGoal = baby ? typicalNappyCount(baby.dateOfBirth, now) : 6;
   const tummyGoalMin = 30;
+  const napWhen = baby
+    ? predictedNapLabel({
+        dateOfBirth: baby.dateOfBirth,
+        lastSleepEndMs: shown?.lastSleepEndMs,
+        asleep,
+        now,
+      })
+    : null;
 
   return (
     <Screen clearDock>
@@ -102,6 +134,16 @@ export default function HomeTab() {
       ) : null}
 
       <WeekStrip selectedDayStart={dayStart} onSelect={setDayStart} />
+
+      {napWhen && baby ? (
+        <Pressable
+          style={styles.nap}
+          onPress={() => router.push(`/baby/${baby._id}/sleep/timer`)}
+        >
+          <Text style={styles.napLabel}>Next nap</Text>
+          <Text style={styles.napValue}>{napWhen}</Text>
+        </Pressable>
+      ) : null}
 
       <Pressable
         style={styles.hero}
@@ -150,6 +192,7 @@ export default function HomeTab() {
         <MacroCard
           value={Math.round(shown?.tummyMinutes ?? 0)}
           goal={tummyGoalMin}
+          unit="min"
           label="Tummy"
           color={colors.sky}
           track={colors.skySoft}
@@ -170,6 +213,7 @@ function formatHours(hours: number): string {
 function MacroCard({
   value,
   goal,
+  unit,
   label,
   color,
   track,
@@ -177,6 +221,7 @@ function MacroCard({
 }: {
   value: number;
   goal: number;
+  unit?: string;
   label: string;
   color: string;
   track: string;
@@ -187,7 +232,11 @@ function MacroCard({
       <ProgressRing progress={goal > 0 ? value / goal : 0} size={36} stroke={4} color={color} track={track} />
       <Text style={styles.macroValue}>
         {value}
-        <Text style={styles.macroGoal}> / {goal}</Text>
+        <Text style={styles.macroGoal}>
+          {" "}
+          / {goal}
+          {unit ? ` ${unit}` : ""}
+        </Text>
       </Text>
       <Text style={styles.macroLabel}>{label}</Text>
     </Pressable>
@@ -236,6 +285,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   ctaText: { fontFamily: fonts.bold, fontSize: 16, color: "#fff" },
+  nap: {
+    backgroundColor: colors.purpleSoft,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  napLabel: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: colors.purple,
+  },
+  napValue: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
   hero: {
     backgroundColor: colors.card,
     borderRadius: radius.tile,

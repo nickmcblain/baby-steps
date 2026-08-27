@@ -19,7 +19,9 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSSupportsLiveActivities": true,
         "NSSupportsLiveActivitiesFrequentUpdates": true,
-        "NSMicrophoneUsageDescription": "Baby Steps uses the microphone so you can log feeds, sleeps, and nappies hands-free."
+        "NSMicrophoneUsageDescription": "Baby Steps uses the microphone so you can log feeds, sleeps, and nappies hands-free.",
+        "NSPhotoLibraryUsageDescription": "Baby Steps uses photos so you can log a bottle, label, or handwritten note.",
+        "NSCameraUsageDescription": "Baby Steps uses the camera so you can log a bottle or label."
       },
       "entitlements": {
         "com.apple.security.application-groups": [
@@ -57,6 +59,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#F3F4F6"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Baby Steps uses photos so you can log a bottle, label, or handwritten note."
         }
       ],
       [

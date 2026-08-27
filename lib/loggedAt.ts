@@ -1,53 +1,56 @@
-const HALF_HOUR_MS = 30 * 60_000;
+const MINUTE_MS = 60_000;
 
-/** Snap a timestamp to the nearest 30-minute increment. */
+/** Snap a timestamp to the nearest minute. */
+export function snapToMinute(ms: number): number {
+  return Math.round(ms / MINUTE_MS) * MINUTE_MS;
+}
+
+/** @deprecated Use snapToMinute — kept so older timer screens compile. */
 export function snapToHalfHour(ms: number): number {
-  return Math.round(ms / HALF_HOUR_MS) * HALF_HOUR_MS;
+  return snapToMinute(ms);
 }
 
 export function nowSnapped(): number {
-  return snapToHalfHour(Date.now());
+  return snapToMinute(Date.now());
 }
 
 export type LoggedAtParts = {
   year: number;
   month: number; // 0–11
   day: number;
-  slot: number; // 0–47 → minutes from midnight / 30
+  hour: number; // 0–23
+  minute: number; // 0–59
 };
 
 export function partsFromLoggedAt(ms: number): LoggedAtParts {
   const d = new Date(ms);
-  const minutes = d.getHours() * 60 + d.getMinutes();
   return {
     year: d.getFullYear(),
     month: d.getMonth(),
     day: d.getDate(),
-    slot: Math.min(47, Math.max(0, Math.round(minutes / 30))),
+    hour: d.getHours(),
+    minute: d.getMinutes(),
   };
 }
 
 export function loggedAtFromParts(parts: LoggedAtParts): number {
-  const hours = Math.floor(parts.slot / 2);
-  const minutes = (parts.slot % 2) * 30;
   return new Date(
     parts.year,
     parts.month,
     parts.day,
-    hours,
-    minutes,
+    parts.hour,
+    parts.minute,
     0,
     0,
   ).getTime();
 }
 
-export function timeSlotLabel(slot: number): string {
-  const hours = Math.floor(slot / 2);
-  const minutes = (slot % 2) * 30;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
-
-export const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => timeSlotLabel(i));
+export const HOUR_SLOTS = Array.from({ length: 24 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
+export const MINUTE_SLOTS = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
 
 const MONTHS_SHORT = [
   "Jan",

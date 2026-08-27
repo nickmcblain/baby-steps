@@ -105,6 +105,7 @@ export const daySummary = authedQuery({
     feedCount: v.number(),
     nappyCount: v.number(),
     tummyMinutes: v.number(),
+    lastSleepEndMs: v.union(v.number(), v.null()),
     events: v.array(dayEventValidator),
     recentLoggedAts: v.array(v.number()),
   }),
@@ -165,12 +166,21 @@ export const daySummary = authedQuery({
       .order("desc")
       .take(200);
 
+    let lastSleepEndMs: number | null = null;
+    for (const event of recent) {
+      if (event.kind === "sleep" && event.durationMinutes != null) {
+        lastSleepEndMs = event.loggedAt + event.durationMinutes * 60_000;
+        break;
+      }
+    }
+
     return {
       baby,
       sleepMinutes,
       feedCount,
       nappyCount,
       tummyMinutes,
+      lastSleepEndMs,
       events,
       recentLoggedAts: recent.map((event) => event.loggedAt),
     };

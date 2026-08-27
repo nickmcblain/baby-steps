@@ -2,10 +2,14 @@ import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import { requireBabyMember } from "./lib/access";
 import {
+  insertActivity,
   insertCustom,
   insertFeed,
   insertHeight,
+  insertMedicine,
   insertNappy,
+  insertPotty,
+  insertPump,
   insertSleep,
   insertTummy,
   insertWeight,
@@ -134,6 +138,75 @@ export const logCustom = internalMutation({
     const { userId, ...rest } = args;
     await requireBabyMember(ctx, rest.babyId, userId);
     return await insertCustom(ctx, userId, rest);
+  },
+});
+
+export const logPump = internalMutation({
+  args: {
+    userId: v.id("users"),
+    babyId: v.id("babies"),
+    loggedAt: v.number(),
+    side: sideValidator,
+    durationMinutes: v.number(),
+    amountMl: v.optional(v.number()),
+    note: v.optional(v.string()),
+  },
+  returns: v.id("events"),
+  handler: async (ctx, args) => {
+    const { userId, ...rest } = args;
+    await requireBabyMember(ctx, rest.babyId, userId);
+    return await insertPump(ctx, userId, rest);
+  },
+});
+
+export const logMedicine = internalMutation({
+  args: {
+    userId: v.id("users"),
+    babyId: v.id("babies"),
+    loggedAt: v.number(),
+    title: v.string(),
+    note: v.optional(v.string()),
+  },
+  returns: v.id("events"),
+  handler: async (ctx, args) => {
+    const { userId, ...rest } = args;
+    await requireBabyMember(ctx, rest.babyId, userId);
+    return await insertMedicine(ctx, userId, rest);
+  },
+});
+
+export const logPotty = internalMutation({
+  args: {
+    userId: v.id("users"),
+    babyId: v.id("babies"),
+    loggedAt: v.number(),
+    nappy: nappyKindValidator,
+    weeSize: v.optional(sizeValidator),
+    pooSize: v.optional(sizeValidator),
+    note: v.optional(v.string()),
+  },
+  returns: v.id("events"),
+  handler: async (ctx, args) => {
+    const { userId, ...rest } = args;
+    await requireBabyMember(ctx, rest.babyId, userId);
+    return await insertPotty(ctx, userId, rest);
+  },
+});
+
+export const logActivity = internalMutation({
+  args: {
+    userId: v.id("users"),
+    babyId: v.id("babies"),
+    loggedAt: v.number(),
+    title: v.string(),
+    durationMinutes: v.optional(v.number()),
+    note: v.optional(v.string()),
+  },
+  returns: v.id("events"),
+  handler: async (ctx, args) => {
+    const { userId, ...rest } = args;
+    await requireBabyMember(ctx, rest.babyId, userId);
+    return await insertActivity(ctx, userId, rest);
   },
 });
 

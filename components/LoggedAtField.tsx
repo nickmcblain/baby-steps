@@ -1,12 +1,13 @@
 import { BottomSheet } from "@/components/BottomSheet";
 import { WheelPicker } from "@/components/WheelPicker";
 import {
-  TIME_SLOTS,
+  HOUR_SLOTS,
+  MINUTE_SLOTS,
   formatLoggedAt,
   loggedAtFromParts,
   nowSnapped,
   partsFromLoggedAt,
-  snapToHalfHour,
+  snapToMinute,
   type LoggedAtParts,
 } from "@/lib/loggedAt";
 import { colors, fonts, shadow } from "@/lib/theme";
@@ -69,7 +70,7 @@ export function LoggedAtField({
       ...parts,
       day: Math.min(parts.day, maxDay),
     };
-    const snapped = snapToHalfHour(loggedAtFromParts(safe));
+    const snapped = snapToMinute(loggedAtFromParts(safe));
     const ms = allowFuture ? snapped : Math.min(snapped, nowSnapped());
     onChange(ms);
     setOpen(false);
@@ -100,7 +101,6 @@ export function LoggedAtField({
 
       <BottomSheet
         visible={open}
-        title={label}
         onClose={apply}
         footer={
           <Pressable onPress={apply} style={styles.confirm}>
@@ -135,11 +135,19 @@ export function LoggedAtField({
         </View>
         <View style={styles.timeRow}>
           <WheelPicker
-            items={TIME_SLOTS}
-            value={parts.slot}
-            onChange={(slot) => setParts((p) => ({ ...p, slot }))}
-            width={120}
-            accessibilityLabel="Time"
+            items={HOUR_SLOTS}
+            value={parts.hour}
+            onChange={(hour) => setParts((p) => ({ ...p, hour }))}
+            width={72}
+            accessibilityLabel="Hour"
+          />
+          <Text style={styles.timeSep}>:</Text>
+          <WheelPicker
+            items={MINUTE_SLOTS}
+            value={parts.minute}
+            onChange={(minute) => setParts((p) => ({ ...p, minute }))}
+            width={72}
+            accessibilityLabel="Minute"
           />
         </View>
       </BottomSheet>
@@ -183,7 +191,16 @@ const styles = StyleSheet.create({
   },
   timeRow: {
     marginTop: 8,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  timeSep: {
+    fontFamily: fonts.bold,
+    fontSize: 22,
+    color: colors.ink,
+    marginBottom: 2,
   },
   confirm: {
     backgroundColor: colors.teal,

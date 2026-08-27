@@ -108,7 +108,6 @@ export function DateOfBirthField({
 
       <BottomSheet
         visible={open}
-        title="Date of birth"
         onClose={apply}
         footer={
           <Pressable onPress={apply} style={styles.confirm}>

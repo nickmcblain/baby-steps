@@ -102,6 +102,15 @@ export function PottyIcon({ color = "#fff" }: { color?: string }) {
   );
 }
 
+export function TypeIcon({ color = "#fff" }: { color?: string }) {
+  return (
+    <View style={styles.box}>
+      <View style={[styles.typeLine, { backgroundColor: color }]} />
+      <View style={[styles.typeLineShort, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
 export function ActivityIcon({ color = "#fff" }: { color?: string }) {
   return (
     <View style={styles.box}>
@@ -290,6 +299,17 @@ const styles = StyleSheet.create({
   },
   seatBase: {
     width: 14,
+    height: 3,
+    borderRadius: 2,
+  },
+  typeLine: {
+    width: 16,
+    height: 3,
+    borderRadius: 2,
+    marginBottom: 3,
+  },
+  typeLineShort: {
+    width: 11,
     height: 3,
     borderRadius: 2,
   },

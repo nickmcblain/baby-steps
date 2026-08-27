@@ -269,7 +269,6 @@ export function TimelineView({
 
       <BottomSheet
         visible={pendingDelete != null}
-        title="Delete entry?"
         onClose={() => {
           if (!deleting) setPendingDelete(null);
         }}

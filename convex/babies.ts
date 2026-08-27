@@ -92,7 +92,7 @@ export const create = authedMutation({
       babyId,
       userId: ctx.user._id,
     });
-    const loggedAt = Math.round(Date.now() / (30 * 60_000)) * (30 * 60_000);
+    const loggedAt = Math.round(Date.now() / 60_000) * 60_000;
     await ctx.db.insert("events", {
       babyId,
       createdBy: ctx.user._id,

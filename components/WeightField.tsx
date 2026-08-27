@@ -85,7 +85,6 @@ export function WeightField({
 
       <BottomSheet
         visible={open}
-        title="Weight"
         onClose={apply}
         footer={
           <Pressable onPress={apply} style={styles.confirm}>

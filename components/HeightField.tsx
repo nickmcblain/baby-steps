@@ -83,7 +83,6 @@ export function HeightField({
 
       <BottomSheet
         visible={open}
-        title="Height"
         onClose={apply}
         footer={
           <Pressable onPress={apply} style={styles.confirm}>

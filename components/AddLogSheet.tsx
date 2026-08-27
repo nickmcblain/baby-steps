@@ -12,6 +12,7 @@ import {
   PumpIcon,
   SleepIcon,
   TummyIcon,
+  TypeIcon,
 } from "@/components/ActionIcons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { colors, fonts, shadow } from "@/lib/theme";
@@ -26,6 +27,7 @@ const TILES = [
   { path: "potty", label: "Potty", tint: colors.peach, ink: "#fff", icon: "potty" },
   { path: "activity", label: "Activity", tint: colors.purple, ink: "#fff", icon: "activity" },
   { path: "event", label: "Note", tint: colors.rose, ink: "#fff", icon: "event" },
+  { path: "quick-log", label: "Type a log", tint: colors.ink, ink: "#fff", icon: "type" },
   { path: "ask", label: "Ask", tint: colors.teal, ink: "#fff", icon: "ask" },
 ] as const;
 
@@ -57,6 +59,8 @@ function TileIcon({
       return <ActivityIcon color={color} />;
     case "event":
       return <LogIcon color={color} />;
+    case "type":
+      return <TypeIcon color={color} />;
     case "ask":
       return <AskIcon color={color} />;
   }
@@ -109,7 +113,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   tile: {
-    width: "47.5%",
+    flexGrow: 1,
+    flexBasis: "40%",
     backgroundColor: colors.card,
     borderRadius: 20,
     paddingVertical: 14,
