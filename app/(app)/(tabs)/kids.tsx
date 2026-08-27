@@ -33,7 +33,7 @@ export default function KidsTab() {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const babies = useQuery(api.babies.list, isAuthenticated ? {} : "skip");
   const joinByCode = useMutation(api.babies.joinByCode);
-  const { activeBabyId, select } = useActiveBabyId();
+  const { select } = useActiveBabyId();
   const [joinOpen, setJoinOpen] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -130,12 +130,11 @@ export default function KidsTab() {
 
         <View style={styles.grid}>
           {(babies ?? []).map((baby) => {
-            const active = baby._id === activeBabyId;
             return (
               <Pressable
                 key={baby._id}
                 onPress={() => void openBaby(baby._id)}
-                style={[styles.tile, active && styles.tileOn]}
+                style={styles.tile}
               >
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{baby.name.slice(0, 1).toUpperCase()}</Text>
@@ -156,7 +155,9 @@ export default function KidsTab() {
         onClose={closeJoin}
         contentStyle={{
           paddingBottom:
-            keyboardPad > 0 ? Math.max(keyboardPad - insets.bottom, 12) : 8,
+            keyboardPad > 0
+              ? Math.max(keyboardPad - insets.bottom + 28, 28)
+              : 16,
         }}
       >
         <Text style={styles.sheetTitle}>Join a partner</Text>
@@ -211,10 +212,6 @@ const styles = StyleSheet.create({
     minHeight: 150,
     ...shadow,
     gap: 8,
-  },
-  tileOn: {
-    borderWidth: 2,
-    borderColor: colors.teal,
   },
   avatar: {
     width: 44,
