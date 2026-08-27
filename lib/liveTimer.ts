@@ -7,7 +7,7 @@ import BabyTimerActivity, {
   type BabyTimerProps,
 } from "@/widgets/BabyTimerActivity";
 
-export type TimerKind = "sleep" | "feed" | "tummy";
+export type TimerKind = "sleep" | "feed" | "tummy" | "pump";
 export type FeedSide = "left" | "right";
 
 const STORAGE_KEY = "baby-steps:live-timer-v1";
@@ -78,14 +78,20 @@ function buildProps(args: {
       ? "Sleep"
       : kind === "tummy"
         ? "Tummy time"
-        : side === "right"
-          ? "Feed · Right"
-          : side === "left"
-            ? "Feed · Left"
-            : "Feed";
+        : kind === "pump"
+          ? side === "right"
+            ? "Pump · Right"
+            : side === "left"
+              ? "Pump · Left"
+              : "Pump"
+          : side === "right"
+            ? "Feed · Right"
+            : side === "left"
+              ? "Feed · Left"
+              : "Feed";
   const startEpochMs = running ? Date.now() - elapsedMs : Date.now() - elapsedMs;
   return {
-    kind,
+    kind: kind === "pump" ? "feed" : kind,
     title,
     subtitle: babyName?.trim() || "",
     running,

@@ -7,19 +7,18 @@ import { SleepPatternChart } from "@/components/SleepPatternChart";
 import { Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { formatDurationMinutes } from "@/lib/eventCopy";
 import { colors, fonts, radius } from "@/lib/theme";
 
 type DayRange = 7 | 14;
 
-export default function FeedPatternsScreen() {
+export default function NappyPatternsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const babyId = id as Id<"babies">;
   const [days, setDays] = useState<DayRange>(7);
   const rangeEndMs = useMemo(() => Date.now(), []);
 
-  const data = useQuery(api.events.feedPatterns, {
+  const data = useQuery(api.events.nappyPatterns, {
     babyId,
     days,
     rangeEndMs,
@@ -27,7 +26,7 @@ export default function FeedPatternsScreen() {
 
   return (
     <Screen onBack={() => router.back()}>
-      <Title>Feed patterns</Title>
+      <Title>Nappy patterns</Title>
 
       <View style={styles.modeRow}>
         <Pressable
@@ -53,19 +52,9 @@ export default function FeedPatternsScreen() {
       ) : (
         <>
           <View style={styles.statsRow}>
-            <View style={[styles.stat, { backgroundColor: colors.tealSoft }]}>
-              <Text style={[styles.statLabel, { color: colors.tealDark }]}>
-                Avg feed / day
-              </Text>
-              <Text style={styles.statValue}>
-                {formatDurationMinutes(
-                  Math.round(data.stats.avgFeedMinutesPerDay),
-                ) || "—"}
-              </Text>
-            </View>
-            <View style={[styles.stat, { backgroundColor: colors.tealSoft }]}>
-              <Text style={[styles.statLabel, { color: colors.tealDark }]}>
-                Avg sessions / day
+            <View style={[styles.stat, { backgroundColor: colors.peachSoft }]}>
+              <Text style={[styles.statLabel, { color: colors.peach }]}>
+                Avg / day
               </Text>
               <Text style={styles.statValue}>
                 {data.stats.avgSessionsPerDay > 0
@@ -73,14 +62,22 @@ export default function FeedPatternsScreen() {
                   : "—"}
               </Text>
             </View>
+            <View style={[styles.stat, { backgroundColor: colors.peachSoft }]}>
+              <Text style={[styles.statLabel, { color: colors.peach }]}>
+                Wee · poo
+              </Text>
+              <Text style={styles.statValue}>
+                {data.stats.weeCount} · {data.stats.pooCount}
+              </Text>
+            </View>
           </View>
 
           <SleepPatternChart
-            sleeps={data.feeds}
+            sleeps={data.nappies}
             days={days}
             rangeEndMs={rangeEndMs}
-            barColor={colors.teal}
-            emptyText="No feeds in this range yet."
+            barColor={colors.peach}
+            emptyText="No nappies in this range yet."
           />
         </>
       )}
@@ -101,7 +98,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   modePillOn: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.peach,
   },
   modeText: {
     fontFamily: fonts.bold,

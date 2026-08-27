@@ -8,6 +8,10 @@ export const eventKindValidator = v.union(
   v.literal("sleep"),
   v.literal("tummy"),
   v.literal("custom"),
+  v.literal("pump"),
+  v.literal("medicine"),
+  v.literal("potty"),
+  v.literal("activity"),
 );
 
 export const feedKindValidator = v.union(

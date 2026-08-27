@@ -6,7 +6,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { BottomSheet } from "@/components/BottomSheet";
 import { Screen } from "@/components/Screen";
 import { WeekRhythmChart } from "@/components/WeekRhythmChart";
-import { IconButton, Title } from "@/components/ui";
+import { Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { eventKindLabel, eventTitle } from "@/lib/eventCopy";
@@ -37,6 +37,14 @@ function tintFor(kind: Event["kind"]): string {
       return colors.skySoft;
     case "custom":
       return colors.roseSoft;
+    case "pump":
+      return colors.tealSoft;
+    case "medicine":
+      return colors.amberSoft;
+    case "potty":
+      return colors.peachSoft;
+    case "activity":
+      return colors.purpleSoft;
   }
 }
 
@@ -56,22 +64,25 @@ function inkFor(kind: Event["kind"]): string {
       return colors.sky;
     case "custom":
       return colors.rose;
+    case "pump":
+      return colors.tealDark;
+    case "medicine":
+      return colors.amber;
+    case "potty":
+      return colors.peach;
+    case "activity":
+      return colors.purple;
   }
 }
 
-function PlusGlyph() {
-  return (
-    <View style={styles.plusGlyph} accessibilityLabel="Add event">
-      <View style={styles.plusH} />
-      <View style={styles.plusV} />
-    </View>
-  );
-}
-
-export default function TimelineScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+export function TimelineView({
+  babyId,
+  showBack = false,
+}: {
+  babyId: Id<"babies">;
+  showBack?: boolean;
+}) {
   const router = useRouter();
-  const babyId = id as Id<"babies">;
   const now = Date.now();
   const [mode, setMode] = useState<Mode>("list");
   const [weekStartMs, setWeekStartMs] = useState(() => startOfWeekMonday(now));
@@ -156,40 +167,29 @@ export default function TimelineScreen() {
   return (
     <Screen
       scroll={mode === "list"}
-      onBack={() => router.back()}
-      headerRight={
-        <IconButton
-          onPress={() => router.push(`/baby/${id}/event`)}
-          accessibilityLabel="Add event"
-        >
-          <PlusGlyph />
-        </IconButton>
-      }
+      onBack={showBack ? () => router.back() : undefined}
+      clearDock={!showBack}
     >
-      <Title>Timeline</Title>
-      <Text style={styles.subtitle}>
-        {mode === "list"
-          ? "Care logs and appointments — upcoming first, then recent. Press and hold to delete."
-          : "Sleep blocks and care markers for the week."}
-      </Text>
-
-      <View style={styles.modeRow}>
-        <Pressable
-          onPress={() => setMode("list")}
-          style={[styles.modePill, mode === "list" && styles.modePillOn]}
-        >
-          <Text style={[styles.modeText, mode === "list" && styles.modeTextOn]}>
-            List
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setMode("week")}
-          style={[styles.modePill, mode === "week" && styles.modePillOn]}
-        >
-          <Text style={[styles.modeText, mode === "week" && styles.modeTextOn]}>
-            Week
-          </Text>
-        </Pressable>
+      <View style={styles.headingRow}>
+        <Title>Timeline</Title>
+        <View style={styles.modeRow}>
+          <Pressable
+            onPress={() => setMode("list")}
+            style={[styles.modePill, mode === "list" && styles.modePillOn]}
+          >
+            <Text style={[styles.modeText, mode === "list" && styles.modeTextOn]}>
+              List
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setMode("week")}
+            style={[styles.modePill, mode === "week" && styles.modePillOn]}
+          >
+            <Text style={[styles.modeText, mode === "week" && styles.modeTextOn]}>
+              Week
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {mode === "week" ? (
@@ -307,37 +307,21 @@ export default function TimelineScreen() {
   );
 }
 
+export default function TimelineScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return <TimelineView babyId={id as Id<"babies">} showBack />;
+}
+
 const styles = StyleSheet.create({
-  plusGlyph: {
-    width: 18,
-    height: 18,
+  headingRow: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-  },
-  plusH: {
-    position: "absolute",
-    width: 14,
-    height: 2.5,
-    borderRadius: 2,
-    backgroundColor: colors.ink,
-  },
-  plusV: {
-    position: "absolute",
-    width: 2.5,
-    height: 14,
-    borderRadius: 2,
-    backgroundColor: colors.ink,
-  },
-  subtitle: {
-    fontFamily: fonts.body,
-    color: colors.muted,
-    fontSize: 15,
-    marginTop: -8,
+    justifyContent: "space-between",
+    gap: 12,
   },
   modeRow: {
     flexDirection: "row",
     gap: 8,
-    alignSelf: "flex-start",
   },
   modePill: {
     paddingHorizontal: 16,

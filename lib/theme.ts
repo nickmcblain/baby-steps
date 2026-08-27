@@ -20,6 +20,9 @@ export const colors = {
   danger: "#E15B4C",
 };
 
+/** Space so scroll content clears the floating tab dock. */
+export const tabDockInset = 88;
+
 export const radius = {
   card: 32,
   tile: 28,

@@ -1,7 +1,7 @@
-import { colors } from "@/lib/theme";
+import { colors, tabDockInset } from "@/lib/theme";
 import { ReactNode } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { IconButton } from "@/components/ui";
 
 export function Screen({
@@ -12,6 +12,8 @@ export function Screen({
   headerRight,
   /** When true, content can run under floating controls (no reserved top bar). */
   overlayChrome = false,
+  /** Extra bottom pad so content clears the floating tab dock. */
+  clearDock = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -22,14 +24,23 @@ export function Screen({
   /** Floating right-side control(s). */
   headerRight?: ReactNode;
   overlayChrome?: boolean;
+  clearDock?: boolean;
 }) {
+  const insets = useSafeAreaInsets();
   const hasChrome = stickyHeader != null || onBack != null || headerRight != null;
   const reserveChrome = hasChrome && !overlayChrome;
+  const dockPad = clearDock
+    ? { paddingBottom: tabDockInset + Math.max(insets.bottom, 10) }
+    : null;
 
   const body = scroll ? (
     <ScrollView
       style={styles.flex}
-      contentContainerStyle={[styles.pad, reserveChrome ? styles.padWithSticky : null]}
+      contentContainerStyle={[
+        styles.pad,
+        reserveChrome ? styles.padWithSticky : null,
+        dockPad,
+      ]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
@@ -43,6 +54,7 @@ export function Screen({
         styles.padFill,
         reserveChrome ? styles.padWithSticky : null,
         overlayChrome ? styles.padOverlay : null,
+        dockPad,
       ]}
     >
       {children}

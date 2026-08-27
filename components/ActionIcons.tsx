@@ -76,6 +76,40 @@ export function SleepIcon({
 }
 
 /** Play-mat + baby silhouette — geometric, no emoji. */
+export function PumpIcon({ color = "#fff" }: { color?: string }) {
+  return (
+    <View style={styles.box}>
+      <View style={[styles.drop, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
+export function MedicineIcon({ color = "#fff" }: { color?: string }) {
+  return (
+    <View style={[styles.box, styles.pillRow]}>
+      <View style={[styles.pillL, { backgroundColor: color }]} />
+      <View style={[styles.pillR, { backgroundColor: color, opacity: 0.45 }]} />
+    </View>
+  );
+}
+
+export function PottyIcon({ color = "#fff" }: { color?: string }) {
+  return (
+    <View style={styles.box}>
+      <View style={[styles.seat, { borderColor: color }]} />
+      <View style={[styles.seatBase, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
+export function ActivityIcon({ color = "#fff" }: { color?: string }) {
+  return (
+    <View style={styles.box}>
+      <View style={[styles.play, { borderLeftColor: color }]} />
+    </View>
+  );
+}
+
 export function TummyIcon({ color = "#fff" }: { color?: string }) {
   return (
     <View style={styles.box}>
@@ -225,5 +259,48 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     top: 1,
     right: 2,
+  },
+  drop: {
+    width: 12,
+    height: 16,
+    borderRadius: 6,
+    transform: [{ rotate: "180deg" }],
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  pillRow: { flexDirection: "row" },
+  pillL: {
+    width: 10,
+    height: 12,
+    borderTopLeftRadius: 6,
+    borderBottomLeftRadius: 6,
+  },
+  pillR: {
+    width: 10,
+    height: 12,
+    borderTopRightRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  seat: {
+    width: 16,
+    height: 10,
+    borderWidth: 2.5,
+    borderRadius: 5,
+    marginBottom: 2,
+  },
+  seatBase: {
+    width: 14,
+    height: 3,
+    borderRadius: 2,
+  },
+  play: {
+    width: 0,
+    height: 0,
+    marginLeft: 3,
+    borderTopWidth: 7,
+    borderBottomWidth: 7,
+    borderLeftWidth: 12,
+    borderTopColor: "transparent",
+    borderBottomColor: "transparent",
   },
 });

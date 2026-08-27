@@ -18,6 +18,10 @@ export default function AppGroupLayout() {
         gestureEnabled: true,
         fullScreenGestureEnabled: true,
       }}
-    />
+    >
+      <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
+      <Stack.Screen name="baby/[id]" />
+      <Stack.Screen name="babies/new" />
+    </Stack>
   );
 }

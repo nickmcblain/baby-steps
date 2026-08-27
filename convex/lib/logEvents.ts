@@ -230,6 +230,131 @@ export async function insertHeight(
   return eventId;
 }
 
+export async function insertPump(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  args: {
+    babyId: Id<"babies">;
+    loggedAt: number;
+    side: "left" | "right" | "both";
+    durationMinutes: number;
+    amountMl?: number;
+    note?: string;
+  },
+): Promise<Id<"events">> {
+  if (
+    !Number.isFinite(args.durationMinutes) ||
+    args.durationMinutes < 1 ||
+    args.durationMinutes > 3 * 60
+  ) {
+    throw new ConvexError("Pump time must be between 1 minute and 3 hours");
+  }
+  if (args.amountMl != null && (!Number.isFinite(args.amountMl) || args.amountMl <= 0)) {
+    throw new ConvexError("Amount must be greater than 0");
+  }
+  return await ctx.db.insert("events", {
+    babyId: args.babyId,
+    createdBy: userId,
+    loggedAt: snapLoggedAt(args.loggedAt),
+    kind: "pump",
+    side: args.side,
+    durationMinutes: Math.round(args.durationMinutes),
+    amountMl: args.amountMl != null ? Math.round(args.amountMl) : undefined,
+    note: args.note?.trim() || undefined,
+  });
+}
+
+export async function insertMedicine(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  args: {
+    babyId: Id<"babies">;
+    loggedAt: number;
+    title: string;
+    note?: string;
+  },
+): Promise<Id<"events">> {
+  const title = args.title.trim();
+  if (title.length < 1 || title.length > 80) {
+    throw new ConvexError("Give the medicine a name");
+  }
+  return await ctx.db.insert("events", {
+    babyId: args.babyId,
+    createdBy: userId,
+    loggedAt: snapLoggedAt(args.loggedAt),
+    kind: "medicine",
+    title,
+    note: args.note?.trim() || undefined,
+  });
+}
+
+export async function insertPotty(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  args: {
+    babyId: Id<"babies">;
+    loggedAt: number;
+    nappy: "wee" | "poo" | "both";
+    weeSize?: "small" | "medium" | "large";
+    pooSize?: "small" | "medium" | "large";
+    note?: string;
+  },
+): Promise<Id<"events">> {
+  if ((args.nappy === "wee" || args.nappy === "both") && !args.weeSize) {
+    throw new ConvexError("Wee size is required");
+  }
+  if ((args.nappy === "poo" || args.nappy === "both") && !args.pooSize) {
+    throw new ConvexError("Poo size is required");
+  }
+  return await ctx.db.insert("events", {
+    babyId: args.babyId,
+    createdBy: userId,
+    loggedAt: snapLoggedAt(args.loggedAt),
+    kind: "potty",
+    nappy: args.nappy,
+    weeSize:
+      args.nappy === "wee" || args.nappy === "both" ? args.weeSize : undefined,
+    pooSize:
+      args.nappy === "poo" || args.nappy === "both" ? args.pooSize : undefined,
+    note: args.note?.trim() || undefined,
+  });
+}
+
+export async function insertActivity(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  args: {
+    babyId: Id<"babies">;
+    loggedAt: number;
+    title: string;
+    durationMinutes?: number;
+    note?: string;
+  },
+): Promise<Id<"events">> {
+  const title = args.title.trim();
+  if (title.length < 1 || title.length > 80) {
+    throw new ConvexError("Pick an activity");
+  }
+  if (
+    args.durationMinutes != null &&
+    (!Number.isFinite(args.durationMinutes) ||
+      args.durationMinutes < 1 ||
+      args.durationMinutes > 6 * 60)
+  ) {
+    throw new ConvexError("Duration must be between 1 minute and 6 hours");
+  }
+  return await ctx.db.insert("events", {
+    babyId: args.babyId,
+    createdBy: userId,
+    loggedAt: snapLoggedAt(args.loggedAt),
+    kind: "activity",
+    title,
+    durationMinutes:
+      args.durationMinutes != null ? Math.round(args.durationMinutes) : undefined,
+    note: args.note?.trim() || undefined,
+  });
+}
+
 export async function insertCustom(
   ctx: MutationCtx,
   userId: Id<"users">,

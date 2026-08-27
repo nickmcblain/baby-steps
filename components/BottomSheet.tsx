@@ -1,5 +1,6 @@
 import { colors, fonts, radius, shadow } from "@/lib/theme";
-import { ReactNode, useEffect, useState } from "react";
+import * as Haptics from "expo-haptics";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -9,18 +10,29 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
-  Easing,
-  runOnJS,
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
-  withTiming,
+  withSpring,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const OPEN_MS = 280;
-const CLOSE_MS = 220;
-const SHEET_TRAVEL = 420;
+const FALLBACK_H = 420;
+
+function project(velocity: number, decelerationRate = 0.998) {
+  "worklet";
+  return ((velocity / 1000) * decelerationRate) / (1 - decelerationRate);
+}
+
+function rubberband(overshoot: number, dimension: number, constant = 0.55) {
+  "worklet";
+  return (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
+}
 
 export function BottomSheet({
   visible,
@@ -38,37 +50,107 @@ export function BottomSheet({
   contentStyle?: StyleProp<ViewStyle>;
 }) {
   const insets = useSafeAreaInsets();
+  const reduced = useReducedMotion();
   const [mounted, setMounted] = useState(visible);
-  const progress = useSharedValue(visible ? 1 : 0);
+  const translateY = useSharedValue(FALLBACK_H);
+  const dragStart = useSharedValue(0);
+  const sheetH = useSharedValue(FALLBACK_H);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  function closeFromJS() {
+    onCloseRef.current();
+  }
+
+  function unmount() {
+    setMounted(false);
+  }
+
+  const pan = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetY([-10, 10])
+        .onStart(() => {
+          dragStart.set(translateY.get());
+        })
+        .onUpdate((e) => {
+          const next = dragStart.get() + e.translationY;
+          const height = sheetH.get();
+          translateY.set(next >= 0 ? next : rubberband(next, height));
+        })
+        .onEnd((e) => {
+          const height = sheetH.get();
+          const projected = translateY.get() + project(e.velocityY);
+          if (projected > height * 0.4) {
+            translateY.set(
+              withSpring(
+                height,
+                {
+                  duration: 300,
+                  dampingRatio: 1,
+                  velocity: e.velocityY,
+                  overshootClamping: true,
+                },
+                (finished) => {
+                  if (finished) scheduleOnRN(closeFromJS);
+                },
+              ),
+            );
+          } else {
+            translateY.set(
+              withSpring(0, {
+                duration: 300,
+                dampingRatio: 0.8,
+                velocity: e.velocityY,
+              }),
+            );
+            scheduleOnRN(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
+          }
+        }),
+    [],
+  );
 
   useEffect(() => {
     if (visible) {
       setMounted(true);
-      progress.value = withTiming(1, {
-        duration: OPEN_MS,
-        easing: Easing.out(Easing.cubic),
-      });
+      const height = sheetH.get() || FALLBACK_H;
+      if (reduced) {
+        translateY.set(0);
+        return;
+      }
+      translateY.set(height);
+      translateY.set(withSpring(0, { duration: 300, dampingRatio: 0.8 }));
       return;
     }
 
-    progress.value = withTiming(
-      0,
-      {
-        duration: CLOSE_MS,
-        easing: Easing.in(Easing.cubic),
-      },
-      (finished) => {
-        if (finished) runOnJS(setMounted)(false);
-      },
+    const height = sheetH.get() || FALLBACK_H;
+    if (reduced || translateY.get() >= height * 0.85) {
+      setMounted(false);
+      translateY.set(height);
+      return;
+    }
+    translateY.set(
+      withSpring(
+        height,
+        { duration: 300, dampingRatio: 1, overshootClamping: true },
+        (finished) => {
+          if (finished) scheduleOnRN(unmount);
+        },
+      ),
     );
-  }, [visible, progress]);
+  }, [visible, reduced, translateY, sheetH]);
 
   const backdropStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
+    opacity: interpolate(
+      translateY.get(),
+      [0, sheetH.get() || FALLBACK_H],
+      [1, 0],
+      Extrapolation.CLAMP,
+    ),
   }));
 
   const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: (1 - progress.value) * SHEET_TRAVEL }],
+    transform: [{ translateY: translateY.get() }],
   }));
 
   return (
@@ -79,36 +161,50 @@ export function BottomSheet({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.root} pointerEvents="box-none">
-        <Animated.View style={[styles.backdrop, backdropStyle]}>
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={onClose}
-            accessibilityLabel="Dismiss"
-          />
-        </Animated.View>
-        <Animated.View
-          style={[
-            styles.sheet,
-            { paddingBottom: Math.max(insets.bottom, 16) },
-            sheetStyle,
-          ]}
-        >
-          <View style={styles.handle} />
-          {title ? (
-            <View style={styles.header}>
-              <Text style={styles.title}>{title}</Text>
-              <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
-                <Text style={styles.close}>Done</Text>
-              </Pressable>
+      <GestureHandlerRootView style={styles.root}>
+        <View style={styles.root} pointerEvents="box-none">
+          <Animated.View style={[styles.backdrop, backdropStyle]}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={onClose}
+              accessibilityLabel="Dismiss"
+            />
+          </Animated.View>
+          <Animated.View
+            style={[
+              styles.sheet,
+              { paddingBottom: Math.max(insets.bottom, 16) },
+              sheetStyle,
+            ]}
+            onLayout={(e) => {
+              const height = e.nativeEvent.layout.height;
+              if (height > 0) sheetH.set(height);
+            }}
+          >
+            <GestureDetector gesture={pan}>
+              <View
+                style={styles.handleHit}
+                accessibilityRole="adjustable"
+                accessibilityLabel="Drag down to close"
+              >
+                <View style={styles.handle} />
+              </View>
+            </GestureDetector>
+            {title ? (
+              <View style={styles.header}>
+                <Text style={styles.title}>{title}</Text>
+                <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
+                  <Text style={styles.close}>Done</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <View style={[styles.body, !title && styles.bodyCompact, contentStyle]}>
+              {children}
             </View>
-          ) : null}
-          <View style={[styles.body, !title && styles.bodyCompact, contentStyle]}>
-            {children}
-          </View>
-          {footer}
-        </Animated.View>
-      </View>
+            {footer}
+          </Animated.View>
+        </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
@@ -123,18 +219,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     borderTopLeftRadius: radius.card,
     borderTopRightRadius: radius.card,
-    paddingTop: 10,
+    paddingTop: 4,
     paddingHorizontal: 20,
     gap: 16,
     ...shadow,
   },
+  handleHit: {
+    alignSelf: "stretch",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 28,
+    paddingVertical: 10,
+  },
   handle: {
-    alignSelf: "center",
     width: 42,
     height: 5,
     borderRadius: 999,
     backgroundColor: colors.line,
-    marginBottom: 4,
   },
   header: {
     flexDirection: "row",

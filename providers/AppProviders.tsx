@@ -4,6 +4,7 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ReactNode } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { StoreUser } from "@/components/StoreUser";
+import { ActiveBabyProvider } from "@/lib/activeBaby";
 import { colors, fonts } from "@/lib/theme";
 
 const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL ?? "";
@@ -34,8 +35,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-      <StoreUser />
-      {children}
+      <ActiveBabyProvider>
+        <StoreUser />
+        {children}
+      </ActiveBabyProvider>
     </ConvexProviderWithClerk>
   );
 }

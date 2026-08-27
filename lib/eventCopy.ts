@@ -1,6 +1,24 @@
 import type { Doc } from "../convex/_generated/dataModel";
 import { formatHeight, formatWeight } from "@/lib/format";
 
+export type EventCopySource = Pick<
+  Doc<"events">,
+  | "kind"
+  | "loggedAt"
+  | "feedKind"
+  | "side"
+  | "durationMinutes"
+  | "amountMl"
+  | "milk"
+  | "nappy"
+  | "weeSize"
+  | "pooSize"
+  | "weightGrams"
+  | "heightCm"
+  | "title"
+  | "note"
+>;
+
 function capitalize(value: string): string {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
@@ -16,7 +34,7 @@ export function formatDurationMinutes(minutes: number): string {
   return `${h}h ${m}m`;
 }
 
-export function feedSummary(event: Doc<"events">): string {
+export function feedSummary(event: EventCopySource): string {
   if (event.feedKind === "bottle") {
     const milk = event.milk === "expressed" ? "expressed" : "formula";
     return `${event.amountMl ?? "?"} ml ${capitalize(milk)}`;
@@ -33,7 +51,7 @@ export function feedSummary(event: Doc<"events">): string {
   return `Breast ${side}${duration}`;
 }
 
-export function nappySummary(event: Doc<"events">): string {
+export function nappySummary(event: EventCopySource): string {
   const bits: string[] = [];
   if (event.nappy === "wee" || event.nappy === "both") {
     bits.push(`Wee ${capitalize(event.weeSize ?? "")}`.trim());
@@ -44,17 +62,17 @@ export function nappySummary(event: Doc<"events">): string {
   return bits.join(" · ") || "Nappy";
 }
 
-export function sleepSummary(event: Doc<"events">): string {
+export function sleepSummary(event: EventCopySource): string {
   if (event.durationMinutes == null) return "Sleep";
   return formatDurationMinutes(event.durationMinutes);
 }
 
-export function tummySummary(event: Doc<"events">): string {
+export function tummySummary(event: EventCopySource): string {
   if (event.durationMinutes == null) return "Tummy time";
   return formatDurationMinutes(event.durationMinutes);
 }
 
-export function eventKindLabel(event: Doc<"events">): string {
+export function eventKindLabel(event: EventCopySource): string {
   switch (event.kind) {
     case "feed":
       return "Feed";
@@ -70,10 +88,18 @@ export function eventKindLabel(event: Doc<"events">): string {
       return "Tummy time";
     case "custom":
       return event.loggedAt > Date.now() ? "Upcoming" : "Event";
+    case "pump":
+      return "Pump";
+    case "medicine":
+      return "Medicine";
+    case "potty":
+      return "Potty";
+    case "activity":
+      return "Activity";
   }
 }
 
-export function eventTitle(event: Doc<"events">): string {
+export function eventTitle(event: EventCopySource): string {
   switch (event.kind) {
     case "feed":
       return feedSummary(event);
@@ -91,5 +117,35 @@ export function eventTitle(event: Doc<"events">): string {
       return tummySummary(event);
     case "custom":
       return event.title?.trim() || "Event";
+    case "pump":
+      return pumpSummary(event);
+    case "medicine":
+      return event.title?.trim() || "Medicine";
+    case "potty":
+      return nappySummary(event);
+    case "activity":
+      return activitySummary(event);
   }
+}
+
+export function pumpSummary(event: EventCopySource): string {
+  const side =
+    event.side === "left"
+      ? "left"
+      : event.side === "right"
+        ? "right"
+        : "both sides";
+  const duration = event.durationMinutes
+    ? ` · ${event.durationMinutes} min`
+    : "";
+  const amount = event.amountMl != null ? ` · ${event.amountMl} ml` : "";
+  return `${capitalize(side)}${duration}${amount}`;
+}
+
+export function activitySummary(event: EventCopySource): string {
+  const title = event.title?.trim() || "Activity";
+  const duration = event.durationMinutes
+    ? ` · ${formatDurationMinutes(event.durationMinutes)}`
+    : "";
+  return `${title}${duration}`;
 }

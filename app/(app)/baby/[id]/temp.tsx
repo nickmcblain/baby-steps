@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
-import { Card, Pill, Subtitle, Title } from "@/components/ui";
+import { Card, Pill, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clothingAdvice } from "@/lib/clothingAdvice";
@@ -77,10 +77,6 @@ export default function TempScreen() {
   return (
     <Screen onBack={() => router.back()}>
       <Title>Clothing</Title>
-      <Subtitle>
-        What is the room now? Layers update as you adjust the temperature for
-        {baby ? ` ${baby.name}` : " baby"}.
-      </Subtitle>
 
       <View style={styles.unitRow}>
         <Pill label="°C" selected={unit === "C"} onPress={() => setUnit("C")} />

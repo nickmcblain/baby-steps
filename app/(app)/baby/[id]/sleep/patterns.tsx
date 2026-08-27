@@ -29,7 +29,6 @@ export default function SleepPatternsScreen() {
   return (
     <Screen onBack={() => router.back()}>
       <Title>Sleep patterns</Title>
-      <Text style={styles.subtitle}>When sleep happens across the day.</Text>
 
       <View style={styles.modeRow}>
         <Pressable
@@ -84,12 +83,6 @@ export default function SleepPatternsScreen() {
 }
 
 const styles = StyleSheet.create({
-  subtitle: {
-    fontFamily: fonts.body,
-    color: colors.muted,
-    fontSize: 15,
-    marginTop: -8,
-  },
   modeRow: {
     flexDirection: "row",
     gap: 8,

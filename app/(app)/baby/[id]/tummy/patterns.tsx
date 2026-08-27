@@ -12,14 +12,14 @@ import { colors, fonts, radius } from "@/lib/theme";
 
 type DayRange = 7 | 14;
 
-export default function FeedPatternsScreen() {
+export default function TummyPatternsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const babyId = id as Id<"babies">;
   const [days, setDays] = useState<DayRange>(7);
   const rangeEndMs = useMemo(() => Date.now(), []);
 
-  const data = useQuery(api.events.feedPatterns, {
+  const data = useQuery(api.events.tummyPatterns, {
     babyId,
     days,
     rangeEndMs,
@@ -27,7 +27,7 @@ export default function FeedPatternsScreen() {
 
   return (
     <Screen onBack={() => router.back()}>
-      <Title>Feed patterns</Title>
+      <Title>Tummy patterns</Title>
 
       <View style={styles.modeRow}>
         <Pressable
@@ -53,18 +53,18 @@ export default function FeedPatternsScreen() {
       ) : (
         <>
           <View style={styles.statsRow}>
-            <View style={[styles.stat, { backgroundColor: colors.tealSoft }]}>
-              <Text style={[styles.statLabel, { color: colors.tealDark }]}>
-                Avg feed / day
+            <View style={[styles.stat, { backgroundColor: colors.skySoft }]}>
+              <Text style={[styles.statLabel, { color: colors.sky }]}>
+                Avg tummy / day
               </Text>
               <Text style={styles.statValue}>
                 {formatDurationMinutes(
-                  Math.round(data.stats.avgFeedMinutesPerDay),
+                  Math.round(data.stats.avgTummyMinutesPerDay),
                 ) || "—"}
               </Text>
             </View>
-            <View style={[styles.stat, { backgroundColor: colors.tealSoft }]}>
-              <Text style={[styles.statLabel, { color: colors.tealDark }]}>
+            <View style={[styles.stat, { backgroundColor: colors.skySoft }]}>
+              <Text style={[styles.statLabel, { color: colors.sky }]}>
                 Avg sessions / day
               </Text>
               <Text style={styles.statValue}>
@@ -76,11 +76,11 @@ export default function FeedPatternsScreen() {
           </View>
 
           <SleepPatternChart
-            sleeps={data.feeds}
+            sleeps={data.tummies}
             days={days}
             rangeEndMs={rangeEndMs}
-            barColor={colors.teal}
-            emptyText="No feeds in this range yet."
+            barColor={colors.sky}
+            emptyText="No tummy time in this range yet."
           />
         </>
       )}
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   modePillOn: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.sky,
   },
   modeText: {
     fontFamily: fonts.bold,

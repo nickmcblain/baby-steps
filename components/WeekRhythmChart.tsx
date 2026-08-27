@@ -30,7 +30,16 @@ export type WeekDuration = {
 /** @deprecated Prefer WeekDuration */
 export type WeekSleep = WeekDuration;
 
-export type WeekMarkerKind = "feed" | "nappy" | "weight" | "height" | "custom";
+export type WeekMarkerKind =
+  | "feed"
+  | "nappy"
+  | "weight"
+  | "height"
+  | "custom"
+  | "pump"
+  | "medicine"
+  | "potty"
+  | "activity";
 
 export type WeekMarker = {
   kind: WeekMarkerKind;
@@ -44,6 +53,10 @@ const MARKER_COLOR: Record<WeekMarkerKind, string> = {
   weight: colors.amber,
   height: colors.sky,
   custom: colors.rose,
+  pump: colors.tealDark,
+  medicine: colors.amber,
+  potty: colors.peach,
+  activity: colors.purple,
 };
 
 const DURATION_COLOR: Record<WeekDuration["kind"], string> = {
@@ -59,6 +72,10 @@ const LEGEND: { label: string; color: string; shape: "bar" | "dot" }[] = [
   { label: "Weight", color: colors.amber, shape: "dot" },
   { label: "Height", color: colors.sky, shape: "dot" },
   { label: "Event", color: colors.rose, shape: "dot" },
+  { label: "Pump", color: colors.tealDark, shape: "dot" },
+  { label: "Meds", color: colors.amber, shape: "dot" },
+  { label: "Potty", color: colors.peach, shape: "dot" },
+  { label: "Play", color: colors.purple, shape: "dot" },
 ];
 
 /** Small x-offsets so same-minute markers of different kinds stay readable. */
@@ -68,6 +85,10 @@ const KIND_OFFSET: Record<WeekMarkerKind, number> = {
   weight: -6,
   height: 6,
   custom: 0,
+  pump: -4,
+  medicine: 4,
+  potty: -7,
+  activity: 7,
 };
 
 export function WeekRhythmChart({

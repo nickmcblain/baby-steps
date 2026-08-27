@@ -8,13 +8,14 @@ import { Screen } from "@/components/Screen";
 import { WeightField } from "@/components/WeightField";
 import { Field, Pill, PrimaryButton, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
-import { setActiveBabyId } from "@/lib/activeBaby";
+import { useActiveBabyId } from "@/lib/activeBaby";
 import type { Sex } from "@/lib/growth/lms";
 import { colors, fonts } from "@/lib/theme";
 
 export default function NewBabyScreen() {
   const router = useRouter();
   const create = useMutation(api.babies.create);
+  const { select } = useActiveBabyId();
   const [name, setName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<number | null>(null);
   const [sex, setSex] = useState<Sex | null>(null);
@@ -43,8 +44,8 @@ export default function NewBabyScreen() {
         notes: notes.trim() || undefined,
         careDataConsent: true,
       });
-      await setActiveBabyId(id);
-      router.replace(`/baby/${id}`);
+      await select(id);
+      router.replace("/");
     } catch (error) {
       Alert.alert("Could not save", error instanceof Error ? error.message : "Try again");
     }
