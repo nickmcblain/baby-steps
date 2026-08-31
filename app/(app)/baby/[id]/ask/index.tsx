@@ -29,8 +29,6 @@ const EMERGENCY =
 /** Near-bottom: show composer. Hysteresis stops show/hide layout thrash. */
 const BOTTOM_SHOW = 64;
 const BOTTOM_HIDE = 140;
-/** Reserved so toggling composer never changes ScrollView geometry. */
-const COMPOSER_RESERVE = 148;
 
 function ListGlyph() {
   return (
@@ -272,8 +270,8 @@ export default function AskScreen() {
     >
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={8}
+        behavior="padding"
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           ref={scrollRef}
@@ -281,7 +279,6 @@ export default function AskScreen() {
           contentContainerStyle={[
             styles.messages,
             styles.messagesUnderChrome,
-            styles.messagesComposerPad,
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -414,14 +411,10 @@ const styles = StyleSheet.create({
   },
   messages: { paddingVertical: 12, gap: 10, flexGrow: 1 },
   messagesUnderChrome: { paddingTop: 52 },
-  messagesComposerPad: { paddingBottom: COMPOSER_RESERVE },
   composerDock: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingBottom: 8,
     backgroundColor: colors.bg,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   composerDockHidden: {
     opacity: 0,

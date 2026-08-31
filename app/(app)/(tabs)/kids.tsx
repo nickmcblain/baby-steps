@@ -103,9 +103,9 @@ export default function KidsTab() {
 
   return (
     <>
-      <Screen
-        clearDock
-        headerRight={
+      <Screen clearDock>
+        <View style={styles.header}>
+          <Title>Kids</Title>
           <View style={styles.headerActions}>
             <IconButton
               onPress={() => setJoinOpen(true)}
@@ -124,9 +124,7 @@ export default function KidsTab() {
               </View>
             </IconButton>
           </View>
-        }
-      >
-        <Title>Kids</Title>
+        </View>
 
         <View style={styles.grid}>
           {(babies ?? []).map((baby) => {
@@ -181,6 +179,11 @@ export default function KidsTab() {
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, minHeight: 240 },
   loadingText: { fontFamily: fonts.body, color: colors.muted },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   headerActions: { flexDirection: "row", alignItems: "center" },
   headerGap: { marginLeft: 8 },
   plusGlyph: {

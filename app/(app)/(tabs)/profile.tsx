@@ -1,7 +1,7 @@
-import { useAuth, useUser } from "@clerk/expo";
+import { useUser } from "@clerk/expo";
 import { UserButton } from "@clerk/expo/native";
 import { useQuery } from "convex/react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { Card, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
@@ -11,7 +11,6 @@ import { useMarkInteractive } from "@/lib/useMarkInteractive";
 export default function ProfileTab() {
   const user = useQuery(api.users.current);
   const { user: clerkUser } = useUser();
-  const { signOut } = useAuth();
   useMarkInteractive(user !== undefined);
 
   const email =
@@ -35,13 +34,6 @@ export default function ProfileTab() {
           <Text style={styles.value}>Not subscribed</Text>
         </View>
       </Card>
-
-      <Pressable
-        style={styles.signOut}
-        onPress={() => void signOut()}
-      >
-        <Text style={styles.signOutText}>Sign out</Text>
-      </Pressable>
     </Screen>
   );
 }
@@ -56,9 +48,4 @@ const styles = StyleSheet.create({
   label: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted },
   value: { fontFamily: fonts.bold, fontSize: 17, color: colors.ink },
   rule: { height: 1, backgroundColor: colors.line },
-  signOut: {
-    alignItems: "center",
-    paddingVertical: 16,
-  },
-  signOutText: { fontFamily: fonts.bold, fontSize: 16, color: colors.danger },
 });
