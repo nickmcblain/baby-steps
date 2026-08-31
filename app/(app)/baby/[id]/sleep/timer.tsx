@@ -204,6 +204,15 @@ export default function SleepTimerScreen() {
     });
   }
 
+  async function skipToManual() {
+    await stopLiveTimer();
+    await notifySleepIdle();
+    router.replace({
+      pathname: "/baby/[id]/sleep/manual",
+      params: { id: String(id) },
+    });
+  }
+
   const canFinish = minutesFromMs(elapsedMs) > 0 || elapsedMs >= 5_000;
 
   return (
@@ -233,6 +242,14 @@ export default function SleepTimerScreen() {
           onPress={() => void finish()}
           disabled={!canFinish}
         />
+        <Pressable
+          onPress={() => void skipToManual()}
+          style={styles.reset}
+          accessibilityRole="link"
+          accessibilityLabel="Skip to manual entry"
+        >
+          <Text style={styles.resetText}>Skip to manual entry</Text>
+        </Pressable>
         {elapsedMs > 0 && !running ? (
           <Pressable onPress={() => void reset()} style={styles.reset}>
             <Text style={styles.resetText}>Reset</Text>
