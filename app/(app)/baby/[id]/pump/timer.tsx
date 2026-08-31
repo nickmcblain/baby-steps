@@ -224,6 +224,14 @@ export default function PumpTimerScreen() {
     });
   }
 
+  async function skipToManual() {
+    await stopLiveTimer();
+    router.replace({
+      pathname: "/baby/[id]/pump/manual",
+      params: { id: String(id) },
+    });
+  }
+
   const canFinish =
     minutesFromMs(leftMs) > 0 ||
     minutesFromMs(rightMs) > 0 ||
@@ -261,6 +269,14 @@ export default function PumpTimerScreen() {
           onPress={() => void finish()}
           disabled={!canFinish}
         />
+        <Pressable
+          onPress={() => void skipToManual()}
+          style={styles.reset}
+          accessibilityRole="link"
+          accessibilityLabel="Skip to manual entry"
+        >
+          <Text style={styles.resetText}>Skip to manual entry</Text>
+        </Pressable>
         {(leftMs > 0 || rightMs > 0) && active == null ? (
           <Pressable onPress={() => void reset()} style={styles.reset}>
             <Text style={styles.resetText}>Reset</Text>

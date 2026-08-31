@@ -230,6 +230,14 @@ export default function FeedTimerScreen() {
     });
   }
 
+  async function skipToManual() {
+    await stopLiveTimer();
+    router.replace({
+      pathname: "/baby/[id]/feed/manual",
+      params: { id: String(id) },
+    });
+  }
+
   const canFinish =
     minutesFromMs(leftMs) > 0 ||
     minutesFromMs(rightMs) > 0 ||
@@ -267,6 +275,14 @@ export default function FeedTimerScreen() {
           onPress={() => void finish()}
           disabled={!canFinish}
         />
+        <Pressable
+          onPress={() => void skipToManual()}
+          style={styles.reset}
+          accessibilityRole="link"
+          accessibilityLabel="Skip to manual entry"
+        >
+          <Text style={styles.resetText}>Skip to manual entry</Text>
+        </Pressable>
         {(leftMs > 0 || rightMs > 0) && active == null ? (
           <Pressable onPress={() => void reset()} style={styles.reset}>
             <Text style={styles.resetText}>Reset</Text>
