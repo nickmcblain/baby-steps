@@ -1,21 +1,31 @@
 import { useRouter, type Href } from "expo-router";
-import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { type ReactNode, useEffect } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import {
   ActivityIcon,
   AskIcon,
   FeedIcon,
   LogIcon,
   MedicineIcon,
+  MicIcon,
   NappyIcon,
   PottyIcon,
   PumpIcon,
   SleepIcon,
+  TempIcon,
   TummyIcon,
-  TypeIcon,
 } from "@/components/ActionIcons";
 import { BottomSheet } from "@/components/BottomSheet";
+import type { Id } from "@/convex/_generated/dataModel";
 import { colors, fonts, shadow } from "@/lib/theme";
+import { useVoiceLog } from "@/lib/useVoiceLog";
 
 const TILES = [
   { path: "feed/timer", label: "Feed", tint: colors.teal, ink: "#fff", icon: "feed" },
@@ -27,7 +37,7 @@ const TILES = [
   { path: "potty", label: "Potty", tint: colors.peach, ink: "#fff", icon: "potty" },
   { path: "activity", label: "Activity", tint: colors.purple, ink: "#fff", icon: "activity" },
   { path: "event", label: "Note", tint: colors.rose, ink: "#fff", icon: "event" },
-  { path: "quick-log", label: "Type a log", tint: colors.ink, ink: "#fff", icon: "type" },
+  { path: "temp", label: "Clothing", tint: colors.amber, ink: colors.ink, icon: "temp" },
   { path: "ask", label: "Ask", tint: colors.teal, ink: "#fff", icon: "ask" },
 ] as const;
 
@@ -36,7 +46,7 @@ function TileIcon({
   color,
   cut,
 }: {
-  name: (typeof TILES)[number]["icon"];
+  name: (typeof TILES)[number]["icon"] | "mic";
   color: string;
   cut: string;
 }): ReactNode {
@@ -59,10 +69,12 @@ function TileIcon({
       return <ActivityIcon color={color} />;
     case "event":
       return <LogIcon color={color} />;
-    case "type":
-      return <TypeIcon color={color} />;
+    case "temp":
+      return <TempIcon color={color} />;
     case "ask":
       return <AskIcon color={color} />;
+    case "mic":
+      return <MicIcon color={color} />;
   }
 }
 
@@ -76,8 +88,14 @@ export function AddLogSheet({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const voice = useVoiceLog(babyId as Id<"babies"> | null);
+  useEffect(() => {
+    if (!visible) void voice.cancel();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   function go(path: string) {
+    if (voice.recording || voice.busy) return;
     onClose();
     if (!babyId) {
       router.navigate("/kids" as Href);
@@ -85,6 +103,26 @@ export function AddLogSheet({
     }
     router.push(`/baby/${babyId}/${path}`);
   }
+
+  async function onSpeak() {
+    if (!babyId) {
+      onClose();
+      router.navigate("/kids" as Href);
+      return;
+    }
+    const result = await voice.toggle();
+    if (!result) return;
+    onClose();
+    if (result.handoff === "ask") {
+      router.push(
+        `/baby/${babyId}/ask?q=${encodeURIComponent(result.transcript)}` as Href,
+      );
+      return;
+    }
+    Alert.alert("Logged", result.confirmation);
+  }
+
+  const speakTint = voice.recording ? colors.danger : colors.ink;
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
@@ -101,7 +139,27 @@ export function AddLogSheet({
             <Text style={styles.label}>{tile.label}</Text>
           </Pressable>
         ))}
+        <Pressable
+          onPress={() => void onSpeak()}
+          disabled={voice.busy}
+          accessibilityLabel={
+            voice.recording ? "Stop and send" : "Speak a log or question"
+          }
+          style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
+        >
+          <View style={[styles.iconWell, { backgroundColor: speakTint }]}>
+            {voice.busy ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <TileIcon name="mic" color="#fff" cut={speakTint} />
+            )}
+          </View>
+          <Text style={styles.label}>
+            {voice.recording ? "Listening" : "Speak"}
+          </Text>
+        </Pressable>
       </View>
+      {voice.status ? <Text style={styles.status}>{voice.status}</Text> : null}
     </BottomSheet>
   );
 }
@@ -137,5 +195,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 14,
     color: colors.ink,
+  },
+  status: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: colors.muted,
+    textAlign: "center",
   },
 });

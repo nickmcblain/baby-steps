@@ -10,32 +10,15 @@ import {
 } from "expo-audio";
 import { EncodingType, getInfoAsync, readAsStringAsync } from "expo-file-system/legacy";
 import { useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MicIcon } from "@/components/ActionIcons";
+import { Alert } from "react-native";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { colors, shadow } from "@/lib/theme";
 
 const MAX_MS = 30_000;
 const MIN_MS = 900;
-/** Tiny m4a headers are a few hundred bytes; real speech is larger. */
 const MIN_BYTES = 2_500;
 
-export function VoiceLogFab({
-  babyId,
-  onStatus,
-}: {
-  babyId: Id<"babies">;
-  onStatus: (message: string | null) => void;
-}) {
-  const insets = useSafeAreaInsets();
+export function useVoiceLog(babyId: Id<"babies"> | null) {
   const logFromAudio = useAction(api.voiceLog.logFromAudio);
   const recorder = useAudioRecorder({
     ...RecordingPresets.HIGH_QUALITY,
@@ -44,6 +27,7 @@ export function VoiceLogFab({
   });
   const recorderState = useAudioRecorderState(recorder, 200);
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
   const maxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recordingRef = useRef(false);
   const startingRef = useRef(false);
@@ -55,7 +39,7 @@ export function VoiceLogFab({
     if (current.status !== "undetermined") {
       Alert.alert(
         "Microphone needed",
-        "Allow mic access in Settings to voice-log.",
+        "Allow mic access in Settings to speak a log.",
       );
       return false;
     }
@@ -71,7 +55,7 @@ export function VoiceLogFab({
   }
 
   async function startRecording() {
-    if (busy || recordingRef.current || startingRef.current) return;
+    if (!babyId || busy || recordingRef.current || startingRef.current) return;
     startingRef.current = true;
     try {
       if (!Device.isDevice) {
@@ -91,14 +75,14 @@ export function VoiceLogFab({
       recordingRef.current = true;
       startedAtRef.current = Date.now();
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      onStatus("Listening… tap mic again to send");
+      setStatus("Listening… tap again to send");
       if (maxTimerRef.current) clearTimeout(maxTimerRef.current);
       maxTimerRef.current = setTimeout(() => {
         void finishRecording();
       }, MAX_MS);
     } catch (error) {
       recordingRef.current = false;
-      onStatus(null);
+      setStatus(null);
       Alert.alert(
         "Could not record",
         error instanceof Error ? error.message : "Try again",
@@ -108,12 +92,15 @@ export function VoiceLogFab({
     }
   }
 
-  async function finishRecording() {
+  async function finishRecording(): Promise<
+    | { transcript: string; confirmation: string; handoff: "ask" | null }
+    | null
+  > {
     if (maxTimerRef.current) {
       clearTimeout(maxTimerRef.current);
       maxTimerRef.current = null;
     }
-    if (!recordingRef.current) return;
+    if (!recordingRef.current || !babyId) return null;
     recordingRef.current = false;
 
     const elapsed = Date.now() - startedAtRef.current;
@@ -123,12 +110,12 @@ export function VoiceLogFab({
       } catch {
         // ignore
       }
-      onStatus(null);
+      setStatus(null);
       Alert.alert(
         "Too short",
-        "Tap mic, speak for a second or two, then tap again to send.",
+        "Tap Speak, talk for a second or two, then tap again to send.",
       );
-      return;
+      return null;
     }
 
     try {
@@ -139,26 +126,26 @@ export function VoiceLogFab({
 
     const uri = recorder.uri;
     if (!uri) {
-      onStatus(null);
+      setStatus(null);
       Alert.alert("Voice log", "No recording saved — try again.");
-      return;
+      return null;
     }
 
     const info = await getInfoAsync(uri);
     const size = info.exists && "size" in info ? Number(info.size ?? 0) : 0;
     if (size < MIN_BYTES) {
-      onStatus(null);
+      setStatus(null);
       Alert.alert(
         "No audio captured",
         Device.isDevice
           ? "Mic produced an empty clip. Check mic permission and try again."
           : "Simulator mic is silent — use a real phone.",
       );
-      return;
+      return null;
     }
 
     setBusy(true);
-    onStatus("Logging…");
+    setStatus("Logging…");
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
@@ -171,14 +158,16 @@ export function VoiceLogFab({
         format: "m4a",
       });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      onStatus(result.confirmation);
-      setTimeout(() => onStatus(null), 5000);
+      setStatus(null);
+      return result;
     } catch (error) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      const message =
-        error instanceof Error ? error.message : "Could not log from voice";
-      onStatus(null);
-      Alert.alert("Voice log", message);
+      setStatus(null);
+      Alert.alert(
+        "Voice log",
+        error instanceof Error ? error.message : "Could not log from voice",
+      );
+      return null;
     } finally {
       setBusy(false);
       try {
@@ -192,63 +181,35 @@ export function VoiceLogFab({
     }
   }
 
-  function onMicPress() {
-    if (busy || startingRef.current) return;
+  async function toggle() {
+    if (busy || startingRef.current) return null;
     if (recordingRef.current || recorderState.isRecording) {
-      void finishRecording();
-      return;
+      return finishRecording();
     }
-    void startRecording();
+    await startRecording();
+    return null;
   }
 
-  const recording = recorderState.isRecording || recordingRef.current;
+  async function cancel() {
+    if (maxTimerRef.current) {
+      clearTimeout(maxTimerRef.current);
+      maxTimerRef.current = null;
+    }
+    if (!recordingRef.current) return;
+    recordingRef.current = false;
+    setStatus(null);
+    try {
+      await recorder.stop();
+    } catch {
+      // ignore
+    }
+  }
 
-  return (
-    <View
-      style={[styles.fab, { bottom: Math.max(insets.bottom, 12) + 8 }]}
-      pointerEvents="box-none"
-    >
-      <Pressable
-        disabled={busy}
-        onPress={onMicPress}
-        accessibilityLabel={recording ? "Stop voice log" : "Start voice log"}
-        accessibilityHint="Tap to start, speak, tap again to log"
-        style={[
-          styles.btn,
-          recording && styles.btnRecording,
-          busy && styles.btnBusy,
-        ]}
-      >
-        {busy ? (
-          <ActivityIndicator color={colors.ink} />
-        ) : (
-          <MicIcon color={recording ? "#fff" : colors.ink} />
-        )}
-      </Pressable>
-    </View>
-  );
+  return {
+    busy,
+    recording: recorderState.isRecording || recordingRef.current,
+    status,
+    toggle,
+    cancel,
+  };
 }
-
-const styles = StyleSheet.create({
-  fab: {
-    position: "absolute",
-    left: 16,
-    zIndex: 40,
-    elevation: 40,
-  },
-  btn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.card,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadow,
-  },
-  btnRecording: {
-    backgroundColor: colors.danger,
-  },
-  btnBusy: {
-    opacity: 0.85,
-  },
-});

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
+  Keyboard,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Platform,
@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Screen } from "@/components/Screen";
 import { IconButton } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
@@ -127,11 +128,13 @@ const mdStyles = StyleSheet.create({
 });
 
 export default function AskScreen() {
-  const { id, thread: threadParam } = useLocalSearchParams<{
+  const { id, thread: threadParam, q: questionParam } = useLocalSearchParams<{
     id: string;
     thread?: string;
+    q?: string;
   }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const babyId = id as Id<"babies">;
   const ensureThread = useMutation(api.chat.ensureThread);
   const createThread = useMutation(api.chat.createThread);
@@ -148,7 +151,9 @@ export default function AskScreen() {
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [atBottom, setAtBottom] = useState(true);
   const [composerFocused, setComposerFocused] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const sentQuestion = useRef<string | null>(null);
   useMarkInteractive(threadId != null);
 
   const showComposer =
@@ -204,8 +209,23 @@ export default function AskScreen() {
     });
   }, [messages?.length, sending, showPendingUser, atBottom]);
 
-  async function send() {
-    const text = draft.trim();
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => setKeyboardHeight(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setKeyboardHeight(0),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  async function send(textArg?: string) {
+    const text = (textArg ?? draft).trim();
     if (!text || !threadId || sending) return;
     if (EMERGENCY.test(text)) {
       Alert.alert(
@@ -230,6 +250,16 @@ export default function AskScreen() {
     }
   }
 
+  useEffect(() => {
+    const question =
+      typeof questionParam === "string" ? questionParam.trim() : "";
+    if (!question || !threadId || sending) return;
+    if (sentQuestion.current === question) return;
+    sentQuestion.current = question;
+    void send(question);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionParam, threadId]);
+
   async function startNewChat() {
     try {
       const tid = await createThread({ babyId });
@@ -249,6 +279,7 @@ export default function AskScreen() {
     <Screen
       scroll={false}
       overlayChrome
+      flushBottom
       onBack={() => router.back()}
       headerRight={
         <View style={styles.headerActions}>
@@ -268,11 +299,7 @@ export default function AskScreen() {
         </View>
       }
     >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior="padding"
-        keyboardVerticalOffset={0}
-      >
+      <View style={styles.flex}>
         <ScrollView
           ref={scrollRef}
           style={styles.flex}
@@ -335,6 +362,12 @@ export default function AskScreen() {
         <View
           style={[
             styles.composerDock,
+            {
+              paddingBottom:
+                keyboardHeight > 0
+                  ? keyboardHeight
+                  : Math.max(insets.bottom, 12),
+            },
             !showComposer && styles.composerDockHidden,
           ]}
           pointerEvents={showComposer ? "auto" : "none"}
@@ -369,7 +402,7 @@ export default function AskScreen() {
             </Pressable>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Screen>
   );
 }

@@ -16,6 +16,8 @@ export function Screen({
   overlayChrome = false,
   /** Extra bottom pad so content clears the floating tab dock. */
   clearDock = false,
+  /** Drop the default bottom pad — caller owns keyboard / home-indicator inset. */
+  flushBottom = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -27,6 +29,7 @@ export function Screen({
   headerRight?: ReactNode;
   overlayChrome?: boolean;
   clearDock?: boolean;
+  flushBottom?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const hasChrome = stickyHeader != null || onBack != null || headerRight != null;
@@ -59,6 +62,7 @@ export function Screen({
         styles.padFill,
         reserveChrome ? styles.padWithSticky : null,
         overlayChrome ? styles.padOverlay : null,
+        flushBottom ? styles.padFlushBottom : null,
         dockPad,
       ]}
     >
@@ -130,5 +134,6 @@ const styles = StyleSheet.create({
   padWithSticky: { paddingTop: 60 },
   /** Content under floating chips — only horizontal/bottom pad from Screen. */
   padOverlay: { paddingTop: 8 },
+  padFlushBottom: { paddingBottom: 0 },
   padFill: { flex: 1 },
 });

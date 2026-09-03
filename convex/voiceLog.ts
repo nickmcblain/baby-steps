@@ -10,12 +10,13 @@ import type { BabyContextSnapshot } from "./lib/babyContext";
 
 const INSTRUCTIONS = `You are Baby Steps Voice Log — you turn a parent's spoken note into logged baby activities.
 
-You ONLY log. You do NOT give medical advice, diagnose, triage, or delete anything.
+You log activities. You do NOT give medical advice, diagnose, triage, or delete anything. Care questions go to Ask via handoff_to_ask.
 
 Rules:
 - Call get_baby_context if you need age/weight for sanity checks.
 - Prefer tools for every concrete activity mentioned.
 - You may log multiple activities from one utterance.
+- If the parent asked a care question (advice, "is this normal", clothing/TOG, how much should they sleep/feed, why are they crying) rather than reporting something that happened, call handoff_to_ask and do not log.
 - Use loggedAtMs = the provided "nowMs" unless the parent clearly said a relative time (e.g. "an hour ago", "this morning"). Snap relative times yourself to epoch ms.
 - Never invent amounts or durations the parent did not say. If a required field is missing (e.g. bottle ml, breast side, nappy size), ask a short clarifying question in your reply and DO NOT call the incomplete tool.
 - For breast feeds, side is required (left/right/both).
@@ -104,11 +105,16 @@ export const logFromAudio = action({
   returns: v.object({
     transcript: v.string(),
     confirmation: v.string(),
+    handoff: v.union(v.literal("ask"), v.null()),
   }),
   handler: async (
     ctx,
     args,
-  ): Promise<{ transcript: string; confirmation: string }> => {
+  ): Promise<{
+    transcript: string;
+    confirmation: string;
+    handoff: "ask" | null;
+  }> => {
     if (!args.audioBase64 || args.audioBase64.length < 64) {
       throw new ConvexError("Recording is empty");
     }
@@ -137,7 +143,7 @@ export const logFromAudio = action({
       format: args.format,
     });
 
-    const confirmation = await runLogFromNote({
+    const result = await runLogFromNote({
       ctx,
       apiKey,
       userId,
@@ -148,7 +154,7 @@ export const logFromAudio = action({
       sourceLabel: "transcript",
     });
 
-    return { transcript, confirmation };
+    return { transcript, ...result };
   },
 });
 
@@ -160,6 +166,7 @@ export const logFromText = action({
   returns: v.object({
     transcript: v.string(),
     confirmation: v.string(),
+    handoff: v.union(v.literal("ask"), v.null()),
   }),
   handler: async (ctx, args) => {
     const note = args.note.trim();
@@ -182,7 +189,7 @@ export const logFromText = action({
       userId,
       now: nowMs,
     })) as BabyContextSnapshot;
-    const confirmation = await runLogFromNote({
+    const result = await runLogFromNote({
       ctx,
       apiKey,
       userId,
@@ -192,7 +199,7 @@ export const logFromText = action({
       note,
       sourceLabel: "typed note",
     });
-    return { transcript: note, confirmation };
+    return { transcript: note, ...result };
   },
 });
 
@@ -210,6 +217,7 @@ export const logFromImage = action({
   returns: v.object({
     transcript: v.string(),
     confirmation: v.string(),
+    handoff: v.union(v.literal("ask"), v.null()),
   }),
   handler: async (ctx, args) => {
     if (!args.imageBase64 || args.imageBase64.length < 64) {
@@ -237,7 +245,7 @@ export const logFromImage = action({
       userId,
       now: nowMs,
     })) as BabyContextSnapshot;
-    const confirmation = await runLogFromNote({
+    const result = await runLogFromNote({
       ctx,
       apiKey,
       userId,
@@ -247,7 +255,7 @@ export const logFromImage = action({
       note: extracted,
       sourceLabel: "photo",
     });
-    return { transcript: extracted, confirmation };
+    return { transcript: extracted, ...result };
   },
 });
 
@@ -326,9 +334,11 @@ async function runLogFromNote(args: {
   context: BabyContextSnapshot;
   note: string;
   sourceLabel: string;
-}): Promise<string> {
+}): Promise<{ confirmation: string; handoff: "ask" | null }> {
   const { ctx, apiKey, userId, babyId, nowMs, context, note, sourceLabel } =
     args;
+  let loggedCount = 0;
+  let askHandoff = false;
 
     const getBabyContextTool = tool({
       name: "get_baby_context",
@@ -367,6 +377,7 @@ async function runLogFromNote(args: {
           milk: input.milk,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -387,6 +398,7 @@ async function runLogFromNote(args: {
           durationMinutes: input.durationMinutes,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -407,6 +419,7 @@ async function runLogFromNote(args: {
           durationMinutes: input.durationMinutes,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -431,6 +444,7 @@ async function runLogFromNote(args: {
           pooSize: input.pooSize,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -451,6 +465,7 @@ async function runLogFromNote(args: {
           weightGrams: input.weightGrams,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -471,6 +486,7 @@ async function runLogFromNote(args: {
           heightCm: input.heightCm,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -491,6 +507,7 @@ async function runLogFromNote(args: {
           title: input.title,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -515,6 +532,7 @@ async function runLogFromNote(args: {
           amountMl: input.amountMl,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -535,6 +553,7 @@ async function runLogFromNote(args: {
           title: input.title,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -559,6 +578,7 @@ async function runLogFromNote(args: {
           pooSize: input.pooSize,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -581,6 +601,7 @@ async function runLogFromNote(args: {
           durationMinutes: input.durationMinutes,
           note: input.note,
         });
+        loggedCount += 1;
         return { ok: true, eventId: id };
       },
     });
@@ -597,6 +618,18 @@ async function runLogFromNote(args: {
           babyId,
           tempC: input.tempC,
         });
+        loggedCount += 1;
+        return { ok: true };
+      },
+    });
+
+    const handoffAskTool = tool({
+      name: "handoff_to_ask",
+      description:
+        "Parent asked a care question that cannot be logged as an activity. Use this instead of logging.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        askHandoff = true;
         return { ok: true };
       },
     });
@@ -623,6 +656,7 @@ async function runLogFromNote(args: {
         logPottyTool,
         logActivityTool,
         saveRoomTempTool,
+        handoffAskTool,
       ],
       stopWhen: stepCountIs(10),
     });
@@ -636,5 +670,8 @@ async function runLogFromNote(args: {
       );
     }
 
-    return confirmation || "Done.";
+    return {
+      confirmation: confirmation || "Done.",
+      handoff: askHandoff && loggedCount === 0 ? "ask" : null,
+    };
 }
