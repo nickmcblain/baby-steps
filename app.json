@@ -82,10 +82,12 @@
           "frequentUpdates": true,
           "widgets": [
             {
-              "name": "BabyTimerActivity",
-              "displayName": "Baby Timer",
-              "description": "Shows an active feed or sleep timer on the Lock Screen and Dynamic Island",
-              "supportedFamilies": ["systemSmall"]
+              "name": "BabyGlanceWidget",
+              "displayName": "Baby Steps",
+              "description": "Next nap, last feed and nappy at a glance",
+              "ios": {
+                "supportedFamilies": ["systemSmall", "systemMedium"]
+              }
             }
           ]
         }

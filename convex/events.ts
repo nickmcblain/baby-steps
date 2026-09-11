@@ -31,6 +31,7 @@ import {
   sideValidator,
   sizeValidator,
 } from "./lib/validators";
+import { weekStats } from "./lib/weeklyStats";
 
 export const dashboard = authedQuery({
   args: { babyId: v.id("babies") },
@@ -764,6 +765,48 @@ export const nappyPatterns = authedQuery({
         weeCount,
         pooCount,
       },
+    };
+  },
+});
+
+const weekStatsValidator = v.object({
+  loggedDays: v.number(),
+  sleepMinutesPerDay: v.number(),
+  feedsPerDay: v.number(),
+  nappiesPerDay: v.number(),
+  longestNightStretchMin: v.number(),
+});
+
+/** This 7 days vs the 7 before, for the home-screen weekly digest. */
+export const weeklySummary = authedQuery({
+  args: {
+    babyId: v.id("babies"),
+    rangeEndMs: v.number(),
+    /** `new Date().getTimezoneOffset()` from the client, for night detection. */
+    tzOffsetMinutes: v.number(),
+  },
+  returns: v.object({
+    thisWeek: weekStatsValidator,
+    lastWeek: weekStatsValidator,
+  }),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const weekMs = 7 * 86_400_000;
+    const thisStart = args.rangeEndMs - weekMs;
+    const lastStart = thisStart - weekMs;
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_baby_and_loggedAt", (q) =>
+        q
+          .eq("babyId", args.babyId)
+          .gte("loggedAt", lastStart - 86_400_000)
+          .lt("loggedAt", args.rangeEndMs),
+      )
+      .order("asc")
+      .take(1000);
+    return {
+      thisWeek: weekStats(events, thisStart, args.rangeEndMs, args.tzOffsetMinutes),
+      lastWeek: weekStats(events, lastStart, thisStart, args.tzOffsetMinutes),
     };
   },
 });
