@@ -16,7 +16,6 @@ import {
 import { BottomSheet } from "@/components/BottomSheet";
 import { Screen } from "@/components/Screen";
 import { IconButton, Title } from "@/components/ui";
-import { VoiceLogFab } from "@/components/VoiceLogFab";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { eventTitle } from "@/lib/eventCopy";
@@ -36,7 +35,6 @@ export default function BabyHome() {
   const [feedSheetOpen, setFeedSheetOpen] = useState(false);
   const [sleepSheetOpen, setSleepSheetOpen] = useState(false);
   const [tummySheetOpen, setTummySheetOpen] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   useMarkInteractive(data != null);
 
   const reminderBaby = useMemo(
@@ -245,12 +243,6 @@ export default function BabyHome() {
         </View>
       </BottomSheet>
     </Screen>
-      {voiceStatus ? (
-        <View style={styles.voiceBanner} pointerEvents="none">
-          <Text style={styles.voiceBannerText}>{voiceStatus}</Text>
-        </View>
-      ) : null}
-      <VoiceLogFab babyId={babyId} onStatus={setVoiceStatus} />
       <View
         style={[styles.fab, { bottom: Math.max(insets.bottom, 12) + 8 }]}
         pointerEvents="box-none"
@@ -297,25 +289,6 @@ const styles = StyleSheet.create({
     right: 16,
     zIndex: 40,
     elevation: 40,
-  },
-  voiceBanner: {
-    position: "absolute",
-    left: 20,
-    right: 20,
-    bottom: 72,
-    zIndex: 45,
-    backgroundColor: colors.ink,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    ...shadow,
-  },
-  voiceBannerText: {
-    fontFamily: fonts.medium,
-    fontSize: 14,
-    color: "#fff",
-    textAlign: "center",
-    lineHeight: 20,
   },
   editMark: {
     fontFamily: fonts.bold,
