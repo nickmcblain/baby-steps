@@ -64,7 +64,7 @@ export default function HomeScreen() {
   if (babies !== undefined && babies.length === 0) {
     return (
       <Screen clearDock>
-        <Text style={styles.brand}>Baby Steps</Text>
+        <Text style={styles.brand}>Scrunch</Text>
         <Text style={styles.emptyTitle}>Add a kid to start</Text>
         <Text style={styles.emptyBody}>Feeds, sleep, and nappies live here once you add a baby.</Text>
         <Pressable style={styles.cta} onPress={() => router.navigate("/kids" as Href)}>

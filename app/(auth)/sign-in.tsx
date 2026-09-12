@@ -38,7 +38,7 @@ export default function SignIn() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.hero}>
         <View style={styles.blob} />
-        <Text style={styles.kicker}>Baby Steps</Text>
+        <Text style={styles.kicker}>Scrunch</Text>
         <Text style={styles.title}>Keep the little hours in one place.</Text>
       </View>
       <View style={styles.sheet}>

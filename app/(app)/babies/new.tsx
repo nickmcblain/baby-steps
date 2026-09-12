@@ -87,9 +87,9 @@ export default function NewBabyScreen() {
           {careConsent ? <Text style={styles.tick}>✓</Text> : null}
         </View>
         <Text style={styles.consentText}>
-          I am a parent or guardian and I consent to Baby Steps storing this
+          I am a parent or guardian and I consent to Scrunch storing this
           baby's care details (such as name, date of birth, growth, and logs) so
-          the app can work. Baby Steps is not a medical or healthcare service.
+          the app can work. Scrunch is not a medical or healthcare service.
         </Text>
       </Pressable>
       <PrimaryButton

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Baby Steps",
+    "name": "Scrunch",
     "slug": "baby-steps",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,9 +20,9 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSSupportsLiveActivities": true,
         "NSSupportsLiveActivitiesFrequentUpdates": true,
-        "NSMicrophoneUsageDescription": "Baby Steps uses the microphone so you can log feeds, sleeps, and nappies hands-free.",
-        "NSPhotoLibraryUsageDescription": "Baby Steps uses photos so you can log a bottle, label, or handwritten note.",
-        "NSCameraUsageDescription": "Baby Steps uses the camera so you can log a bottle or label."
+        "NSMicrophoneUsageDescription": "Scrunch uses the microphone so you can log feeds, sleeps, and nappies hands-free.",
+        "NSPhotoLibraryUsageDescription": "Scrunch uses photos so you can log a bottle, label, or handwritten note.",
+        "NSCameraUsageDescription": "Scrunch uses the camera so you can log a bottle or label."
       },
       "entitlements": {
         "com.apple.security.application-groups": [
@@ -53,7 +53,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Baby Steps uses the microphone so you can log feeds, sleeps, and nappies hands-free."
+          "microphonePermission": "Scrunch uses the microphone so you can log feeds, sleeps, and nappies hands-free."
         }
       ],
       [
@@ -65,7 +65,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Baby Steps uses photos so you can log a bottle, label, or handwritten note."
+          "photosPermission": "Scrunch uses photos so you can log a bottle, label, or handwritten note."
         }
       ],
       [
@@ -83,7 +83,7 @@
           "widgets": [
             {
               "name": "BabyGlanceWidget",
-              "displayName": "Baby Steps",
+              "displayName": "Scrunch",
               "description": "Next nap, last feed and nappy at a glance",
               "ios": {
                 "supportedFamilies": ["systemSmall", "systemMedium"]

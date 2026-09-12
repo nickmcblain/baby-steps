@@ -373,7 +373,7 @@ export default function AskScreen() {
           pointerEvents={showComposer ? "auto" : "none"}
         >
           <Text style={styles.disclaimer}>
-            Baby Steps is not a medical or healthcare service. Guidance only —
+            Scrunch is not a medical or healthcare service. Guidance only —
             not diagnosis, clinical advice, or triage. Emergencies: call 999.
             Urgent advice: NHS 111 or your midwife.
           </Text>
