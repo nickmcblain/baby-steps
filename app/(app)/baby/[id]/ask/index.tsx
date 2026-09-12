@@ -375,7 +375,9 @@ export default function AskScreen() {
           <Text style={styles.disclaimer}>
             Scrunch is not a medical or healthcare service. Guidance only —
             not diagnosis, clinical advice, or triage. Emergencies: call 999.
-            Urgent advice: NHS 111 or your midwife.
+            Urgent advice: NHS 111 or your midwife. Scrunch is independent and
+            not affiliated with the NHS or The Lullaby Trust; it summarises
+            their public guidance.
           </Text>
           <View style={styles.composer}>
             <TextInput

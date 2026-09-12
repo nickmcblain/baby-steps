@@ -23,7 +23,7 @@ export const GUIDANCE_DOCS: GuidanceDoc[] = [
   {
     id: "sleep-tog",
     title: "Room temperature and TOG layers",
-    source: "Scrunch clothing helper (Lullaby Trust-style)",
+    source: "Scrunch clothing helper (based on Lullaby Trust TOG guidance)",
     tags: ["tog", "temperature", "clothing", "overheat", "layers", "room"],
     body: `Aim for a comfortable room around 16–20°C when possible. Use a TOG-rated bag and adjust layers rather than adding loose blankets. Feel the chest or back of the neck — warm is fine; sweaty means remove a layer. No hats or hoods for indoor sleep. Newborns and smaller babies may need one thin extra layer in cooler rooms, never at the expense of overheating.`,
   },
@@ -74,6 +74,13 @@ export const GUIDANCE_DOCS: GuidanceDoc[] = [
     url: "https://www.bliss.org.uk/",
     tags: ["premature", "preterm", "gestation", "corrected age"],
     body: `For babies born early, professionals often use corrected age (age from due date) for developmental expectations. Feeding, sleep, and growth patterns can differ. Follow your neonatal / health visitor plan. This chat uses any gestation you stored on the profile but does not replace specialist advice.`,
+  },
+  {
+    id: "about-scrunch",
+    title: "Where Scrunch's guidance comes from",
+    source: "Scrunch",
+    tags: ["nhs", "lullaby trust", "affiliated", "partner", "endorsed", "official", "source", "who are you"],
+    body: `Scrunch is an independent app. It is not affiliated with, endorsed by, or connected to the NHS, The Lullaby Trust, or any other organisation. Ask summarises their publicly available guidance and names the source each time. For the latest advice, check nhs.uk and lullabytrust.org.uk directly.`,
   },
   {
     id: "refuse-meds",
