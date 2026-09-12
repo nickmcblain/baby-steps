@@ -45,7 +45,7 @@ function canUseLiveActivity(): boolean {
 export function liveActivityUnavailableReason(): string | null {
   if (Platform.OS !== "ios") return "Live Activities are iOS-only.";
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
-    return "Live Activities need a native build (Baby Steps app), not Expo Go.";
+    return "Live Activities need a native build (Scrunch app), not Expo Go.";
   }
   return null;
 }

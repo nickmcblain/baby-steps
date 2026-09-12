@@ -36,7 +36,7 @@ export async function ensureWeeklyDigestReminder(babyId: string, babyName: strin
     identifier: notifIdFor(babyId),
     content: {
       title: `Your week with ${babyName} is ready`,
-      body: "Open Baby Steps to see how sleep and feeds changed.",
+      body: "Open Scrunch to see how sleep and feeds changed.",
       data: { babyId, kind: "weekly-digest" },
       ...(Platform.OS === "android" ? { channelId: CHANNEL_ID } : {}),
     },

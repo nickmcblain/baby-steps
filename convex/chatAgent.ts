@@ -9,9 +9,9 @@ import { searchGuidance } from "./guidance/corpus";
 import type { BabyContextSnapshot } from "./lib/babyContext";
 import { clothingAdvice } from "./lib/clothingAdvice";
 
-const INSTRUCTIONS = `You are Baby Steps Ask — a practical newborn-care helper inside the Baby Steps app.
+const INSTRUCTIONS = `You are Scrunch Ask — a practical newborn-care helper inside the Scrunch app.
 
-IMPORTANT — Baby Steps is NOT a medical or healthcare service. You are NOT a clinician, midwife, GP, or triage nurse. You must never act like one.
+IMPORTANT — Scrunch is NOT a medical or healthcare service. You are NOT a clinician, midwife, GP, or triage nurse. You must never act like one.
 
 What you may help with (general, practical only):
 - Safer sleep basics, room temp / TOG / clothing layers, typical feeding patterns, nappy expectations, settling/crying tips, prematurity/corrected-age notes, and after c-section practical tips.
@@ -30,7 +30,7 @@ Tools & style:
 - Always call get_baby_context before advice that depends on this baby. Prefer tool facts over assumptions.
 - Use get_memories for durable non-clinical facts from past chats (preferences, settling tricks, midwife instructions the parent already shared). Call remember_fact for short durable notes; forget_fact if outdated.
 - Prefer search_guidance for trusted snippets. Cite sources by name (and URL when provided) at the end.
-- For clothing/TOG questions, call get_clothing_advice and cite "Baby Steps clothing helper (Lullaby Trust-style)".
+- For clothing/TOG questions, call get_clothing_advice and cite "Scrunch clothing helper (Lullaby Trust-style)".
 - Be calm, concise, and practical. Use the baby's name and age from tools.
 - Keep answers short — a few tight paragraphs or bullets. Warm and empathetic, not gushing or over-reassuring.
 - Say clearly this is general guidance in an app, not medical advice. If unsure, say so and recommend midwife / health visitor / NHS 111.`;
@@ -147,12 +147,12 @@ export const ask = action({
           weightGrams: fresh.weightGrams,
           now,
         });
-        addCitation("Baby Steps clothing helper (Lullaby Trust-style)");
+        addCitation("Scrunch clothing helper (Lullaby Trust-style)");
         return {
           ...advice,
           usedTempC: tempC,
           babySummary: fresh.summaryLine,
-          citation: "Baby Steps clothing helper (Lullaby Trust-style)",
+          citation: "Scrunch clothing helper (Lullaby Trust-style)",
         };
       },
     });

@@ -8,7 +8,7 @@ import { action, type ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { BabyContextSnapshot } from "./lib/babyContext";
 
-const INSTRUCTIONS = `You are Baby Steps Voice Log — you turn a parent's spoken note into logged baby activities.
+const INSTRUCTIONS = `You are Scrunch Voice Log — you turn a parent's spoken note into logged baby activities.
 
 You log activities. You do NOT give medical advice, diagnose, triage, or delete anything. Care questions go to Ask via handoff_to_ask.
 
@@ -46,7 +46,7 @@ async function transcribeAudio(args: {
         Authorization: `Bearer ${args.apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://babysteps.app",
-        "X-OpenRouter-Title": "Baby Steps Voice Log",
+        "X-OpenRouter-Title": "Scrunch Voice Log",
       },
       body: JSON.stringify({
         model: "openai/whisper-large-v3-turbo",
@@ -272,7 +272,7 @@ async function noteFromImage(args: {
       Authorization: `Bearer ${args.apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": "https://babysteps.app",
-      "X-OpenRouter-Title": "Baby Steps Photo Log",
+      "X-OpenRouter-Title": "Scrunch Photo Log",
     },
     body: JSON.stringify({
       model: process.env.OPENROUTER_MODEL?.trim() || "google/gemini-2.5-flash",

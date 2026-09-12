@@ -23,7 +23,7 @@ export const GUIDANCE_DOCS: GuidanceDoc[] = [
   {
     id: "sleep-tog",
     title: "Room temperature and TOG layers",
-    source: "Baby Steps clothing helper (Lullaby Trust-style)",
+    source: "Scrunch clothing helper (Lullaby Trust-style)",
     tags: ["tog", "temperature", "clothing", "overheat", "layers", "room"],
     body: `Aim for a comfortable room around 16–20°C when possible. Use a TOG-rated bag and adjust layers rather than adding loose blankets. Feel the chest or back of the neck — warm is fine; sweaty means remove a layer. No hats or hoods for indoor sleep. Newborns and smaller babies may need one thin extra layer in cooler rooms, never at the expense of overheating.`,
   },
@@ -78,14 +78,14 @@ export const GUIDANCE_DOCS: GuidanceDoc[] = [
   {
     id: "refuse-meds",
     title: "Medicines and dosing",
-    source: "Baby Steps safety policy",
+    source: "Scrunch safety policy",
     tags: ["medicine", "calpol", "paracetamol", "ibuprofen", "dose", "medication"],
-    body: `Baby Steps is not a medical or healthcare service. Ask will not give medicine names with doses, schedules, or whether a medicine is appropriate. For fever, pain, or illness, contact a pharmacist, GP, midwife, or NHS 111. In an emergency call 999.`,
+    body: `Scrunch is not a medical or healthcare service. Ask will not give medicine names with doses, schedules, or whether a medicine is appropriate. For fever, pain, or illness, contact a pharmacist, GP, midwife, or NHS 111. In an emergency call 999.`,
   },
   {
     id: "refuse-clinical",
     title: "No diagnosis or clinical triage",
-    source: "Baby Steps safety policy",
+    source: "Scrunch safety policy",
     tags: [
       "diagnose",
       "diagnosis",
@@ -96,7 +96,7 @@ export const GUIDANCE_DOCS: GuidanceDoc[] = [
       "a&e",
       "ill",
     ],
-    body: `Baby Steps Ask must not diagnose conditions, interpret symptoms clinically, or triage how urgent a situation is beyond directing emergencies to 999 and otherwise to midwife, GP, health visitor, pharmacist, or NHS 111. It cannot say whether something is “normal” in a medical sense or whether A&E is needed.`,
+    body: `Scrunch Ask must not diagnose conditions, interpret symptoms clinically, or triage how urgent a situation is beyond directing emergencies to 999 and otherwise to midwife, GP, health visitor, pharmacist, or NHS 111. It cannot say whether something is “normal” in a medical sense or whether A&E is needed.`,
   },
   {
     id: "emergencies",

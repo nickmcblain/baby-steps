@@ -1,4 +1,4 @@
-# Baby Steps
+# Scrunch
 
 iOS-first Expo app for logging feeds and nappies, plus a room-temperature clothing helper. Syncs with Convex so both parents share one timeline.
 
