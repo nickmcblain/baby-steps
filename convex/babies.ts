@@ -152,6 +152,40 @@ export const update = authedMutation({
   },
 });
 
+export const setNightWindow = authedMutation({
+  args: {
+    babyId: v.id("babies"),
+    bedMin: v.union(v.number(), v.null()),
+    wakeMin: v.union(v.number(), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    if (args.bedMin === null || args.wakeMin === null) {
+      await ctx.db.patch(args.babyId, { nightBedMin: undefined, nightWakeMin: undefined });
+      return null;
+    }
+    const length = (args.wakeMin - args.bedMin + 1440) % 1440;
+    if (
+      !Number.isInteger(args.bedMin) ||
+      !Number.isInteger(args.wakeMin) ||
+      args.bedMin < 0 ||
+      args.bedMin >= 1440 ||
+      args.wakeMin < 0 ||
+      args.wakeMin >= 1440 ||
+      length < 4 * 60 ||
+      length > 14 * 60
+    ) {
+      throw new ConvexError("Night window looks out of range");
+    }
+    await ctx.db.patch(args.babyId, {
+      nightBedMin: args.bedMin,
+      nightWakeMin: args.wakeMin,
+    });
+    return null;
+  },
+});
+
 export const saveRoomTemp = authedMutation({
   args: {
     babyId: v.id("babies"),

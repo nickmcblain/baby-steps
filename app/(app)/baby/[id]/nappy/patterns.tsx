@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { SleepPatternChart } from "@/components/SleepPatternChart";
-import { Title } from "@/components/ui";
+import { IconButton, PlusMark, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { colors, fonts, radius } from "@/lib/theme";
+import { fonts, radius } from "@/lib/theme";
+import { useTheme, useThemedStyles } from "@/providers/ThemeProvider";
 
 type DayRange = 7 | 14;
 
@@ -17,6 +18,42 @@ export default function NappyPatternsScreen() {
   const babyId = id as Id<"babies">;
   const [days, setDays] = useState<DayRange>(7);
   const rangeEndMs = useMemo(() => Date.now(), []);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(({ colors }) => ({
+    modePill: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 999,
+      backgroundColor: colors.card,
+    },
+    modePillOn: {
+      backgroundColor: colors.peach,
+    },
+    modeText: {
+      fontFamily: fonts.bold,
+      fontSize: 14,
+      color: colors.muted,
+    },
+    modeTextOn: {
+      color: colors.card,
+    },
+    loading: {
+      fontFamily: fonts.body,
+      color: colors.muted,
+      fontSize: 15,
+    },
+    statLabel: {
+      fontFamily: fonts.medium,
+      fontSize: 12,
+      textTransform: "uppercase" as const,
+      letterSpacing: 0.5,
+    },
+    statValue: {
+      fontFamily: fonts.bold,
+      fontSize: 20,
+      color: colors.ink,
+    },
+  }));
 
   const data = useQuery(api.events.nappyPatterns, {
     babyId,
@@ -25,10 +62,20 @@ export default function NappyPatternsScreen() {
   });
 
   return (
-    <Screen onBack={() => router.back()}>
+    <Screen
+      onBack={() => router.back()}
+      headerRight={
+        <IconButton
+          onPress={() => router.push(`/baby/${id}/nappy`)}
+          accessibilityLabel="Add nappy"
+        >
+          <PlusMark color={colors.ink} />
+        </IconButton>
+      }
+    >
       <Title>Nappy patterns</Title>
 
-      <View style={styles.modeRow}>
+      <View style={layout.modeRow}>
         <Pressable
           onPress={() => setDays(7)}
           style={[styles.modePill, days === 7 && styles.modePillOn]}
@@ -51,8 +98,8 @@ export default function NappyPatternsScreen() {
         <Text style={styles.loading}>Loading…</Text>
       ) : (
         <>
-          <View style={styles.statsRow}>
-            <View style={[styles.stat, { backgroundColor: colors.peachSoft }]}>
+          <View style={layout.statsRow}>
+            <View style={[layout.stat, { backgroundColor: colors.peachSoft }]}>
               <Text style={[styles.statLabel, { color: colors.peach }]}>
                 Avg / day
               </Text>
@@ -62,7 +109,7 @@ export default function NappyPatternsScreen() {
                   : "—"}
               </Text>
             </View>
-            <View style={[styles.stat, { backgroundColor: colors.peachSoft }]}>
+            <View style={[layout.stat, { backgroundColor: colors.peachSoft }]}>
               <Text style={[styles.statLabel, { color: colors.peach }]}>
                 Wee · poo
               </Text>
@@ -85,33 +132,11 @@ export default function NappyPatternsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const layout = StyleSheet.create({
   modeRow: {
     flexDirection: "row",
     gap: 8,
     alignSelf: "flex-start",
-  },
-  modePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: colors.card,
-  },
-  modePillOn: {
-    backgroundColor: colors.peach,
-  },
-  modeText: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
-    color: colors.muted,
-  },
-  modeTextOn: {
-    color: colors.card,
-  },
-  loading: {
-    fontFamily: fonts.body,
-    color: colors.muted,
-    fontSize: 15,
   },
   statsRow: {
     flexDirection: "row",
@@ -123,16 +148,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 4,
-  },
-  statLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  statValue: {
-    fontFamily: fonts.bold,
-    fontSize: 20,
-    color: colors.ink,
   },
 });

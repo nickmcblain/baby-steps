@@ -4,11 +4,12 @@ import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { SleepPatternChart } from "@/components/SleepPatternChart";
-import { Title } from "@/components/ui";
+import { IconButton, PlusMark, Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { formatDurationMinutes } from "@/lib/eventCopy";
-import { colors, fonts, radius } from "@/lib/theme";
+import { fonts, radius } from "@/lib/theme";
+import { useTheme, useThemedStyles } from "@/providers/ThemeProvider";
 
 type DayRange = 7 | 14;
 
@@ -18,6 +19,42 @@ export default function FeedPatternsScreen() {
   const babyId = id as Id<"babies">;
   const [days, setDays] = useState<DayRange>(7);
   const rangeEndMs = useMemo(() => Date.now(), []);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(({ colors }) => ({
+    modePill: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 999,
+      backgroundColor: colors.card,
+    },
+    modePillOn: {
+      backgroundColor: colors.teal,
+    },
+    modeText: {
+      fontFamily: fonts.bold,
+      fontSize: 14,
+      color: colors.muted,
+    },
+    modeTextOn: {
+      color: colors.card,
+    },
+    loading: {
+      fontFamily: fonts.body,
+      color: colors.muted,
+      fontSize: 15,
+    },
+    statLabel: {
+      fontFamily: fonts.medium,
+      fontSize: 12,
+      textTransform: "uppercase" as const,
+      letterSpacing: 0.5,
+    },
+    statValue: {
+      fontFamily: fonts.bold,
+      fontSize: 20,
+      color: colors.ink,
+    },
+  }));
 
   const data = useQuery(api.events.feedPatterns, {
     babyId,
@@ -26,10 +63,20 @@ export default function FeedPatternsScreen() {
   });
 
   return (
-    <Screen onBack={() => router.back()}>
+    <Screen
+      onBack={() => router.back()}
+      headerRight={
+        <IconButton
+          onPress={() => router.push(`/baby/${id}/feed/timer`)}
+          accessibilityLabel="Add feed"
+        >
+          <PlusMark color={colors.ink} />
+        </IconButton>
+      }
+    >
       <Title>Feed patterns</Title>
 
-      <View style={styles.modeRow}>
+      <View style={layout.modeRow}>
         <Pressable
           onPress={() => setDays(7)}
           style={[styles.modePill, days === 7 && styles.modePillOn]}
@@ -52,8 +99,8 @@ export default function FeedPatternsScreen() {
         <Text style={styles.loading}>Loading…</Text>
       ) : (
         <>
-          <View style={styles.statsRow}>
-            <View style={[styles.stat, { backgroundColor: colors.tealSoft }]}>
+          <View style={layout.statsRow}>
+            <View style={[layout.stat, { backgroundColor: colors.tealSoft }]}>
               <Text style={[styles.statLabel, { color: colors.tealDark }]}>
                 Avg feed / day
               </Text>
@@ -63,7 +110,7 @@ export default function FeedPatternsScreen() {
                 ) || "—"}
               </Text>
             </View>
-            <View style={[styles.stat, { backgroundColor: colors.tealSoft }]}>
+            <View style={[layout.stat, { backgroundColor: colors.tealSoft }]}>
               <Text style={[styles.statLabel, { color: colors.tealDark }]}>
                 Avg sessions / day
               </Text>
@@ -88,33 +135,11 @@ export default function FeedPatternsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const layout = StyleSheet.create({
   modeRow: {
     flexDirection: "row",
     gap: 8,
     alignSelf: "flex-start",
-  },
-  modePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: colors.card,
-  },
-  modePillOn: {
-    backgroundColor: colors.teal,
-  },
-  modeText: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
-    color: colors.muted,
-  },
-  modeTextOn: {
-    color: colors.card,
-  },
-  loading: {
-    fontFamily: fonts.body,
-    color: colors.muted,
-    fontSize: 15,
   },
   statsRow: {
     flexDirection: "row",
@@ -126,16 +151,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 4,
-  },
-  statLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  statValue: {
-    fontFamily: fonts.bold,
-    fontSize: 20,
-    color: colors.ink,
   },
 });

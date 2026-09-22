@@ -77,6 +77,8 @@ export const babyValidator = v.object({
   deliveryType: v.optional(deliveryTypeValidator),
   gestationWeeks: v.optional(v.number()),
   feedingMode: v.optional(feedingModeValidator),
+  nightBedMin: v.optional(v.number()),
+  nightWakeMin: v.optional(v.number()),
   createdBy: v.id("users"),
   careDataConsentAt: v.optional(v.number()),
   careDataConsentVersion: v.optional(v.string()),

@@ -33,6 +33,9 @@ export default defineSchema({
     deliveryType: v.optional(deliveryTypeValidator),
     gestationWeeks: v.optional(v.number()),
     feedingMode: v.optional(feedingModeValidator),
+    /** Clock minutes, both set together. Parent override for the night stretch. */
+    nightBedMin: v.optional(v.number()),
+    nightWakeMin: v.optional(v.number()),
     createdBy: v.id("users"),
     /** Parent/guardian consented to store this baby's care details (UK GDPR). */
     careDataConsentAt: v.optional(v.number()),
