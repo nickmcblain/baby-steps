@@ -2,6 +2,7 @@ import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { EventList } from "@/components/EventList";
 import { Screen } from "@/components/Screen";
 import { SleepPatternChart } from "@/components/SleepPatternChart";
 import { IconButton, PlusMark, Title } from "@/components/ui";
@@ -131,6 +132,13 @@ export default function FeedPatternsScreen() {
           />
         </>
       )}
+
+      <EventList
+        babyId={babyId}
+        kind="feed"
+        days={days}
+        rangeEndMs={rangeEndMs}
+      />
     </Screen>
   );
 }

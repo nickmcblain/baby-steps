@@ -1,79 +1,18 @@
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
-import * as Haptics from "expo-haptics";
+import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import { BottomSheet } from "@/components/BottomSheet";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { EventList } from "@/components/EventList";
 import { Screen } from "@/components/Screen";
 import { WeekRhythmChart } from "@/components/WeekRhythmChart";
 import { Title } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { eventKindLabel, eventTitle } from "@/lib/eventCopy";
-import {
-  formatLoggedAt,
-  formatTimelineDay,
-  timelineDayKey,
-} from "@/lib/loggedAt";
+import type { Id } from "@/convex/_generated/dataModel";
 import { addDays, startOfWeekMonday } from "@/lib/weekGrid";
-import { colors, fonts } from "@/lib/theme";
+import { fonts } from "@/lib/theme";
+import { useThemedStyles } from "@/providers/ThemeProvider";
 
-type Event = Doc<"events">;
 type Mode = "list" | "week";
-
-function tintFor(kind: Event["kind"]): string {
-  switch (kind) {
-    case "feed":
-      return colors.tealSoft;
-    case "nappy":
-      return colors.peachSoft;
-    case "weight":
-      return colors.amberSoft;
-    case "height":
-      return colors.skySoft;
-    case "sleep":
-      return colors.purpleSoft;
-    case "tummy":
-      return colors.skySoft;
-    case "custom":
-      return colors.roseSoft;
-    case "pump":
-      return colors.tealSoft;
-    case "medicine":
-      return colors.amberSoft;
-    case "potty":
-      return colors.peachSoft;
-    case "activity":
-      return colors.purpleSoft;
-  }
-}
-
-function inkFor(kind: Event["kind"]): string {
-  switch (kind) {
-    case "feed":
-      return colors.tealDark;
-    case "nappy":
-      return colors.peach;
-    case "weight":
-      return colors.amber;
-    case "height":
-      return colors.sky;
-    case "sleep":
-      return colors.purple;
-    case "tummy":
-      return colors.sky;
-    case "custom":
-      return colors.rose;
-    case "pump":
-      return colors.tealDark;
-    case "medicine":
-      return colors.amber;
-    case "potty":
-      return colors.peach;
-    case "activity":
-      return colors.purple;
-  }
-}
 
 export function TimelineView({
   babyId,
@@ -86,83 +25,36 @@ export function TimelineView({
   const now = Date.now();
   const [mode, setMode] = useState<Mode>("list");
   const [weekStartMs, setWeekStartMs] = useState(() => startOfWeekMonday(now));
-  const [pendingDelete, setPendingDelete] = useState<Event | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const removeEvent = useMutation(api.events.remove);
-
-  const { results, status, loadMore } = usePaginatedQuery(
-    api.events.list,
-    { babyId },
-    { initialNumItems: 40 },
-  );
+  const styles = useThemedStyles(({ colors }) => ({
+    modePill: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 999,
+      backgroundColor: colors.card,
+    },
+    modePillOn: {
+      backgroundColor: colors.ink,
+    },
+    modeText: {
+      fontFamily: fonts.bold,
+      fontSize: 14,
+      color: colors.muted,
+    },
+    modeTextOn: {
+      color: colors.card,
+    },
+    empty: {
+      fontFamily: fonts.body,
+      color: colors.muted,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+  }));
 
   const weekGrid = useQuery(
     api.events.weekGrid,
     mode === "week" ? { babyId, weekStartMs } : "skip",
   );
-
-  const sections = useMemo(() => {
-    const groups: { key: string; label: string; items: Event[]; dayStart: number }[] =
-      [];
-    for (const event of results) {
-      const key = timelineDayKey(event.loggedAt);
-      const last = groups[groups.length - 1];
-      if (last && last.key === key) {
-        last.items.push(event);
-      } else {
-        const d = new Date(event.loggedAt);
-        const dayStart = new Date(
-          d.getFullYear(),
-          d.getMonth(),
-          d.getDate(),
-        ).getTime();
-        groups.push({
-          key,
-          label: formatTimelineDay(event.loggedAt, now),
-          items: [event],
-          dayStart,
-        });
-      }
-    }
-
-    const todayStart = new Date(
-      new Date(now).getFullYear(),
-      new Date(now).getMonth(),
-      new Date(now).getDate(),
-    ).getTime();
-
-    const upcoming = groups
-      .filter((g) => g.dayStart > todayStart)
-      .sort((a, b) => a.dayStart - b.dayStart);
-    const rest = groups.filter((g) => g.dayStart <= todayStart);
-    return [...upcoming, ...rest];
-  }, [results, now]);
-
-  async function confirmDelete() {
-    if (!pendingDelete || deleting) return;
-    setDeleting(true);
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
-      () => undefined,
-    );
-    try {
-      await removeEvent({ eventId: pendingDelete._id });
-      setPendingDelete(null);
-    } catch (error) {
-      Alert.alert(
-        "Couldn’t delete",
-        error instanceof Error ? error.message : "Try again",
-      );
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  function onLongPressEvent(event: Event) {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
-      () => undefined,
-    );
-    setPendingDelete(event);
-  }
 
   return (
     <Screen
@@ -170,9 +62,9 @@ export function TimelineView({
       onBack={showBack ? () => router.back() : undefined}
       clearDock={!showBack}
     >
-      <View style={styles.headingRow}>
+      <View style={layout.headingRow}>
         <Title>Timeline</Title>
-        <View style={styles.modeRow}>
+        <View style={layout.modeRow}>
           <Pressable
             onPress={() => setMode("list")}
             style={[styles.modePill, mode === "list" && styles.modePillOn]}
@@ -206,102 +98,11 @@ export function TimelineView({
           />
         )
       ) : (
-        <>
-          {sections.map((section) => (
-            <View key={section.key} style={styles.section}>
-              <Text style={styles.day}>{section.label}</Text>
-              <View style={styles.rail}>
-                {section.items.map((event, index) => (
-                  <View key={event._id} style={styles.row}>
-                    <View style={styles.railCol}>
-                      <View
-                        style={[
-                          styles.dot,
-                          { backgroundColor: inkFor(event.kind) },
-                        ]}
-                      />
-                      {index < section.items.length - 1 ? (
-                        <View style={styles.line} />
-                      ) : null}
-                    </View>
-                    <Pressable
-                      onLongPress={() => onLongPressEvent(event)}
-                      delayLongPress={380}
-                      style={[
-                        styles.card,
-                        { backgroundColor: tintFor(event.kind) },
-                      ]}
-                      accessibilityHint="Press and hold to delete"
-                    >
-                      <View style={styles.cardTop}>
-                        <Text
-                          style={[styles.kind, { color: inkFor(event.kind) }]}
-                        >
-                          {eventKindLabel(event)}
-                        </Text>
-                        <Text style={styles.time}>
-                          {formatLoggedAt(event.loggedAt).split(" · ")[1]}
-                        </Text>
-                      </View>
-                      <Text style={styles.title}>{eventTitle(event)}</Text>
-                      {event.note ? (
-                        <Text style={styles.note}>{event.note}</Text>
-                      ) : null}
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-            </View>
-          ))}
-
-          {status === "CanLoadMore" ? (
-            <Pressable onPress={() => loadMore(20)} style={styles.more}>
-              <Text style={styles.moreText}>Load older</Text>
-            </Pressable>
-          ) : null}
-          {results.length === 0 ? (
-            <Text style={styles.empty}>
-              Nothing yet. Log care, or tap + to add a midwife visit or jab date.
-            </Text>
-          ) : null}
-        </>
+        <EventList
+          babyId={babyId}
+          emptyText="Nothing yet. Log care, or tap + to add a midwife visit or jab date."
+        />
       )}
-
-      <BottomSheet
-        visible={pendingDelete != null}
-        onClose={() => {
-          if (!deleting) setPendingDelete(null);
-        }}
-      >
-        {pendingDelete ? (
-          <View style={styles.deleteBody}>
-            <Text style={styles.deleteKind}>
-              {eventKindLabel(pendingDelete)}
-            </Text>
-            <Text style={styles.deleteTitle}>{eventTitle(pendingDelete)}</Text>
-            <Text style={styles.deleteWhen}>
-              {formatLoggedAt(pendingDelete.loggedAt)}
-            </Text>
-            <Text style={styles.deleteHint}>This can’t be undone.</Text>
-            <Pressable
-              onPress={() => void confirmDelete()}
-              disabled={deleting}
-              style={[styles.deleteBtn, deleting && styles.deleteBtnDisabled]}
-            >
-              <Text style={styles.deleteBtnText}>
-                {deleting ? "Deleting…" : "Delete"}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setPendingDelete(null)}
-              disabled={deleting}
-              style={styles.cancelBtn}
-            >
-              <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-          </View>
-        ) : null}
-      </BottomSheet>
     </Screen>
   );
 }
@@ -311,7 +112,7 @@ export default function TimelineScreen() {
   return <TimelineView babyId={id as Id<"babies">} showBack />;
 }
 
-const styles = StyleSheet.create({
+const layout = StyleSheet.create({
   headingRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -321,148 +122,5 @@ const styles = StyleSheet.create({
   modeRow: {
     flexDirection: "row",
     gap: 8,
-  },
-  modePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: colors.card,
-  },
-  modePillOn: {
-    backgroundColor: colors.ink,
-  },
-  modeText: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
-    color: colors.muted,
-  },
-  modeTextOn: {
-    color: colors.card,
-  },
-  section: { gap: 12 },
-  day: {
-    fontFamily: fonts.bold,
-    fontSize: 13,
-    color: colors.tealDark,
-    textTransform: "uppercase",
-    letterSpacing: 0.7,
-  },
-  rail: { gap: 0 },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 72,
-  },
-  railCol: {
-    width: 18,
-    alignItems: "center",
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginTop: 18,
-    zIndex: 1,
-  },
-  line: {
-    flex: 1,
-    width: 2,
-    backgroundColor: colors.line,
-    marginTop: 4,
-    marginBottom: -4,
-  },
-  card: {
-    flex: 1,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 12,
-    gap: 4,
-  },
-  cardTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  kind: {
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  time: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    color: colors.muted,
-  },
-  title: {
-    fontFamily: fonts.bold,
-    fontSize: 17,
-    color: colors.ink,
-  },
-  note: {
-    fontFamily: fonts.body,
-    color: colors.ink,
-    opacity: 0.75,
-    marginTop: 2,
-  },
-  more: {
-    alignItems: "center",
-    padding: 14,
-    backgroundColor: colors.card,
-    borderRadius: 999,
-  },
-  moreText: { fontFamily: fonts.bold, color: colors.tealDark },
-  empty: {
-    fontFamily: fonts.body,
-    color: colors.muted,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  deleteBody: { gap: 8 },
-  deleteKind: {
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    color: colors.muted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  deleteTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 20,
-    color: colors.ink,
-  },
-  deleteWhen: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: colors.muted,
-  },
-  deleteHint: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.muted,
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  deleteBtn: {
-    backgroundColor: colors.danger,
-    borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  deleteBtnDisabled: { opacity: 0.45 },
-  deleteBtnText: {
-    fontFamily: fonts.bold,
-    fontSize: 17,
-    color: "#fff",
-  },
-  cancelBtn: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  cancelText: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: colors.muted,
   },
 });

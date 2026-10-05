@@ -1,7 +1,8 @@
 import { fonts, radius } from "@/lib/theme";
 import { useTheme, useThemedStyles } from "@/providers/ThemeProvider";
-import { ReactNode } from "react";
+import { ReactNode, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   Text,
   TextInput,
@@ -93,9 +94,13 @@ export function PrimaryButton({
   disabled,
 }: {
   label: string;
-  onPress: () => void;
+  onPress: () => void | Promise<unknown>;
   disabled?: boolean;
 }) {
+  const { colors } = useTheme();
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const locked = disabled || busy;
   const styles = useThemedStyles(({ colors }) => ({
     primary: {
       backgroundColor: colors.teal,
@@ -107,13 +112,34 @@ export function PrimaryButton({
     },
     primaryText: { fontFamily: fonts.bold, fontSize: 17, color: colors.onAccent },
   }));
+
+  async function handlePress() {
+    if (disabled || busyRef.current) return;
+    const result = onPress();
+    if (result && typeof result.then === "function") {
+      busyRef.current = true;
+      setBusy(true);
+      try {
+        await result;
+      } finally {
+        busyRef.current = false;
+        setBusy(false);
+      }
+    }
+  }
+
   return (
     <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={[styles.primary, disabled && { opacity: 0.45 }]}
+      onPress={() => void handlePress()}
+      disabled={locked}
+      accessibilityState={{ disabled: locked, busy }}
+      style={[styles.primary, locked && { opacity: 0.45 }]}
     >
-      <Text style={styles.primaryText}>{label}</Text>
+      {busy ? (
+        <ActivityIndicator color={colors.onAccent} />
+      ) : (
+        <Text style={styles.primaryText}>{label}</Text>
+      )}
     </Pressable>
   );
 }

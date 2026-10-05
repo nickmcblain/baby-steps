@@ -233,16 +233,54 @@ export const growthSeries = authedQuery({
 export const list = authedQuery({
   args: {
     babyId: v.id("babies"),
+    kind: v.optional(eventKindValidator),
     paginationOpts: paginationOptsValidator,
   },
   returns: paginationResultValidator(eventValidator),
   handler: async (ctx, args) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    if (args.kind !== undefined) {
+      const kind = args.kind;
+      return await ctx.db
+        .query("events")
+        .withIndex("by_baby_kind_loggedAt", (q) =>
+          q.eq("babyId", args.babyId).eq("kind", kind),
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
     return await ctx.db
       .query("events")
       .withIndex("by_baby_and_loggedAt", (q) => q.eq("babyId", args.babyId))
       .order("desc")
       .paginate(args.paginationOpts);
+  },
+});
+
+export const listByKindInRange = authedQuery({
+  args: {
+    babyId: v.id("babies"),
+    kind: eventKindValidator,
+    startMs: v.number(),
+    endMs: v.number(),
+  },
+  returns: v.array(eventValidator),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    if (!(args.endMs > args.startMs)) {
+      throw new ConvexError("Range is invalid");
+    }
+    return await ctx.db
+      .query("events")
+      .withIndex("by_baby_kind_loggedAt", (q) =>
+        q
+          .eq("babyId", args.babyId)
+          .eq("kind", args.kind)
+          .gte("loggedAt", args.startMs)
+          .lt("loggedAt", args.endMs),
+      )
+      .order("desc")
+      .take(200);
   },
 });
 
