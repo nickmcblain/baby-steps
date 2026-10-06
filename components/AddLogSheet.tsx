@@ -26,20 +26,27 @@ import { BottomSheet } from "@/components/BottomSheet";
 import type { Id } from "@/convex/_generated/dataModel";
 import { colors, fonts, shadow } from "@/lib/theme";
 import { useVoiceLog } from "@/lib/useVoiceLog";
+import { useTheme } from "@/providers/ThemeProvider";
 
 const TILES = [
-  { path: "feed/timer", label: "Feed", tint: colors.teal, ink: "#fff", icon: "feed" },
-  { path: "sleep/timer", label: "Sleep", tint: colors.purple, ink: "#fff", icon: "sleep" },
-  { path: "nappy", label: "Nappy", tint: colors.peach, ink: "#fff", icon: "nappy" },
-  { path: "tummy/timer", label: "Tummy", tint: colors.sky, ink: "#fff", icon: "tummy" },
-  { path: "pump/timer", label: "Pump", tint: colors.tealDark, ink: "#fff", icon: "pump" },
-  { path: "medicine", label: "Medicine", tint: colors.amber, ink: colors.ink, icon: "medicine" },
-  { path: "potty", label: "Potty", tint: colors.peach, ink: "#fff", icon: "potty" },
-  { path: "activity", label: "Activity", tint: colors.purple, ink: "#fff", icon: "activity" },
-  { path: "event", label: "Note", tint: colors.rose, ink: "#fff", icon: "event" },
-  { path: "temp", label: "Clothing", tint: colors.amber, ink: colors.ink, icon: "temp" },
-  { path: "ask", label: "Ask", tint: colors.teal, ink: "#fff", icon: "ask" },
+  { path: "feed/timer", label: "Feed", tint: colors.teal, icon: "feed" },
+  { path: "sleep/timer", label: "Sleep", tint: colors.purple, icon: "sleep" },
+  { path: "nappy", label: "Nappy", tint: colors.peach, icon: "nappy" },
+  { path: "tummy/timer", label: "Tummy", tint: colors.sky, icon: "tummy" },
+  { path: "pump/timer", label: "Pump", tint: colors.tealDark, icon: "pump" },
+  { path: "medicine", label: "Medicine", tint: colors.amber, icon: "medicine" },
+  { path: "potty", label: "Potty", tint: colors.peach, icon: "potty" },
+  { path: "activity", label: "Activity", tint: colors.purple, icon: "activity" },
+  { path: "event", label: "Note", tint: colors.rose, icon: "event" },
+  { path: "temp", label: "Clothing", tint: colors.amber, icon: "temp" },
+  { path: "ask", label: "Ask", tint: colors.teal, icon: "ask" },
 ] as const;
+
+/** Idle Speak well. Darker than the near-white ink token, still light enough for a black glyph in dark mode. */
+const SPEAK_WELL = {
+  light: "#3E4654",
+  dark: "#8E96A3",
+} as const;
 
 function TileIcon({
   name,
@@ -88,6 +95,7 @@ export function AddLogSheet({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { colors: theme, scheme } = useTheme();
   const voice = useVoiceLog(babyId as Id<"babies"> | null);
   useEffect(() => {
     if (!visible) void voice.cancel();
@@ -122,7 +130,8 @@ export function AddLogSheet({
     Alert.alert("Logged", result.confirmation);
   }
 
-  const speakTint = voice.recording ? colors.danger : colors.ink;
+  const iconInk = theme.onInk;
+  const speakTint = voice.recording ? theme.danger : SPEAK_WELL[scheme];
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
@@ -134,7 +143,7 @@ export function AddLogSheet({
             style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
           >
             <View style={[styles.iconWell, { backgroundColor: tile.tint }]}>
-              <TileIcon name={tile.icon} color={tile.ink} cut={tile.tint} />
+              <TileIcon name={tile.icon} color={iconInk} cut={tile.tint} />
             </View>
             <Text style={styles.label}>{tile.label}</Text>
           </Pressable>
@@ -149,9 +158,9 @@ export function AddLogSheet({
         >
           <View style={[styles.iconWell, { backgroundColor: speakTint }]}>
             {voice.busy ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={iconInk} />
             ) : (
-              <TileIcon name="mic" color="#fff" cut={speakTint} />
+              <TileIcon name="mic" color={iconInk} cut={speakTint} />
             )}
           </View>
           <Text style={styles.label}>
