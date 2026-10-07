@@ -1,4 +1,4 @@
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery } from "convex/react";
 import * as Haptics from "expo-haptics";
 import { useMemo, useState, type ReactNode } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
@@ -93,29 +93,26 @@ export function EventList({
   emptyText?: string;
 }) {
   const now = Date.now();
-  const ranged = kind != null && days != null && rangeEndMs != null;
-  const window = ranged ? patternWindow(days, rangeEndMs) : null;
-  const rangedEvents = useQuery(
-    api.events.listByKindInRange,
-    window && kind
-      ? { babyId, kind, startMs: window.startMs, endMs: window.endMs }
-      : "skip",
-  );
+  const window =
+    kind != null && days != null && rangeEndMs != null
+      ? patternWindow(days, rangeEndMs)
+      : null;
+  // `events.list` on the running deployment only accepts babyId.
+  // Passing `kind` makes Convex throw and takes down the screen.
   const paginated = usePaginatedQuery(
     api.events.list,
-    ranged ? "skip" : kind ? { babyId, kind } : { babyId },
-    { initialNumItems: 40 },
+    { babyId },
+    { initialNumItems: kind != null || window != null ? 200 : 40 },
   );
-  if (ranged) {
-    if (rangedEvents === undefined) return null;
-    return (
-      <EventTimeline events={rangedEvents} now={now} emptyText={emptyText} />
-    );
-  }
+  const events = (paginated.results ?? []).filter((event) => {
+    if (kind != null && event.kind !== kind) return false;
+    if (window == null) return true;
+    return event.loggedAt >= window.startMs && event.loggedAt < window.endMs;
+  });
 
   return (
     <EventTimeline
-      events={paginated.results}
+      events={events}
       now={now}
       emptyText={emptyText}
       footer={
