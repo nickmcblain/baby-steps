@@ -130,12 +130,20 @@ public struct TimerSession: Codable, Equatable, Sendable {
   }
 
   /// What the manual screen is pre-filled with after "Done".
-  public struct Handoff: Equatable, Sendable {
+  public struct Handoff: Hashable, Sendable {
     public var minutes: Int
     public var side: Side?
     public var startedAt: EpochMs
     public var leftMinutes: Int?
     public var rightMinutes: Int?
+
+    public init(minutes: Int, side: Side?, startedAt: EpochMs, leftMinutes: Int? = nil, rightMinutes: Int? = nil) {
+      self.minutes = minutes
+      self.side = side
+      self.startedAt = startedAt
+      self.leftMinutes = leftMinutes
+      self.rightMinutes = rightMinutes
+    }
 
     /// The feed note the RN app pre-fills when both sides were used.
     public var bothSidesNote: String? {

@@ -1,0 +1,13 @@
+// Committed defaults. Real values go in Secrets.xcconfig (gitignored).
+// Copy Secrets.example.xcconfig to Secrets.xcconfig and fill it in.
+
+MARKETING_VERSION = 1.0.0
+// Must be higher than the last EAS build number for this app on App Store Connect.
+CURRENT_PROJECT_VERSION = 1
+
+CLERK_PUBLISHABLE_KEY =
+CONVEX_URL =
+DEVELOPMENT_TEAM =
+CODE_SIGN_STYLE = Automatic
+
+#include? "Secrets.xcconfig"
