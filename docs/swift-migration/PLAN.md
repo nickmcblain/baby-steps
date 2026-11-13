@@ -113,10 +113,20 @@ and widget targets depend on it as a local Swift package.
 | Custom SVG icons (`ActionIcons.tsx`, `TabIcons.tsx`) | SF Symbols | Native, dynamic-type aware. Mapping below |
 | `app.json` `userInterfaceStyle: "light"` | `UIUserInterfaceStyle = Light` in Info.plist | Same forced-light behaviour; dark palette ported and one key away |
 
+### Deliberate deviations from RN
+
+- The Ask composer stays visible (RN hides it while scrolling up).
+- Ask citations with a URL are tappable links.
+- "Skip to manual" on a timer only stops the timer if it belongs to that screen.
+- "Load older" re-subscribes with a bigger page instead of cursor pagination (see above).
+- Feed-reminder suppression while the sleep timer runs is driven by `TimerStore` (the sleep
+  timer refreshes the feed reminder on every start / stop) instead of RN's
+  `onSleepTimerRunning` / `onSleepTimerIdle` hooks. Same outcome.
+
 ### Fonts
 
 Fredoka (display, 600/700) and Nunito (body, 400/600/700) are SIL OFL Google Fonts. Static
-TTFs are bundled in `ios-native/Scrunch/Resources/Fonts` with their OFL licence and
+TTFs are bundled in `ios-native/Shared/Fonts` (app and widget extension) with their OFL licence and
 registered via `UIAppFonts`.
 
 ---
@@ -220,7 +230,7 @@ A = action.
 
 | Function | Kind | Args | Swift result |
 | --- | --- | --- | --- |
-| `users:store` | M | `{}` | `String` (user id) |
+| `users:store` | M | `{}` | `User` |
 | `users:current` | Q | `{}` | `User?` |
 | `babies:list` | Q | `{}` | `[Baby]` |
 | `babies:get` | Q | `babyId` | `Baby?` |
@@ -325,9 +335,9 @@ Legend:
 
 ### Foundation
 
-- [~] XcodeGen `project.yml` (app, widgets, tests), bundle IDs, app group, URL scheme
+- [x] XcodeGen `project.yml` (app, widgets, tests), bundle IDs, app group, URL scheme (generates cleanly)
 - [~] xcconfig-based `CLERK_PUBLISHABLE_KEY` / `CONVEX_URL` (secrets gitignored)
-- [~] Info.plist: mic / photos / camera strings, Live Activities, forced light, fonts
+- [~] Info.plist: mic string, Live Activities, forced light, fonts (photo / camera strings dropped until image logging exists)
 - [~] Fonts bundled (Fredoka, Nunito) + OFL licence
 - [~] App icon from `assets/icon.png`
 - [x] `ConvexValue` encoding (Double-only numbers, nil keys omitted)
@@ -398,6 +408,7 @@ Legend:
 - [~] VoiceOver labels on icon-only buttons, rings and charts
 - [~] Dynamic Type (fonts scale relative to body)
 - [ ] Dock collapse on scroll
+- [~] App unit tests for deep-link routing (`ScrunchTests`)
 - [ ] Snapshot / UI tests on device
 
 ---
@@ -408,9 +419,10 @@ Legend:
 | --- | --- | --- |
 | `ScrunchCore` builds | `swift build` on Linux (Swift 6.x) | Verified |
 | `ScrunchCore` tests | `swift test` on Linux | Verified |
-| App / widget Swift syntax | `swiftc -parse` on every file | Verified (syntax only; not type-checked) |
+| App / widget / app-test Swift syntax | `swiftc -parse` on every file | Verified (syntax only; not type-checked) |
+| App unit tests (`ScrunchTests`: deep links, routing) | Xcode | **Not verified** |
 | App / widget type-check, link, run | Xcode 16+ / iOS 17 simulator | **Not verified**: no Xcode on Linux |
-| XcodeGen spec generates a project | `xcodegen generate` | See PR notes |
+| XcodeGen spec generates a project | `xcodegen generate` (XcodeGen built from source on Linux) | Verified |
 | Clerk sign-in, Convex auth round-trip | Device / simulator | **Not verified** |
 | Widget, Live Activity, notifications, mic | Device | **Not verified** |
 
@@ -429,5 +441,9 @@ Legend:
 4. **Dock collapse on scroll**: worth porting, or is a fixed floating dock fine?
 5. **Dark mode**: RN forces light. Keep forcing light, or follow the system now that the
    dark palette is native?
-6. **Image logging** (`voiceLog:logFromImage`) exists on the backend and the photo / camera
-   permission strings ship, but the RN client never calls it. Add it to the native app?
+6. **Image logging** (`voiceLog:logFromImage`) exists on the backend and RN ships photo /
+   camera permission strings, but the RN client never calls it. The native app drops those
+   strings for now. Add the feature?
+7. **Build number**: the App Store needs `CURRENT_PROJECT_VERSION` above the last EAS build
+   number. Set it in `Config/Secrets.xcconfig` (or `Shared.xcconfig`) before archiving.
+8. **Small behaviour differences** (listed in section 1, "Deliberate deviations"): OK?
