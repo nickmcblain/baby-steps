@@ -11,3 +11,6 @@ DEVELOPMENT_TEAM =
 CODE_SIGN_STYLE = Automatic
 
 #include? "Secrets.xcconfig"
+
+// convex-swift ships an arm64-only simulator slice
+EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64

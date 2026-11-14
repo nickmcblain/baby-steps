@@ -20,9 +20,9 @@ struct GlanceProvider: TimelineProvider {
   }
 
   /// The app pushes a new snapshot and reloads; there is nothing to compute ahead of time.
-  func getTimeline(in context: Context, completion: @escaping (Timeline<GlanceEntry>) -> Void) {
+  func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<GlanceEntry>) -> Void) {
     let entry = GlanceEntry(date: .now, snapshot: GlanceStore.load() ?? .placeholder)
-    completion(Timeline(entries: [entry], policy: .never))
+    completion(WidgetKit.Timeline(entries: [entry], policy: .never))
   }
 }
 

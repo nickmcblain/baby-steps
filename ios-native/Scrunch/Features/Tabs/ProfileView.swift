@@ -7,7 +7,7 @@ import SwiftUI
 struct ProfileView: View {
   @Environment(ConvexService.self) private var convex
   @Environment(Clerk.self) private var clerk
-  @State private var user = Live<User?>()
+  @State private var user = Live<ScrunchCore.User?>()
 
   private var email: String {
     user.value??.email ?? clerk.user?.primaryEmailAddress?.emailAddress ?? "—"
