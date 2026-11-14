@@ -10,18 +10,21 @@ struct BabyTimerLiveActivity: Widget {
     ActivityConfiguration(for: BabyTimerAttributes.self) { context in
       let state = context.state
       HStack(spacing: 12) {
-        Image(systemName: state.symbol).foregroundStyle(state.accent).font(.title2)
+        Image(systemName: state.symbol).foregroundStyle(state.accent).font(.title2).accessibilityHidden(true)
         VStack(alignment: .leading, spacing: 2) {
           Text(state.title).font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
           if !state.subtitle.isEmpty {
             Text(state.subtitle).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6))
           }
-          Text(state.running ? "Timing…" : "Paused").font(.system(size: 12)).foregroundStyle(.white.opacity(0.4))
+          Label(state.running ? "Timing…" : "Paused", systemImage: state.running ? "record.circle" : "pause.fill")
+            .font(.system(size: 12))
+            .foregroundStyle(.white.opacity(0.6))
         }
         Spacer()
         TimerClockText(state: state, size: 28).frame(width: 110, alignment: .trailing)
       }
       .padding(14)
+      .accessibilityElement(children: .combine)
       .activityBackgroundTint(Color.black.opacity(0.85))
       .activitySystemActionForegroundColor(.white)
       .widgetURL(context.attributes.deepLink)
@@ -30,10 +33,11 @@ struct BabyTimerLiveActivity: Widget {
       return DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
           VStack(alignment: .leading, spacing: 4) {
-            Image(systemName: state.symbol).foregroundStyle(state.accent)
+            Image(systemName: state.symbol).foregroundStyle(state.accent).accessibilityHidden(true)
             Text(state.shortLabel).font(.system(size: 12)).foregroundStyle(.white)
           }
           .padding(10)
+          .accessibilityElement(children: .combine)
         }
         DynamicIslandExpandedRegion(.trailing) {
           VStack(alignment: .trailing, spacing: 2) {
@@ -41,6 +45,7 @@ struct BabyTimerLiveActivity: Widget {
             Text(state.running ? "Running" : "Paused").font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
           }
           .padding(10)
+          .accessibilityElement(children: .combine)
         }
         DynamicIslandExpandedRegion(.bottom) {
           VStack(alignment: .leading, spacing: 2) {
@@ -54,7 +59,7 @@ struct BabyTimerLiveActivity: Widget {
           .padding(.bottom, 10)
         }
       } compactLeading: {
-        Image(systemName: state.symbol).foregroundStyle(state.accent)
+        Image(systemName: state.symbol).foregroundStyle(state.accent).accessibilityLabel(state.shortLabel)
       } compactTrailing: {
         TimerClockText(state: state, size: 16).frame(width: 64, alignment: .trailing)
       } minimal: {
@@ -85,6 +90,8 @@ struct TimerClockText: View {
     .monospacedDigit()
     .foregroundStyle(.white)
     .multilineTextAlignment(.trailing)
+    .lineLimit(1)
+    .minimumScaleFactor(0.6)
   }
 }
 

@@ -52,14 +52,23 @@ struct GlanceView: View {
   private let peach = Color(hex: 0xFF8A65)
 
   var body: some View {
+    content
+      // A widget has a fixed size, so text scales with Dynamic Type up to what still fits.
+      .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+  }
+
+  @ViewBuilder
+  private var content: some View {
     if family == .systemMedium {
       VStack(alignment: .leading, spacing: 8) {
         HStack {
           header
           Spacer()
           Text(snapshot.sleepToday)
-            .font(.system(size: 12, weight: .semibold))
+            .font(.caption.weight(.semibold))
             .foregroundStyle(muted)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
         }
         HStack(spacing: 12) {
           row("moon.fill", purple, "Next nap", snapshot.nextNap)
@@ -78,21 +87,24 @@ struct GlanceView: View {
 
   private var header: some View {
     Text(snapshot.babyName)
-      .font(.system(size: 15, weight: .bold))
+      .font(.subheadline.weight(.bold))
       .foregroundStyle(ink)
       .lineLimit(1)
+      .minimumScaleFactor(0.7)
+      .accessibilityAddTraits(.isHeader)
   }
 
   private func row(_ symbol: String, _ color: Color, _ label: String, _ value: String) -> some View {
     HStack(spacing: 8) {
-      Image(systemName: symbol).foregroundStyle(color)
+      Image(systemName: symbol).foregroundStyle(color).accessibilityHidden(true)
       VStack(alignment: .leading, spacing: 0) {
-        Text(label).font(.system(size: 11, weight: .semibold)).foregroundStyle(color)
-        Text(value).font(.system(size: 13, weight: .bold)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.8)
+        Text(label).font(.caption2.weight(.semibold)).foregroundStyle(color).lineLimit(1).minimumScaleFactor(0.7)
+        Text(value).font(.footnote.weight(.bold)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.6)
       }
       Spacer(minLength: 0)
     }
-    .accessibilityElement(children: .combine)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("\(label): \(value)")
   }
 }
 
