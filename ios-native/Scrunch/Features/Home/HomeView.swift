@@ -54,6 +54,12 @@ struct HomeView: View {
       guard let babyId else { return }
       await patterns.bind(API.events.sleepPatterns(babyId: babyId, days: 14, rangeEndMs: rangeEndMs), convex)
     }
+    .onChange(of: babies.value != nil, initial: true) { _, known in
+      if known { LaunchMetrics.homeUsable(fromCache: !babies.isFresh) }
+    }
+    .onChange(of: babies.isFresh && summary.isFresh, initial: true) { _, live in
+      if live { LaunchMetrics.homeLive() }
+    }
     .task {
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(30))

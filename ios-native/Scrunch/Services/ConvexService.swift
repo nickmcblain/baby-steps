@@ -82,6 +82,8 @@ final class ConvexService {
 final class Live<Value: Decodable> {
   private(set) var value: Value?
   private(set) var error: String?
+  /// The value came from Convex this session, not the on-disk copy.
+  private(set) var isFresh = false
 
   var isLoading: Bool { value == nil && error == nil }
 
@@ -93,6 +95,7 @@ final class Live<Value: Decodable> {
     do {
       for try await next in convex.subscribe(call).values {
         value = next
+        isFresh = true
       }
     } catch {
       self.error = UserMessage.from(error)

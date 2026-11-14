@@ -10,6 +10,7 @@ struct ScrunchApp: App {
   @State private var activeBaby = ActiveBabyStore()
 
   init() {
+    LaunchMetrics.appStarted()
     UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
     if AppConfig.isComplete {
       Clerk.configure(publishableKey: AppConfig.clerkPublishableKey)
