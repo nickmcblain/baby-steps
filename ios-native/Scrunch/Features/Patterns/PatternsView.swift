@@ -105,7 +105,7 @@ struct PatternsView: View {
         ("Sleeps a day", Patterns.sessionsPerDay($0.stats.avgSessionsPerDay)),
       ], loggedDays: loggedDays($0.sleeps)) }
     case .feed:
-      feedEvents.value.map { page in
+      feedEvents.value.map { (page: EventPage) -> Summary in
         let totals = Patterns.feedTotals(page.page, days: days, rangeEndMs: rangeEndMs)
         return Summary(items: [], stats: [
           ("Feeds a day", Patterns.perDay(totals.feedsPerDay)),

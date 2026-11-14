@@ -193,7 +193,7 @@ struct InviteCodeField: View {
         .focused($focused)
         .disabled(!editable)
         .opacity(0.02)
-        .accessibilityLabel("Invite code")
+        .accessibilityLabel("Share code")
       HStack(spacing: 8) {
         ForEach(0..<InviteCode.length, id: \.self) { index in
           let chars = Array(code)
