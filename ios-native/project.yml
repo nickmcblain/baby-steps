@@ -1,0 +1,160 @@
+name: Scrunch
+options:
+  bundleIdPrefix: com.nickmcblain
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Release: Config/Release.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+packages:
+  ScrunchCore:
+    path: Packages/ScrunchCore
+  ConvexMobile:
+    url: https://github.com/get-convex/convex-swift
+    from: 0.8.2
+  Clerk:
+    url: https://github.com/clerk/clerk-ios
+    from: 1.7.2
+
+targets:
+  Scrunch:
+    type: application
+    platform: iOS
+    sources:
+      - path: Scrunch
+      - path: Shared
+    dependencies:
+      - package: ScrunchCore
+      - package: ConvexMobile
+      - package: Clerk
+        product: ClerkKit
+      - package: Clerk
+        product: ClerkKitUI
+      - target: ScrunchWidgets
+        embed: true
+        codeSign: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nickmcblain.babysteps
+        PRODUCT_NAME: Scrunch
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    entitlements:
+      path: Scrunch/Scrunch.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.nickmcblain.babysteps
+    info:
+      path: Scrunch/Info.plist
+      properties:
+        CFBundleDisplayName: Scrunch
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleURLTypes:
+          - CFBundleURLName: com.nickmcblain.babysteps
+            CFBundleURLSchemes: [babysteps]
+        ClerkPublishableKey: $(CLERK_PUBLISHABLE_KEY)
+        ConvexDeploymentURL: $(CONVEX_URL)
+        AppGroupIdentifier: group.com.nickmcblain.babysteps
+        CADisableMinimumFrameDurationOnPhone: true
+        ITSAppUsesNonExemptEncryption: false
+        LSRequiresIPhoneOS: true
+        NSSupportsLiveActivities: true
+        NSSupportsLiveActivitiesFrequentUpdates: true
+        NSMicrophoneUsageDescription: Scrunch uses the microphone so you can log feeds, sleeps, and nappies hands-free.
+        UIUserInterfaceStyle: Light
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchIcon
+        UIAppFonts:
+          - Fredoka_600SemiBold.ttf
+          - Fredoka_700Bold.ttf
+          - Nunito_400Regular.ttf
+          - Nunito_600SemiBold.ttf
+          - Nunito_700Bold.ttf
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  ScrunchWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ScrunchWidgets
+      - path: Shared
+    dependencies:
+      - package: ScrunchCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+      - sdk: ActivityKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nickmcblain.babysteps.widgets
+        PRODUCT_NAME: ScrunchWidgets
+        SKIP_INSTALL: YES
+    entitlements:
+      path: ScrunchWidgets/ScrunchWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.nickmcblain.babysteps
+    info:
+      path: ScrunchWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Scrunch
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        AppGroupIdentifier: group.com.nickmcblain.babysteps
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        UIAppFonts:
+          - Fredoka_600SemiBold.ttf
+          - Fredoka_700Bold.ttf
+          - Nunito_400Regular.ttf
+          - Nunito_600SemiBold.ttf
+          - Nunito_700Bold.ttf
+
+  ScrunchTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: ScrunchTests
+    dependencies:
+      - target: Scrunch
+      - package: ScrunchCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nickmcblain.babysteps.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Scrunch.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Scrunch
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  Scrunch:
+    build:
+      targets:
+        Scrunch: all
+        ScrunchWidgets: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ScrunchTests
+        - package: ScrunchCore/ScrunchCoreTests
+    archive:
+      config: Release
