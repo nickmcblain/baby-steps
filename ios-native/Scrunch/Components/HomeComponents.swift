@@ -29,6 +29,7 @@ struct WeekStrip: View {
   let onSelect: (EpochMs) -> Void
 
   @Environment(\.dynamicTypeSize) private var typeSize
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     if typeSize.isAccessibilitySize {
@@ -37,7 +38,7 @@ struct WeekStrip: View {
           .scrollClipDisabled()
           .onAppear { proxy.scrollTo(selectedDayStart, anchor: .center) }
           .onChange(of: selectedDayStart) { _, day in
-            withAnimation { proxy.scrollTo(day, anchor: .center) }
+            withAnimation(reduceMotion ? nil : .default) { proxy.scrollTo(day, anchor: .center) }
           }
       }
     } else {
