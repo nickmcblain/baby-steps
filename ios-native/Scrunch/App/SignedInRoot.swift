@@ -7,8 +7,11 @@ import SwiftUI
 struct SignedInRoot: View {
   @Environment(ConvexService.self) private var convex
   @Environment(AppRouter.self) private var router
+  @Environment(ActiveBabyStore.self) private var activeBaby
+  @Environment(\.scenePhase) private var scenePhase
   @State private var storedUser = false
   @State private var slowConnect = false
+  @State private var undo = UndoCenter()
 
   var body: some View {
     @Bindable var router = router
@@ -20,6 +23,20 @@ struct SignedInRoot: View {
             .navigationDestination(for: Route.self) { route in
               destination(route)
             }
+        }
+        .overlay(alignment: .bottom) {
+          // Over the dock, so it never covers the quick-log buttons.
+          UndoToastView().padding(.bottom, 6)
+        }
+        .animation(.snappy(duration: 0.25), value: undo.toast?.id)
+        .environment(undo)
+        .onChange(of: scenePhase) { _, phase in
+          if phase == .background { undo.settle() }
+        }
+        .onChange(of: router.requestedBabyId) { _, id in
+          guard let id else { return }
+          activeBaby.select(id)
+          router.requestedBabyId = nil
         }
         .task {
           guard !storedUser else { return }
@@ -76,9 +93,7 @@ struct BabyDestination: View {
 
   var body: some View {
     switch screen {
-    case .home: BabyHomeView(babyId: babyId)
     case .edit: EditBabyView(babyId: babyId)
-    case .timeline: TimelineView(babyId: babyId, showsBack: true)
     case .customEvent: CustomEventView(babyId: babyId)
     case .feedTimer: FeedTimerView(babyId: babyId, kind: .feed)
     case .pumpTimer: FeedTimerView(babyId: babyId, kind: .pump)

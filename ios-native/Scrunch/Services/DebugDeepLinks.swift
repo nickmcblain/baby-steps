@@ -36,10 +36,13 @@ extension AppRouter {
     case "new-baby":
       path = [.newBaby]
     case "baby":
-      guard parts.count > 1, let screen = BabyScreen(debugName: parts[1]),
-            let id = parts.count > 2 ? parts[2] : activeBabyId
-      else { break }
-      path = [.baby(id, screen)]
+      guard parts.count > 1, let id = parts.count > 2 ? parts[2] : activeBabyId else { break }
+      switch parts[1] {
+      case "home": showHome(id)
+      case "timeline": showTimeline(id)
+      default:
+        if let screen = BabyScreen(debugName: parts[1]) { path = [.baby(id, screen)] }
+      }
     default:
       break
     }
@@ -50,9 +53,7 @@ extension AppRouter {
 extension BabyScreen {
   init?(debugName: String) {
     switch debugName {
-    case "home": self = .home
     case "edit": self = .edit
-    case "timeline": self = .timeline
     case "customEvent": self = .customEvent
     case "feedTimer": self = .feedTimer
     case "feedManual": self = .feedManual(nil)
