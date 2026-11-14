@@ -13,7 +13,7 @@ struct QuickLogPanel: View {
   @Environment(TimerStore.self) private var timers
   @Environment(UndoCenter.self) private var undo
   @State private var savingNappy: QuickLog.Nappy?
-  @ScaledMetric(relativeTo: .body) private var nappyIconSize: CGFloat = 22
+  @ScaledMetric(relativeTo: .body) private var nappyIconSize: CGFloat = 20
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
@@ -27,8 +27,12 @@ struct QuickLogPanel: View {
     .padding(.horizontal, 12)
     .padding(.top, 10)
     .padding(.bottom, 12)
-    .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
-    .cardShadow(opacity: 0.12)
+    // Shadow on the card shape only, so the buttons inside stay flat.
+    .background {
+      RoundedRectangle(cornerRadius: Radius.tile, style: .continuous)
+        .fill(C.card)
+        .cardShadow(opacity: 0.12)
+    }
   }
 
   // MARK: Starters
@@ -101,24 +105,22 @@ struct QuickLogPanel: View {
 
   private var nappyRow: some View {
     HStack(spacing: 8) {
-      Image("NappyGlyph")
-        .renderingMode(.template)
-        .resizable()
-        .scaledToFit()
-        .frame(width: nappyIconSize, height: nappyIconSize)
-        .foregroundStyle(C.peach)
-        .padding(.horizontal, 4)
-        .accessibilityLabel("Nappy")
       ForEach(QuickLog.Nappy.allCases, id: \.self) { nappy in
         Button { Task { await log(nappy) } } label: {
           ZStack {
             if savingNappy == nappy {
               ProgressView().tint(C.peach)
             } else {
-              Text(nappy.label).font(.app(.bold, 15)).foregroundStyle(C.ink)
+              HStack(spacing: 8) {
+                nappyIcon(nappy)
+                Text(nappy.label).font(.app(.bold, 15)).foregroundStyle(C.ink)
+              }
+              .lineLimit(1)
+              .minimumScaleFactor(0.8)
             }
           }
           .frame(maxWidth: .infinity, minHeight: 48)
+          .padding(.horizontal, 6)
           .background(C.peachSoft, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
           .contentShape(Rectangle())
         }
@@ -127,6 +129,29 @@ struct QuickLogPanel: View {
         .accessibilityLabel("Log \(nappy == .both ? "wet and dirty" : nappy.label.lowercased()) nappy")
       }
     }
+  }
+
+  /// The nappy glyph with a small badge: a drop for wet, a dot for dirty, both for both.
+  private func nappyIcon(_ nappy: QuickLog.Nappy) -> some View {
+    Image("NappyGlyph")
+      .renderingMode(.template)
+      .resizable()
+      .scaledToFit()
+      .frame(width: nappyIconSize, height: nappyIconSize)
+      .foregroundStyle(C.peach)
+      .overlay(alignment: .bottomTrailing) {
+        HStack(spacing: 1) {
+          if nappy != .dirty { Image(systemName: "drop.fill") }
+          if nappy != .wet { Image(systemName: "circle.fill").scaleEffect(0.7) }
+        }
+        .font(.system(size: nappyIconSize * 0.4, weight: .bold))
+        .foregroundStyle(C.peach)
+        .padding(1.5)
+        .background(C.peachSoft, in: Capsule())
+        .offset(x: nappyIconSize * 0.3, y: nappyIconSize * 0.15)
+      }
+      .padding(.trailing, nappyIconSize * 0.25)
+      .accessibilityHidden(true)
   }
 
   private func log(_ nappy: QuickLog.Nappy) async {
