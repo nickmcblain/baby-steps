@@ -32,6 +32,27 @@ public enum AskSafety {
     "Scrunch is not a medical or healthcare service. Guidance only — not diagnosis, clinical advice, or triage. Emergencies: call 999. Urgent advice: NHS 111 or your midwife. Scrunch is independent and not affiliated with the NHS or The Lullaby Trust; it summarises their public guidance."
 
   public static let placeholder = "Ask about newborn care…"
+
+  public static let entryTitle = "Ask Scrunch"
+  public static let entrySubtitle = "Answers from NHS and Lullaby Trust guidance"
+
+  public static let sourcesHeading = "Where this comes from"
+  public static let noSourceNote =
+    "General guidance. No specific NHS or Lullaby Trust page matched, so check nhs.uk or ask your health visitor."
+  public static let helpLine = "Worried? Call your GP or NHS 111. Emergency: call 999."
+
+  public static let starterQuestions = [
+    "What should my baby wear to sleep tonight?",
+    "How many wet nappies should I expect?",
+    "How often do newborns usually feed?",
+    "What does safer sleep look like?",
+  ]
+
+  /// Source lines for a reply. Never empty: with no citations it says so plainly.
+  public static func sourceLines(_ citations: [Citation]?) -> [Citation] {
+    let list = citations ?? []
+    return list.isEmpty ? [Citation(title: noSourceNote, url: nil)] : list
+  }
 }
 
 public enum MarkdownBlock: Equatable, Sendable {

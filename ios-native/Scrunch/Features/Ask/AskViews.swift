@@ -39,6 +39,9 @@ struct AskView: View {
       ScrollViewReader { proxy in
         ScrollView(showsIndicators: false) {
           LazyVStack(spacing: 10) {
+            if messages.value?.isEmpty == true && !sending && !showPendingUser {
+              starters
+            }
             ForEach(messages.value ?? []) { message in
               bubble(message)
             }
@@ -99,6 +102,30 @@ struct AskView: View {
     }
   }
 
+  private var starters: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text(AskSafety.entryTitle).font(.app(.displayBold, 28)).foregroundStyle(C.ink).accessibilityAddTraits(.isHeader)
+      Text("\(AskSafety.entrySubtitle). Every answer says where it comes from.")
+        .font(.app(.body, 15)).foregroundStyle(C.muted)
+        .padding(.bottom, 6)
+      ForEach(AskSafety.starterQuestions, id: \.self) { question in
+        Button { Task { await send(question) } } label: {
+          Text(question)
+            .font(.app(.medium, 15))
+            .foregroundStyle(C.ink)
+            .multilineTextAlignment(.leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(C.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .cardShadow()
+        }
+        .buttonStyle(PressScale())
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
   private var composer: some View {
     VStack(alignment: .leading, spacing: 8) {
       Text(AskSafety.disclaimer)
@@ -143,20 +170,26 @@ struct AskView: View {
     } else {
       VStack(alignment: .leading, spacing: 6) {
         MarkdownText(text: message.content)
-        if let citations = message.citations, !citations.isEmpty {
-          VStack(alignment: .leading, spacing: 2) {
-            ForEach(citations, id: \.self) { citation in
-              if let url = citation.url.flatMap(URL.init(string:)) {
-                Link("· \(citation.title)", destination: url)
-                  .font(.app(.medium, 12))
-                  .foregroundStyle(C.muted)
-              } else {
-                Text("· \(citation.title)").font(.app(.medium, 12)).foregroundStyle(C.muted)
-              }
+        VStack(alignment: .leading, spacing: 2) {
+          Text(AskSafety.sourcesHeading).font(.app(.bold, 12)).foregroundStyle(C.ink)
+          ForEach(AskSafety.sourceLines(message.citations), id: \.self) { citation in
+            if let url = citation.url.flatMap(URL.init(string:)) {
+              Link("· \(citation.title)", destination: url)
+                .font(.app(.medium, 12))
+                .foregroundStyle(C.tealDark)
+            } else {
+              Text("· \(citation.title)").font(.app(.medium, 12)).foregroundStyle(C.muted)
             }
           }
-          .padding(.top, 4)
         }
+        .padding(.top, 4)
+        Text(AskSafety.helpLine)
+          .font(.app(.bold, 12))
+          .foregroundStyle(C.ink)
+          .padding(.horizontal, 10)
+          .padding(.vertical, 8)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .background(C.peachSoft, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
       }
       .padding(.horizontal, 14)
       .padding(.vertical, 12)
