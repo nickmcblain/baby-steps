@@ -37,22 +37,65 @@ final class ConvexService {
   enum Auth { case loading, signedOut, signedIn }
 
   private(set) var auth: Auth = .loading
+  /// ConvexMobile only reports changes, and connects lazily on first use, so this starts false.
+  private(set) var socketConnected = false
+  private(set) var pendingLogs = 0
+  private(set) var syncFailure: String?
+
+  /// Convex is answering: authed and the socket is up.
+  var reachable: Bool { auth == .signedIn && socketConnected }
 
   @ObservationIgnored let client: ConvexClientWithAuth<String>
+  @ObservationIgnored let cache: LastKnownCache
+  /// Set at launch: a previous session left a babies list, so tabs can render before auth.
+  @ObservationIgnored let hasLastKnownState: Bool
   @ObservationIgnored private let provider: ClerkConvexTemplateAuthProvider
+  @ObservationIgnored private let outbox: Outbox
   @ObservationIgnored private var bag = Set<AnyCancellable>()
+  @ObservationIgnored private var retrying = false
 
   init(deploymentUrl: String) {
-    provider = ClerkConvexTemplateAuthProvider()
-    client = ConvexClientWithAuth(deploymentUrl: deploymentUrl, authProvider: provider)
+    let provider = ClerkConvexTemplateAuthProvider()
+    let client = ConvexClientWithAuth(deploymentUrl: deploymentUrl, authProvider: provider)
+    self.provider = provider
+    self.client = client
+    let files = FileManager.default
+    let cache = LastKnownCache(directory: files.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("LastKnown"))
+    self.cache = cache
+    hasLastKnownState = cache.contains(API.babies.list().key)
+
+    outbox = Outbox(fileURL: files.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent("Outbox/pending.json")) { entry in
+      do {
+        let _: EventID = try await client.mutation(entry.name, with: entry.args.mapValues { Optional($0 as ConvexEncodable) })
+      } catch let error as ClientError {
+        if case .ConvexError = error { throw Outbox.Rejected(message: UserMessage.from(error)) }
+        throw error
+      }
+    }
+    outbox.canSend = { [weak self] in self?.auth == .signedIn }
+    outbox.onChange = { [weak self] in self?.syncOutboxState() }
+    syncOutboxState()
+
     client.authState
       .receive(on: DispatchQueue.main)
       .sink { [weak self] state in
+        guard let self else { return }
         switch state {
-        case .loading: self?.auth = .loading
-        case .unauthenticated: self?.auth = .signedOut
-        case .authenticated: self?.auth = .signedIn
+        case .loading: auth = .loading
+        case .unauthenticated: auth = .signedOut
+        case .authenticated:
+          auth = .signedIn
+          Task { await self.outbox.flush() }
         }
+      }
+      .store(in: &bag)
+    client.watchWebSocketState()
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] state in
+        guard let self else { return }
+        socketConnected = state == .connected
+        if socketConnected { Task { await self.retry() } }
       }
       .store(in: &bag)
     provider.bind(client: client)
@@ -67,12 +110,47 @@ final class ConvexService {
     try await client.mutation(call.name, with: call.encodedArgs)
   }
 
+  /// Event logs go through the outbox: saved on the phone first, so a dropped connection
+  /// or a killed app can't lose them, and replays can't duplicate them.
+  @discardableResult
+  func log(_ call: ConvexCall<EventID>) async throws -> Outbox.Outcome {
+    try await outbox.submit(call.name, call.args, now: Date().epochMs)
+  }
+
   func action<R: Decodable>(_ call: ConvexCall<R>) async throws -> R {
     try await client.action(call.name, with: call.encodedArgs)
   }
 
+  /// Reconnects auth if it dropped (e.g. the token fetch failed offline) and resends queued logs.
+  /// `manual` (a Retry tap) also restarts a login that is still hanging.
+  func retry(manual: Bool = false) async {
+    if auth == .signedOut && !retrying || manual && auth != .signedIn {
+      retrying = true
+      _ = await client.loginFromCache()
+      retrying = false
+    }
+    await outbox.flush()
+  }
+
+  func dismissSyncFailure() {
+    outbox.dismissFailures()
+  }
+
+  /// Returns once Convex auth is ready. Subscribing earlier would fail with "Not authenticated".
+  func untilSignedIn() async {
+    if auth == .signedIn { return }
+    for await state in client.authState.values {
+      if case .authenticated = state { return }
+    }
+  }
+
   func signOut() async {
     await client.logout()
+  }
+
+  private func syncOutboxState() {
+    pendingLogs = outbox.pending.count
+    syncFailure = outbox.failures.last?.message
   }
 }
 
@@ -90,12 +168,27 @@ final class Live<Value: Decodable> {
   init(_ initial: Value? = nil) { value = initial }
 
   /// Runs until the calling task is cancelled (view disappears or the key changes).
-  func bind(_ call: ConvexCall<Value>, _ convex: ConvexService) async {
+  /// With a `cacheKey`, the last result is shown straight away and kept on disk.
+  func bind(_ call: ConvexCall<Value>, _ convex: ConvexService, cacheKey: String? = nil) async {
     error = nil
+    if let cacheKey, let cached: Value = try? convex.cache.read(cacheKey)?.decode() {
+      value = cached
+    }
+    await convex.untilSignedIn()
+    guard !Task.isCancelled else { return }
     do {
-      for try await next in convex.subscribe(call).values {
-        value = next
-        isFresh = true
+      if let cacheKey {
+        let cache = convex.cache
+        for try await raw in convex.subscribe(ConvexCall<ConvexValue>(call.name, call.args)).values {
+          value = try raw.decode()
+          isFresh = true
+          Task.detached(priority: .utility) { cache.write(cacheKey, raw) }
+        }
+      } else {
+        for try await next in convex.subscribe(call).values {
+          value = next
+          isFresh = true
+        }
       }
     } catch {
       self.error = UserMessage.from(error)

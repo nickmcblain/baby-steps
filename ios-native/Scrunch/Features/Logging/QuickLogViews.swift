@@ -53,9 +53,9 @@ struct NappyView: View {
     let noteValue = trimmed.isEmpty ? nil : trimmed
     do {
       if potty {
-        try await convex.mutation(API.events.logPotty(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+        try await convex.log(API.events.logPotty(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
       } else {
-        try await convex.mutation(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+        try await convex.log(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
       }
       dismiss()
     } catch {
@@ -102,7 +102,7 @@ struct MedicineView: View {
     let trimmedDose = dose.trimmingCharacters(in: .whitespacesAndNewlines)
     let doseValue = trimmedDose.isEmpty ? nil : trimmedDose
     do {
-      try await convex.mutation(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
+      try await convex.log(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
       if let remindHours, let baby = baby.value {
         let scheduled = await Reminders.scheduleMedicine(babyId: baby.id, babyName: baby.name, name: title, dose: doseValue, hours: remindHours)
         if !scheduled {
@@ -168,7 +168,7 @@ struct ActivityLogView: View {
     guard !title.isEmpty else { return alert = FormAlert(title: "Pick an activity") }
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
-      try await convex.mutation(API.events.logActivity(
+      try await convex.log(API.events.logActivity(
         babyId: babyId,
         loggedAt: loggedAt,
         title: title,
@@ -224,7 +224,7 @@ struct CustomEventView: View {
     guard !title.isEmpty else { return alert = FormAlert(title: "Add a title") }
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
-      try await convex.mutation(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
+      try await convex.log(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
       dismiss()
     } catch {
       alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))

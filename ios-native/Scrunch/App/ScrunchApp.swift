@@ -51,14 +51,20 @@ struct ScrunchApp: App {
 
 struct RootView: View {
   @Environment(Clerk.self) private var clerk
+  @Environment(ConvexService.self) private var convex
 
   var body: some View {
-    if !clerk.isLoaded {
-      LoadingView()
-    } else if clerk.session == nil {
-      SignInView()
-    } else {
-      SignedInRoot()
+    Group {
+      if !clerk.isLoaded {
+        LoadingView()
+      } else if clerk.session == nil {
+        SignInView()
+      } else {
+        SignedInRoot()
+      }
+    }
+    .onChange(of: clerk.session == nil) { _, signedOut in
+      if signedOut { convex.cache.clear() }
     }
   }
 }

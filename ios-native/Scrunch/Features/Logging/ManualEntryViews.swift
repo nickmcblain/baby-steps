@@ -96,7 +96,7 @@ struct FeedManualView: View {
   private func save() async {
     let duration = minutes.isEmpty ? nil : number(minutes)
     do {
-      try await convex.mutation(API.events.logFeed(
+      try await convex.log(API.events.logFeed(
         babyId: babyId,
         loggedAt: loggedAt,
         feedKind: kind,
@@ -163,7 +163,7 @@ struct PumpManualView: View {
       return alert = FormAlert(title: "Enter how long you pumped")
     }
     do {
-      try await convex.mutation(API.events.logPump(
+      try await convex.log(API.events.logPump(
         babyId: babyId,
         loggedAt: loggedAt,
         side: side,
@@ -235,9 +235,9 @@ struct DurationManualView: View {
     }
     do {
       if isSleep {
-        try await convex.mutation(API.events.logSleep(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
+        try await convex.log(API.events.logSleep(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
       } else {
-        try await convex.mutation(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
+        try await convex.log(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
       }
       router.dismissToBabyHome(babyId)
     } catch {

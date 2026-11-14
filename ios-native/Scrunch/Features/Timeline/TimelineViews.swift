@@ -34,7 +34,7 @@ struct TimelineTab: View {
         }
       }
     }
-    .task { await babies.bind(API.babies.list(), convex) }
+    .task { await babies.bind(API.babies.list(), convex, cacheKey: API.babies.list().key) }
   }
 }
 

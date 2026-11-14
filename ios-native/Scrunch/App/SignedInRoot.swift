@@ -13,20 +13,21 @@ struct SignedInRoot: View {
   var body: some View {
     @Bindable var router = router
     Group {
-      switch convex.auth {
-      case .signedIn:
+      // With a last-known copy on disk the tabs render straight away; queries wait for auth.
+      if convex.auth == .signedIn || convex.hasLastKnownState {
         NavigationStack(path: $router.path) {
           MainTabView()
             .navigationDestination(for: Route.self) { route in
               destination(route)
             }
         }
-        .task {
-          guard !storedUser else { return }
+        .safeAreaInset(edge: .top, spacing: 0) { SyncBanner() }
+        .task(id: convex.auth == .signedIn) {
+          guard convex.auth == .signedIn, !storedUser else { return }
           // Auth may still be settling; reactive queries recover either way.
           if (try? await convex.mutation(API.users.store())) != nil { storedUser = true }
         }
-      case .loading, .signedOut:
+      } else {
         connecting
       }
     }
@@ -34,12 +35,17 @@ struct SignedInRoot: View {
 
   private var connecting: some View {
     VStack(spacing: 16) {
-      ProgressView().tint(C.teal)
-      Text("Connecting…").font(.app(.body, 15)).foregroundStyle(C.muted)
+      if slowConnect {
+        Text("Can't reach Scrunch").font(.app(.bold, 17)).foregroundStyle(C.ink)
+        Text("Check your connection and try again.").font(.app(.body, 15)).foregroundStyle(C.muted)
+      } else {
+        ProgressView().tint(C.teal)
+        Text("Connecting…").font(.app(.body, 15)).foregroundStyle(C.muted)
+      }
       if slowConnect {
         VStack(spacing: 10) {
           Button("Try again") {
-            Task { _ = await convex.client.loginFromCache() }
+            Task { await convex.retry(manual: true) }
           }
           .font(.app(.bold, 16))
           Button("Sign out") {
