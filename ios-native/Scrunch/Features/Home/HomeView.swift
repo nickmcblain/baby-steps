@@ -7,6 +7,7 @@ struct HomeView: View {
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
   @Environment(TimerStore.self) private var timers
+  @Environment(\.scenePhase) private var scenePhase
 
   @State private var babies = Live<[Baby]>()
   @State private var summary = Live<DaySummary>()
@@ -34,12 +35,29 @@ struct HomeView: View {
   }
 
   var body: some View {
-    ScreenScaffold(showsBack: false, clearDock: true) {
+    ScreenScaffold(showsBack: false, clearDock: baby == nil) {
       if let list = babies.value, list.isEmpty {
         empty
       } else {
         content
       }
+    }
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      if let baby, babies.value?.isEmpty == false {
+        QuickLogPanel(baby: baby, lastFeed: dash.value?.lastFeed, now: now)
+          .padding(.horizontal, 16)
+          .padding(.top, 8)
+          .padding(.bottom, quickLogDockClearance)
+          .background(alignment: .top) {
+            LinearGradient(colors: [C.bg.opacity(0), C.bg], startPoint: .top, endPoint: .bottom)
+              .frame(height: 24)
+              .offset(y: -24)
+          }
+          .background(C.bg.ignoresSafeArea(edges: .bottom))
+      }
+    }
+    .onChange(of: scenePhase) { _, phase in
+      if phase == .active { Task { await syncSideEffects() } }
     }
     .task { await babies.bind(API.babies.list(), convex) }
     .task(id: babyId.map { API.events.daySummary(babyId: $0, dayStart: dayStart, dayEnd: WeekGrid.addDays(dayStart, 1)).key }) {
@@ -69,6 +87,9 @@ struct HomeView: View {
     }
   }
 
+  /// The floating dock's height, so the quick-log panel sits just above it.
+  private let quickLogDockClearance: CGFloat = 72
+
   private struct SideEffectKey: Equatable {
     let baby: Baby?
     let napAt: EpochMs?
@@ -81,6 +102,7 @@ struct HomeView: View {
   private func syncSideEffects() async {
     guard let baby, baby.id == babyId else { return }
     await Reminders.refreshNap(babyId: baby.id, babyName: baby.name, napAt: napAt, asleep: asleep)
+    await Reminders.refreshFeed(baby: baby, lastFeedAt: dash.value?.lastFeed.map(FeedWindows.feedEndedAt))
     WidgetSync.push(GlanceSnapshot.make(
       babyName: baby.name,
       asleep: asleep,

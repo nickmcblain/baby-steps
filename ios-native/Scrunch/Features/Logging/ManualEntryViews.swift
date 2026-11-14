@@ -109,7 +109,7 @@ struct FeedManualView: View {
       if let baby = baby.value {
         await Reminders.refreshFeed(baby: baby, lastFeedAt: loggedAt + (duration ?? 0) * minuteMs, quiet: false)
       }
-      router.dismissToBabyHome(babyId)
+      router.showHome(babyId)
     } catch {
       alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
     }
@@ -239,7 +239,7 @@ struct DurationManualView: View {
       } else {
         try await convex.mutation(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
       }
-      router.dismissToBabyHome(babyId)
+      router.showHome(babyId)
     } catch {
       alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
     }

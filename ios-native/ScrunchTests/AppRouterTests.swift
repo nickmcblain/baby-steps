@@ -13,10 +13,21 @@ final class AppRouterTests: XCTestCase {
     XCTAssertEqual(router.path, [.baby("abc123", .pumpTimer)])
   }
 
-  func testUnknownKindFallsBackToBabyHome() {
+  func testUnknownKindFallsBackToTheHomeTab() {
     let router = AppRouter()
+    router.tab = .kids
+    router.path = [.baby("abc123", .edit)]
     router.handle(url: URL(string: "babysteps://baby/abc123/bath/timer")!)
-    XCTAssertEqual(router.path, [.baby("abc123", .home)])
+    XCTAssertTrue(router.path.isEmpty)
+    XCTAssertEqual(router.tab, .home)
+    XCTAssertEqual(router.requestedBabyId, "abc123")
+  }
+
+  func testTimerDeepLinkSelectsThatBaby() {
+    let router = AppRouter()
+    router.handle(url: URL(string: "babysteps://baby/b2/feed/timer")!)
+    XCTAssertEqual(router.requestedBabyId, "b2")
+    XCTAssertEqual(router.path, [.baby("b2", .feedTimer)])
   }
 
   func testOtherSchemesAreIgnored() {
@@ -32,14 +43,22 @@ final class AppRouterTests: XCTestCase {
     XCTAssertEqual(router.path, [.baby("b1", .tummyTimer)])
   }
 
-  func testDismissToBabyHomePopsOrReplaces() {
+  func testShowHomeReturnsToTheHomeTab() {
     let router = AppRouter()
-    router.path = [.baby("b1", .home), .baby("b1", .feedTimer), .baby("b1", .feedManual(nil))]
-    router.dismissToBabyHome("b1")
-    XCTAssertEqual(router.path, [.baby("b1", .home)])
+    router.tab = .timeline
+    router.path = [.baby("b1", .feedTimer), .baby("b1", .feedManual(nil))]
+    router.showHome("b1")
+    XCTAssertTrue(router.path.isEmpty)
+    XCTAssertEqual(router.tab, .home)
+    XCTAssertEqual(router.requestedBabyId, "b1")
+  }
 
-    router.path = [.baby("b1", .sleepManual(nil))]
-    router.dismissToBabyHome("b1")
-    XCTAssertEqual(router.path, [.baby("b1", .home)])
+  func testShowTimelineOpensTheTimelineTabForThatBaby() {
+    let router = AppRouter()
+    router.path = [.baby("b1", .feedPatterns)]
+    router.showTimeline("b2")
+    XCTAssertTrue(router.path.isEmpty)
+    XCTAssertEqual(router.tab, .timeline)
+    XCTAssertEqual(router.requestedBabyId, "b2")
   }
 }

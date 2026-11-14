@@ -132,8 +132,8 @@ struct EventListView: View {
 
   @Environment(ConvexService.self) private var convex
   @State private var page = Live<EventPage>()
+  @Environment(UndoCenter.self) private var undo
   @State private var numItems: Int?
-  @State private var pendingDelete: Event?
 
   private var pageSize: Int {
     numItems ?? (kind != nil || window != nil ? Timeline.filteredPageSize : Timeline.initialPageSize)
@@ -142,6 +142,7 @@ struct EventListView: View {
   var body: some View {
     let now = Date().epochMs
     let events = Timeline.filter(page.value?.page ?? [], kind: kind, window: window)
+      .filter { !undo.hiddenEventIds.contains($0.id) }
 
     VStack(alignment: .leading, spacing: 16) {
       ForEach(Timeline.sections(events, now: now)) { section in
@@ -176,9 +177,6 @@ struct EventListView: View {
       }
     }
     .task(id: pageSize) { await page.bind(API.events.list(babyId: babyId, numItems: pageSize), convex) }
-    .sheet(item: $pendingDelete) { event in
-      DeleteEventSheet(event: event) { pendingDelete = nil }
-    }
   }
 
   private func row(_ event: Event, now: EpochMs, last: Bool) -> some View {
@@ -212,71 +210,55 @@ struct EventListView: View {
       .frame(maxWidth: .infinity, alignment: .leading)
       .background(event.kind.tint, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
       .padding(.bottom, 12)
-      .contentShape(Rectangle())
-      .onLongPressGesture(minimumDuration: 0.38) { pendingDelete = event }
-      .sensoryFeedback(.impact(weight: .light), trigger: pendingDelete?.id == event.id)
+      .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 20, style: .continuous))
+      .contextMenu {
+        Button(role: .destructive) { undo.delete(event, convex: convex) } label: {
+          Label("Delete", systemImage: "trash")
+        }
+      }
+      .modifier(SwipeToDelete { undo.delete(event, convex: convex) })
       .accessibilityElement(children: .combine)
-      .accessibilityHint("Press and hold to delete")
-      .accessibilityAction(named: "Delete") { pendingDelete = event }
+      .accessibilityHint("Swipe left to delete")
+      .accessibilityAction(named: "Delete") { undo.delete(event, convex: convex) }
     }
     .frame(minHeight: 72)
   }
 }
 
-private struct DeleteEventSheet: View {
-  let event: Event
-  let onClose: () -> Void
+/// Swipe left to delete, Mail-style: past the threshold the row goes and the toast offers Undo.
+private struct SwipeToDelete: ViewModifier {
+  let onDelete: () -> Void
 
-  @Environment(ConvexService.self) private var convex
-  @State private var deleting = false
-  @State private var alert: FormAlert?
-  @State private var deletedTick = 0
+  @State private var offset: CGFloat = 0
+  private let threshold: CGFloat = 110
 
-  var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text(EventCopy.kindLabel(event, now: Date().epochMs).uppercased())
-        .font(.app(.bold, 12)).tracking(0.6).foregroundStyle(C.muted)
-      Text(EventCopy.title(event)).font(.app(.bold, 20)).foregroundStyle(C.ink)
-      Text(LoggedAt.format(event.loggedAt)).font(.app(.body, 15)).foregroundStyle(C.muted)
-      Text("This can’t be undone.").font(.app(.body, 14)).foregroundStyle(C.muted).padding(.top, 4).padding(.bottom, 8)
-      Button { Task { await confirm() } } label: {
-        Text(deleting ? "Deleting…" : "Delete")
-          .font(.app(.bold, 17))
-          .foregroundStyle(C.onAccent)
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 16)
-          .background(C.danger, in: Capsule())
-          .opacity(deleting ? 0.45 : 1)
+  func body(content: Content) -> some View {
+    content
+      .offset(x: offset)
+      .background(alignment: .trailing) {
+        Image(systemName: "trash.fill")
+          .font(.system(size: 18, weight: .bold))
+          .foregroundStyle(offset < -threshold ? C.onAccent : C.danger)
+          .frame(width: max(0, -offset), alignment: .center)
+          .frame(maxHeight: .infinity)
+          .background(offset < -threshold ? C.danger : C.danger.opacity(0.15), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+          .padding(.bottom, 12)
+          .opacity(offset < 0 ? 1 : 0)
+          .accessibilityHidden(true)
       }
-      .buttonStyle(PressScale())
-      .disabled(deleting)
-      Button(action: onClose) {
-        Text("Cancel").font(.app(.bold, 16)).foregroundStyle(C.muted).frame(maxWidth: .infinity).padding(.vertical, 12)
-      }
-      .disabled(deleting)
-    }
-    .padding(.horizontal, 20)
-    .padding(.top, 28)
-    .sensoryFeedback(.impact(weight: .medium), trigger: deletedTick)
-    .interactiveDismissDisabled(deleting)
-    .presentationDetents([.height(330)])
-    .presentationDragIndicator(.visible)
-    .presentationCornerRadius(32)
-    .presentationBackground(C.bg)
-    .formAlert($alert)
-  }
-
-  private func confirm() async {
-    guard !deleting else { return }
-    deleting = true
-    deletedTick += 1
-    defer { deleting = false }
-    do {
-      try await convex.mutation(API.events.remove(event.id))
-      onClose()
-    } catch {
-      alert = FormAlert(title: "Couldn’t delete", message: UserMessage.from(error, fallback: "Try again"))
-    }
+      .simultaneousGesture(
+        DragGesture(minimumDistance: 24)
+          .onChanged { value in
+            guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+            offset = min(0, value.translation.width)
+          }
+          .onEnded { _ in
+            let delete = offset < -threshold
+            withAnimation(.snappy(duration: 0.2)) { offset = 0 }
+            if delete { onDelete() }
+          }
+      )
+      .sensoryFeedback(.impact(weight: .light), trigger: offset < -threshold)
   }
 }
 

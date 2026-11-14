@@ -26,7 +26,7 @@ enum Route: Hashable {
 }
 
 enum BabyScreen: Hashable {
-  case home, edit, timeline, customEvent
+  case edit, customEvent
   case feedTimer, feedManual(TimerSession.Handoff?), feedPatterns
   case sleepTimer, sleepManual(TimerSession.Handoff?), sleepPatterns
   case tummyTimer, tummyManual(TimerSession.Handoff?), tummyPatterns
@@ -54,6 +54,8 @@ final class AppRouter {
   var tab: Tab = .home
   var path: [Route] = []
   var addLogOpen = false
+  /// Set when a route names a baby; SignedInRoot makes it the active baby.
+  var requestedBabyId: BabyID?
 
   func push(_ babyId: BabyID, _ screen: BabyScreen) {
     path.append(.baby(babyId, screen))
@@ -65,14 +67,15 @@ final class AppRouter {
     path.append(.baby(babyId, screen))
   }
 
-  /// RN `router.dismissTo("/baby/{id}")`: pop back to that baby's home, or replace the
-  /// current screen with it when it isn't on the stack.
-  func dismissToBabyHome(_ babyId: BabyID) {
-    if let index = path.lastIndex(of: .baby(babyId, .home)) {
-      path.removeSubrange((index + 1)...)
-    } else {
-      replaceTop(babyId, .home)
-    }
+  /// There is one home: the Home tab, showing this baby.
+  func showHome(_ babyId: BabyID) {
+    requestedBabyId = babyId
+    popToRoot(tab: .home)
+  }
+
+  func showTimeline(_ babyId: BabyID) {
+    requestedBabyId = babyId
+    popToRoot(tab: .timeline)
   }
 
   func popToRoot(tab: Tab? = nil) {
@@ -87,9 +90,11 @@ final class AppRouter {
     guard parts.count >= 2 else { return }
     let babyId = parts[0]
     if parts.count >= 3, parts[2] == "timer", let screen = BabyScreen(timerKind: parts[1]) {
+      requestedBabyId = babyId
+      tab = .home
       path = [.baby(babyId, screen)]
     } else {
-      path = [.baby(babyId, .home)]
+      showHome(babyId)
     }
   }
 }
