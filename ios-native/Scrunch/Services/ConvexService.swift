@@ -72,6 +72,7 @@ final class ConvexService {
   }
 
   func signOut() async {
+    PendingLogSender.publish(babies: [], activeId: nil)
     await client.logout()
   }
 }
