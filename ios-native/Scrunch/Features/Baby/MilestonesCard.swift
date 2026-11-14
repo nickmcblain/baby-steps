@@ -92,7 +92,7 @@ private struct MilestoneSheet: View {
       Text(milestone.title)
         .font(.app(.displayBold, 24))
         .foregroundStyle(C.ink)
-      DatePicker("When", selection: $date, in: Date(epochMs: baby.dateOfBirth)...Date(), displayedComponents: .date)
+      DatePicker("When", selection: $date, in: min(Date(epochMs: baby.dateOfBirth), Date())...Date(), displayedComponents: .date)
         .font(.app(.medium, 16))
         .foregroundStyle(C.ink)
         .tint(C.teal)
