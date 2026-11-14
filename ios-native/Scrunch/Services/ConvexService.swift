@@ -17,7 +17,11 @@ enum AppConfig {
   static var convexURL: String { value("ConvexDeploymentURL") }
   static let appGroup = "group.com.nickmcblain.babysteps"
 
-  static var isComplete: Bool { !clerkPublishableKey.isEmpty && !convexURL.isEmpty }
+  /// xcconfig treats `//` as a comment, so an unescaped `https://...` arrives as `https:`.
+  /// Requiring a host catches that instead of hanging on "Connecting…".
+  static var isComplete: Bool {
+    !clerkPublishableKey.isEmpty && URL(string: convexURL)?.host?.isEmpty == false
+  }
 
   private static func value(_ key: String) -> String {
     let raw = Bundle.main.object(forInfoDictionaryKey: key) as? String ?? ""
