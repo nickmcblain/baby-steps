@@ -101,6 +101,85 @@ public enum MarkdownBlocks {
   }
 }
 
+/// The agent sometimes ends a reply with its own "---" / "Sources:" block. That is pulled
+/// out so the app can show sources as links instead of raw markdown.
+public enum AskAnswer {
+  public static func split(_ text: String) -> (body: String, sources: [Citation]) {
+    let lines = text.components(separatedBy: "\n")
+    guard let start = lines.firstIndex(where: { sourcesRemainder($0) != nil }) else {
+      return (text, [])
+    }
+    var bodyLines = Array(lines[..<start])
+    while let last = bodyLines.last, isRule(last) || last.trimmingCharacters(in: .whitespaces).isEmpty {
+      bodyLines.removeLast()
+    }
+    var items: [String] = []
+    if let inline = sourcesRemainder(lines[start]), !inline.isEmpty {
+      items += inline.components(separatedBy: ";")
+    }
+    items += lines[(start + 1)...]
+    let sources = items.compactMap(citation)
+    return (bodyLines.joined(separator: "\n"), sources)
+  }
+
+  /// Parsed sources first, then stored citations, without repeats.
+  public static func merge(_ parsed: [Citation], _ stored: [Citation]?) -> [Citation] {
+    var seen = Set<String>()
+    return (parsed + (stored ?? [])).filter { citation in
+      let keys = Set([citation.title, citation.url].compactMap { $0?.lowercased() })
+      guard seen.isDisjoint(with: keys) else { return false }
+      seen.formUnion(keys)
+      return true
+    }
+  }
+
+  static func isRule(_ line: String) -> Bool {
+    let trimmed = line.trimmingCharacters(in: .whitespaces)
+    return trimmed.count >= 3 && trimmed.allSatisfy { $0 == "-" || $0 == "*" || $0 == "_" }
+  }
+
+  /// Text after "Sources:" when the line is a sources heading (any markdown dressing).
+  static func sourcesRemainder(_ line: String) -> String? {
+    var trimmed = line.trimmingCharacters(in: .whitespaces)
+    while let first = trimmed.first, "-*_#> ".contains(first) { trimmed.removeFirst() }
+    let lowered = trimmed.lowercased()
+    for heading in ["sources", "source"] where lowered.hasPrefix(heading) {
+      var rest = trimmed.dropFirst(heading.count)
+      while let first = rest.first, "*_".contains(first) { rest.removeFirst() }
+      if rest.trimmingCharacters(in: .whitespaces).isEmpty { return "" }
+      guard rest.first == ":" else { continue }
+      rest.removeFirst()
+      while let first = rest.first, "*_ ".contains(first) { rest.removeFirst() }
+      return rest.trimmingCharacters(in: .whitespaces)
+    }
+    return nil
+  }
+
+  static func citation(_ raw: String) -> Citation? {
+    var line = raw.trimmingCharacters(in: .whitespaces)
+    for prefix in ["- ", "* ", "• "] where line.hasPrefix(prefix) { line.removeFirst(prefix.count) }
+    if let dot = line.firstIndex(of: "."), Int(line[..<dot]) != nil { line = String(line[line.index(after: dot)...]) }
+    line = line.trimmingCharacters(in: .whitespaces)
+    guard !line.isEmpty, !isRule(line) else { return nil }
+
+    if let open = line.firstIndex(of: "["), let close = line[open...].firstIndex(of: "]"),
+       line.index(after: close) < line.endIndex, line[line.index(after: close)] == "(",
+       let end = line[close...].firstIndex(of: ")") {
+      let title = String(line[line.index(after: open)..<close]).trimmingCharacters(in: .whitespaces)
+      let url = String(line[line.index(close, offsetBy: 2)..<end])
+      return Citation(title: title.isEmpty ? url : title, url: url)
+    }
+    if let range = line.range(of: "https://") ?? line.range(of: "http://") {
+      let url = String(line[range.lowerBound...].prefix { !$0.isWhitespace && $0 != ")" && $0 != ">" })
+      var title = line.replacingOccurrences(of: url, with: "")
+      title = title.trimmingCharacters(in: CharacterSet(charactersIn: " ()<>:-–—*_"))
+      return Citation(title: title.isEmpty ? (URL(string: url)?.host ?? url) : title, url: url)
+    }
+    let title = line.trimmingCharacters(in: CharacterSet(charactersIn: " *_"))
+    return title.isEmpty ? nil : Citation(title: title)
+  }
+}
+
 public enum InviteCode {
   public static let length = 6
   public static let allowed = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"

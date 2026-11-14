@@ -43,6 +43,21 @@ public enum Timeline {
     return (calendar.addingDays(1 - days, to: endDay), calendar.addingDays(1, to: endDay))
   }
 
+  /// "3h 12m since last feed" for each feed and nappy, keyed by event id. Gaps of a day
+  /// or more aren't shown: by then it's a gap in logging, not in care.
+  public static func gaps(_ events: [Event], now: EpochMs) -> [EventID: String] {
+    var result: [EventID: String] = [:]
+    for (kind, noun) in [(EventKind.feed, "feed"), (.nappy, "nappy")] {
+      let sorted = events.filter { $0.kind == kind && $0.loggedAt <= now }.sorted { $0.loggedAt < $1.loggedAt }
+      for (previous, current) in zip(sorted, sorted.dropFirst()) {
+        let minutes = (current.loggedAt - previous.loggedAt) / minuteMs
+        guard minutes >= 1, minutes < 24 * 60 else { continue }
+        result[current.id] = "\(EventCopy.durationMinutes(minutes)) since last \(noun)"
+      }
+    }
+    return result
+  }
+
   /// Client-side filter (the deployment can't filter `events.list` by kind).
   public static func filter(_ events: [Event], kind: EventKind?, window: (startMs: EpochMs, endMs: EpochMs)?) -> [Event] {
     events.filter { event in
@@ -93,4 +108,65 @@ public enum Patterns {
     let text = EventCopy.durationMinutes(jsRound(value))
     return text.isEmpty ? "—" : text
   }
+
+  /// Days in the range with at least one log.
+  public static func loggedDays(_ rows: [PatternDay]) -> Int {
+    rows.filter { !$0.slices.isEmpty }.count
+  }
+
+  /// Below this many logged days, averages are shown with a plain warning.
+  public static let sparseDays = 3
+
+  /// "Only 1 day logged in the last 7, so these numbers are rough for now." or nil.
+  public static func sparseNote(loggedDays: Int, days: Int) -> String? {
+    guard loggedDays > 0, loggedDays < min(sparseDays, days) else { return nil }
+    let dayWord = loggedDays == 1 ? "day" : "days"
+    return "Only \(loggedDays) \(dayWord) logged in the last \(days), so these numbers are rough for now."
+  }
+
+  /// Feeds and bottle millilitres per local day, oldest first. Averages are over the days
+  /// that have a feed, so a gap in logging doesn't read as a baby who stopped eating.
+  public static func feedTotals(_ events: [Event], days: Int, rangeEndMs: EpochMs, calendar: Calendar = .current) -> FeedTotals {
+    let endDay = calendar.localMidnight(rangeEndMs - 1)
+    var rows: [FeedDayTotal] = (0..<days).reversed().map { offset in
+      let dayStart = calendar.addingDays(-offset, to: endDay)
+      let parts = calendar.dateComponents([.weekday, .day], from: Date(epochMs: dayStart))
+      return FeedDayTotal(dayStartMs: dayStart, label: "\(dayShort[parts.weekday! - 1]) \(parts.day!)", feeds: 0, ml: 0)
+    }
+    let index = Dictionary(uniqueKeysWithValues: rows.enumerated().map { ($1.dayStartMs, $0) })
+    for event in events where event.kind == .feed {
+      guard let row = index[calendar.localMidnight(event.loggedAt)] else { continue }
+      rows[row].feeds += 1
+      rows[row].ml += max(0, event.amountMl ?? 0)
+    }
+    let logged = rows.filter { $0.feeds > 0 }
+    let count = Double(max(1, logged.count))
+    return FeedTotals(
+      days: rows,
+      loggedDays: logged.count,
+      feedsPerDay: Double(logged.reduce(0) { $0 + $1.feeds }) / count,
+      mlPerDay: logged.reduce(0) { $0 + $1.ml } / count
+    )
+  }
+
+  /// "6.5", "6"
+  public static func perDay(_ value: Double) -> String {
+    jsNumber(jsRound(value * 10) / 10)
+  }
+}
+
+public struct FeedDayTotal: Equatable, Sendable, Identifiable {
+  public var id: EpochMs { dayStartMs }
+  public var dayStartMs: EpochMs
+  /// "Mon 3"
+  public var label: String
+  public var feeds: Int
+  public var ml: Double
+}
+
+public struct FeedTotals: Equatable, Sendable {
+  public var days: [FeedDayTotal]
+  public var loggedDays: Int
+  public var feedsPerDay: Double
+  public var mlPerDay: Double
 }
