@@ -11,6 +11,8 @@ final class PendingLogSender {
   static let shared = PendingLogSender()
 
   var convex: ConvexService?
+  /// Called after a queued log is held for a subscription, so the app can show the paywall.
+  var onHeld: (() -> Void)?
   private var sending = false
 
   func send() async {
@@ -25,10 +27,17 @@ final class PendingLogSender {
     guard convex.auth == .signedIn else { return }
 
     let queue = QuickLogStore.queue
+    var held = false
+    defer { if held { onHeld?() } }
     for log in queue.all {
       do {
         _ = try await convex.mutation(log.call)
         queue.remove(id: log.id)
+      } catch let error where LogGate.refusal(error) != nil {
+        // Past the free allowance (a partner may have used the last ones): keep it for after subscribing.
+        QuickLogStore.held.enqueue(log)
+        queue.remove(id: log.id)
+        held = true
       } catch ClientError.ConvexError {
         // The server rejected it (e.g. the baby was removed); retrying won't help.
         queue.remove(id: log.id)

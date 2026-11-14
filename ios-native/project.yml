@@ -134,6 +134,8 @@ targets:
     platform: iOS
     sources:
       - path: ScrunchTests
+      - path: StoreKit/Scrunch.storekit
+        buildPhase: resources
     dependencies:
       - target: Scrunch
       - package: ScrunchCore
@@ -152,6 +154,7 @@ schemes:
         ScrunchWidgets: all
     run:
       config: Debug
+      storeKitConfiguration: StoreKit/Scrunch.storekit
     test:
       config: Debug
       targets:

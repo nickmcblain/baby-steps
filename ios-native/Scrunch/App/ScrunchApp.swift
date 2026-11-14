@@ -8,9 +8,14 @@ struct ScrunchApp: App {
   @State private var convex: ConvexService?
   @State private var router = AppRouter()
   @State private var activeBaby = ActiveBabyStore()
+  @State private var entitlements: Entitlements
+  @State private var gate: LogGate
 
   init() {
     UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
+    let entitlements = Entitlements()
+    _entitlements = State(initialValue: entitlements)
+    _gate = State(initialValue: LogGate(entitlements: entitlements))
     if AppConfig.isComplete {
       Clerk.configure(publishableKey: AppConfig.clerkPublishableKey)
       let convex = ConvexService(deploymentUrl: AppConfig.convexURL)
@@ -28,6 +33,8 @@ struct ScrunchApp: App {
             .environment(router)
             .environment(activeBaby)
             .environment(TimerStore.shared)
+            .environment(entitlements)
+            .environment(gate)
             .prefetchClerkImages()
             // Outermost, so ClerkKitUI modifiers like prefetchClerkImages() can see it too.
             .environment(Clerk.shared)
@@ -37,8 +44,10 @@ struct ScrunchApp: App {
       }
       .preferredColorScheme(.light)
       .tint(C.teal)
+      .task { entitlements.start() }
       #if DEBUG
       .task { router.applyLaunchDebugURL(activeBabyId: activeBaby.babyId) }
+      .debugPaywall(entitlements)
       #endif
       .onOpenURL { url in
         #if DEBUG

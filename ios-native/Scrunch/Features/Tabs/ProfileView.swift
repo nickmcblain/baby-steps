@@ -7,6 +7,7 @@ import SwiftUI
 struct ProfileView: View {
   @Environment(ConvexService.self) private var convex
   @Environment(Clerk.self) private var clerk
+  @Environment(ActiveBabyStore.self) private var activeBaby
   @State private var user = Live<ScrunchCore.User?>()
 
   private var email: String {
@@ -23,7 +24,7 @@ struct ProfileView: View {
       Card {
         row("Email", email)
         Rectangle().fill(C.line).frame(height: 1)
-        row("Subscription", "Not subscribed")
+        SubscriptionRow(babyId: activeBaby.babyId)
       }
     }
     .task { await user.bind(API.users.current(), convex) }

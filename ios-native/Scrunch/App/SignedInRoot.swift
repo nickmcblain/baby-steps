@@ -9,6 +9,8 @@ struct SignedInRoot: View {
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(Entitlements.self) private var entitlements
+  @Environment(LogGate.self) private var gate
   @State private var storedUser = false
   @State private var slowConnect = false
   @State private var undo = UndoCenter()
@@ -33,8 +35,26 @@ struct SignedInRoot: View {
         .environment(undo)
         .onChange(of: scenePhase) { _, phase in
           if phase == .background { undo.settle() }
-          if phase == .active { Task { await PendingLogSender.shared.send() } }
+          if phase == .active {
+            gate.presentHeldIfNeeded()
+            Task { await PendingLogSender.shared.send() }
+          }
         }
+        .sheet(item: Bindable(gate).paywall, onDismiss: { gate.paywallClosed() }) { request in
+          PaywallView(type: request.type, heldCount: request.heldCount)
+        }
+        .task {
+          gate.undo = undo
+          gate.clearSheets = { [router] in
+            defer { router.addLogOpen = false }
+            return router.addLogOpen
+          }
+          PendingLogSender.shared.onHeld = { [gate] in gate.presentHeldIfNeeded() }
+          gate.presentHeldIfNeeded()
+        }
+        .task { await entitlements.connect(convex) }
+        .task { await gate.bind(convex) }
+        .onChange(of: entitlements.subscribed) { gate.mirror() }
         .onChange(of: router.requestedBabyId) { _, id in
           guard let id else { return }
           activeBaby.select(id)
@@ -114,10 +134,10 @@ struct BabyDestination: View {
     case .tummyTimer: DurationTimerView(babyId: babyId, kind: .tummy)
     case .sleepManual(let handoff): DurationManualView(babyId: babyId, kind: .sleep, handoff: handoff)
     case .tummyManual(let handoff): DurationManualView(babyId: babyId, kind: .tummy, handoff: handoff)
-    case .feedPatterns: PatternsView(babyId: babyId, kind: .feed)
-    case .sleepPatterns: PatternsView(babyId: babyId, kind: .sleep)
-    case .tummyPatterns: PatternsView(babyId: babyId, kind: .tummy)
-    case .nappyPatterns: PatternsView(babyId: babyId, kind: .nappy)
+    case .feedPatterns: SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: .feed) }
+    case .sleepPatterns: SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: .sleep) }
+    case .tummyPatterns: SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: .tummy) }
+    case .nappyPatterns: SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: .nappy) }
     case .nappy: NappyView(babyId: babyId, potty: false)
     case .potty: NappyView(babyId: babyId, potty: true)
     case .medicine: MedicineView(babyId: babyId)
@@ -125,8 +145,9 @@ struct BabyDestination: View {
     case .clothing: ClothingView(babyId: babyId)
     case .weight: GrowthLogView(babyId: babyId, metric: .weight)
     case .height: GrowthLogView(babyId: babyId, metric: .length)
-    case .ask(let question, let thread): AskView(babyId: babyId, initialQuestion: question, threadId: thread)
-    case .askHistory: AskHistoryView(babyId: babyId)
+    case .ask(let question, let thread):
+      SubscriptionGate(babyId: babyId, feature: .ask) { AskView(babyId: babyId, initialQuestion: question, threadId: thread) }
+    case .askHistory: SubscriptionGate(babyId: babyId, feature: .ask) { AskHistoryView(babyId: babyId) }
     }
   }
 }

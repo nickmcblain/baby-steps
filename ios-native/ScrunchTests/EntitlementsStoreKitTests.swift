@@ -27,84 +27,61 @@ final class EntitlementsStoreKitTests: XCTestCase {
     return entitlements
   }
 
-  func testProductsAndTrialComeFromStoreKit() async throws {
+  func testProductsComeFromStoreKitWithNoTrial() async throws {
     let entitlements = await freshEntitlements()
-    XCTAssertEqual(Set(entitlements.products.map(\.id)), Set(Plus.productIDs))
-    XCTAssertFalse(entitlements.hasPlus)
-    XCTAssertTrue(entitlements.trialEligible)
-    XCTAssertEqual(entitlements.trialLength, "2 weeks")
-    XCTAssertEqual(entitlements.monthly?.subscription?.introductoryOffer?.paymentMode, .freeTrial)
-    XCTAssertNil(entitlements.products.first { $0.id == Plus.annualProductID }?.subscription?.introductoryOffer)
+    XCTAssertEqual(Set(entitlements.products.map(\.id)), Set(Subscription.productIDs))
+    XCTAssertFalse(entitlements.subscribed)
+    for product in entitlements.products {
+      XCTAssertNil(product.subscription?.introductoryOffer, product.id)
+    }
   }
 
-  func testPurchaseStartsTheFreeTrial() async throws {
-    let transaction = try await session.buyProduct(identifier: Plus.monthlyProductID)
+  func testMonthlyPurchaseSubscribesStraightAway() async throws {
+    let transaction = try await session.buyProduct(identifier: Subscription.monthlyProductID)
     let entitlements = await freshEntitlements()
 
     let status = try XCTUnwrap(entitlements.status)
-    XCTAssertTrue(entitlements.hasPlus)
-    XCTAssertTrue(status.inTrial)
+    XCTAssertTrue(entitlements.subscribed)
     XCTAssertTrue(status.willAutoRenew)
     XCTAssertFalse(status.familyShared)
-    let trialDays = try XCTUnwrap(status.expiresAt).timeIntervalSince(transaction.purchaseDate) / 86_400
-    XCTAssertEqual(trialDays, 14, accuracy: 0.1)
-    XCTAssertFalse(entitlements.trialEligible, "One trial per subscription group")
-    XCTAssertNil(entitlements.trialLength)
+    let days = try XCTUnwrap(status.expiresAt).timeIntervalSince(transaction.purchaseDate) / 86_400
+    XCTAssertGreaterThan(days, 27, "A full paid month, not a trial")
     XCTAssertEqual(entitlements.renewalPrice(for: status), "£2.99 a month")
   }
 
-  func testAnnualPurchaseHasNoTrial() async throws {
-    _ = try await session.buyProduct(identifier: Plus.annualProductID)
+  func testAnnualPurchase() async throws {
+    _ = try await session.buyProduct(identifier: Subscription.annualProductID)
     let entitlements = await freshEntitlements()
-    XCTAssertEqual(entitlements.status?.productID, Plus.annualProductID)
-    XCTAssertEqual(entitlements.status?.inTrial, false)
+    XCTAssertEqual(entitlements.status?.productID, Subscription.annualProductID)
+    XCTAssertEqual(entitlements.status?.planName, "Yearly subscription")
   }
 
   func testRestoreOnANewDeviceFindsTheSubscription() async throws {
-    _ = try await session.buyProduct(identifier: Plus.monthlyProductID)
+    _ = try await session.buyProduct(identifier: Subscription.monthlyProductID)
     // A fresh service reads Transaction.currentEntitlements, as after a reinstall or Restore.
     let entitlements = await freshEntitlements()
-    XCTAssertTrue(entitlements.hasPlus)
+    XCTAssertTrue(entitlements.subscribed)
   }
 
-  func testCancellingDuringTheTrialKeepsAccessUntilItEnds() async throws {
-    let transaction = try await session.buyProduct(identifier: Plus.monthlyProductID)
+  func testCancellingKeepsAccessUntilThePeriodEnds() async throws {
+    let transaction = try await session.buyProduct(identifier: Subscription.monthlyProductID)
     try session.disableAutoRenewForTransaction(identifier: UInt(transaction.id))
     let entitlements = await freshEntitlements()
-    XCTAssertTrue(entitlements.hasPlus)
+    XCTAssertTrue(entitlements.subscribed)
     XCTAssertEqual(entitlements.status?.willAutoRenew, false)
   }
 
-  func testExpiryRemovesPlus() async throws {
-    _ = try await session.buyProduct(identifier: Plus.monthlyProductID)
-    try session.expireSubscription(productIdentifier: Plus.monthlyProductID)
+  func testExpiryEndsTheSubscription() async throws {
+    _ = try await session.buyProduct(identifier: Subscription.monthlyProductID)
+    try session.expireSubscription(productIdentifier: Subscription.monthlyProductID)
     let entitlements = await freshEntitlements()
-    XCTAssertFalse(entitlements.hasPlus)
+    XCTAssertFalse(entitlements.subscribed)
   }
 
-  func testRefundRemovesPlus() async throws {
-    let transaction = try await session.buyProduct(identifier: Plus.monthlyProductID)
+  func testRefundEndsTheSubscription() async throws {
+    let transaction = try await session.buyProduct(identifier: Subscription.monthlyProductID)
     try session.refundTransaction(identifier: UInt(transaction.id))
     let entitlements = await freshEntitlements()
-    XCTAssertFalse(entitlements.hasPlus)
-  }
-
-  func testTrialReminderNeedsOptInAndAutoRenew() async throws {
-    UserDefaults.standard.removeObject(forKey: "plus.trialReminderOptIn")
-    let end = Date().addingTimeInterval(14 * 86_400)
-    let trial = PlusStatus(productID: Plus.monthlyProductID, expiresAt: end, inTrial: true, willAutoRenew: true, familyShared: false)
-    let center = UNUserNotificationCenter.current()
-
-    await TrialReminderScheduler.reconcile(status: trial, renewalPrice: "£2.99 a month")
-    var pending = await center.pendingNotificationRequests().map(\.identifier)
-    XCTAssertFalse(pending.contains(TrialReminder.identifier), "Never scheduled without consent")
-
-    UserDefaults.standard.set(true, forKey: "plus.trialReminderOptIn")
-    var cancelled = trial
-    cancelled.willAutoRenew = false
-    await TrialReminderScheduler.reconcile(status: cancelled, renewalPrice: nil)
-    pending = await center.pendingNotificationRequests().map(\.identifier)
-    XCTAssertFalse(pending.contains(TrialReminder.identifier), "No reminder when nothing will be charged")
-    UserDefaults.standard.removeObject(forKey: "plus.trialReminderOptIn")
+    XCTAssertFalse(entitlements.subscribed)
   }
 }

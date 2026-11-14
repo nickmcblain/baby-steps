@@ -261,6 +261,10 @@ public enum API {
     public static func remove(_ eventId: EventID) -> ConvexCall<ConvexNull> {
       .init("events:remove", convexArgs(["eventId": eventId]))
     }
+
+    public static func moveLoggedAt(_ eventId: EventID, to loggedAt: EpochMs) -> ConvexCall<ConvexNull> {
+      .init("events:moveLoggedAt", convexArgs(["eventId": eventId, "loggedAt": loggedAt]))
+    }
   }
 
   public enum chat {
@@ -285,6 +289,21 @@ public enum API {
     public static func ask(babyId: BabyID, threadId: ThreadID, message: String) -> ConvexCall<AskReply> {
       .init("chatAgent:ask", convexArgs(["babyId": babyId, "threadId": threadId, "message": message]))
     }
+  }
+
+  public enum subscriptions {
+    /// The user's stable UUID for StoreKit's appAccountToken.
+    public static func accountToken() -> ConvexCall<String> { .init("subscriptions:accountToken") }
+  }
+
+  public enum appStore {
+    public static func syncTransaction(_ signedTransaction: String) -> ConvexCall<Bool> {
+      .init("appStore:syncTransaction", convexArgs(["signedTransaction": signedTransaction]))
+    }
+  }
+
+  public enum allowance {
+    public static func mine() -> ConvexCall<AllowanceResponse> { .init("allowance:mine") }
   }
 
   public enum voiceLog {

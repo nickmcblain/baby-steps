@@ -28,6 +28,8 @@ final class VoiceLogRecorder {
   @ObservationIgnored private var maxTimer: Task<Void, Never>?
   @ObservationIgnored private var starting = false
   @ObservationIgnored private var onAutoFinish: ((VoiceLogResult) -> Void)?
+  /// Past the free allowance the paywall shows, and the same clip is sent again after subscribing.
+  @ObservationIgnored var gate: LogGate?
 
   private var fileURL: URL {
     FileManager.default.temporaryDirectory.appendingPathComponent("voice-log.m4a")
@@ -140,7 +142,13 @@ final class VoiceLogRecorder {
     }
 
     do {
-      let result = try await convex.action(API.voiceLog.logFromAudio(babyId: babyId, audioBase64: base64))
+      let send = { try await convex.action(API.voiceLog.logFromAudio(babyId: babyId, audioBase64: base64)) }
+      let sent: VoiceLogResult?
+      if let gate { sent = try await gate.save(nil, babyId: babyId, send) } else { sent = try await send() }
+      guard let result = sent else {
+        status = nil
+        return nil
+      }
       UINotificationFeedbackGenerator().notificationOccurred(.success)
       status = nil
       return result

@@ -12,6 +12,7 @@ struct QuickLogPanel: View {
   @Environment(AppRouter.self) private var router
   @Environment(TimerStore.self) private var timers
   @Environment(UndoCenter.self) private var undo
+  @Environment(LogGate.self) private var gate
   @State private var savingNappy: QuickLog.Nappy?
   @ScaledMetric(relativeTo: .body) private var nappyIconSize: CGFloat = 20
 
@@ -160,10 +161,10 @@ struct QuickLogPanel: View {
     defer { savingNappy = nil }
     let loggedAt = LoggedAt.nowSnapped()
     do {
-      let id = try await convex.mutation(nappyCall(nappy, at: loggedAt))
+      guard let id = try await gate.save(.nappy, babyId: baby.id, { try await convex.mutation(nappyCall(nappy, at: loggedAt)) }) else { return }
       showSaved(nappy, saved: SavedLog(id: id, loggedAt: loggedAt))
     } catch {
-      undo.show(UndoCenter.Toast(message: "Couldn’t log that nappy. Try again."))
+      undo.show(UndoCenter.Toast(message: error is LogGate.GateError ? UserMessage.from(error) : "Couldn’t log that nappy. Try again."))
     }
   }
 
@@ -171,7 +172,6 @@ struct QuickLogPanel: View {
     API.events.logNappy(babyId: baby.id, loggedAt: loggedAt, nappy: nappy.kind, weeSize: nappy.weeSize, pooSize: nappy.pooSize)
   }
 
-  /// Fixing a fresh log re-saves it at the new time, then removes the original.
   private func showSaved(_ nappy: QuickLog.Nappy, saved: SavedLog) {
     undo.show(UndoCenter.Toast(
       message: QuickLog.savedCopy(nappy.loggedCopy, loggedAt: saved.loggedAt),
@@ -184,9 +184,7 @@ struct QuickLogPanel: View {
       },
       shift: { [convex] minutes in
         let movedAt = QuickLog.shifted(saved.loggedAt, minutes: minutes)
-        guard let movedId = try? await convex.mutation(nappyCall(nappy, at: movedAt)) else { return nil }
-        _ = try? await convex.mutation(API.events.remove(saved.id))
-        saved.id = movedId
+        guard (try? await convex.mutation(API.events.moveLoggedAt(saved.id, to: movedAt))) != nil else { return nil }
         saved.loggedAt = movedAt
         return QuickLog.savedCopy(nappy.loggedCopy, loggedAt: movedAt)
       }

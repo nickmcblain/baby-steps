@@ -26,6 +26,15 @@ struct QuickLogView: View {
 
   var body: some View {
     switch family {
+    case .accessoryCircular where nappiesLocked:
+      Button(intent: OpenPaywallIntent()) {
+        ZStack {
+          AccessoryWidgetBackground()
+          Image(systemName: "lock.fill").font(.system(size: 16, weight: .bold))
+        }
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel(Self.lockedLabel)
     case .accessoryCircular:
       Button(intent: LogNappyIntent(nappy: .wet)) {
         ZStack {
@@ -65,16 +74,33 @@ struct QuickLogView: View {
       .lineLimit(1)
   }
 
+  /// Past the free nappies the buttons open Scrunch to the paywall rather than logging.
+  private var nappiesLocked: Bool {
+    guard let babyId = QuickLogStore.babies.active?.id else { return false }
+    return !SharedAllowance.load(from: GlanceStore.defaults).canLog(.nappy(.wet), babyId: babyId)
+  }
+
+  private static let lockedLabel = "Free nappies used. Open Scrunch to subscribe"
+
   private var buttons: some View {
     Grid(horizontalSpacing: 6, verticalSpacing: 6) {
       GridRow {
-        QuickLogButton(intent: LogNappyIntent(nappy: .wet), symbol: "drop.fill", label: QuickLog.Nappy.wet.label, spoken: "Log a wet nappy")
-        QuickLogButton(intent: LogNappyIntent(nappy: .dirty), symbol: "circle.fill", label: QuickLog.Nappy.dirty.label, spoken: "Log a dirty nappy")
+        nappyButton(.wet, symbol: "drop.fill", spoken: "Log a wet nappy")
+        nappyButton(.dirty, symbol: "circle.fill", spoken: "Log a dirty nappy")
       }
       GridRow {
-        QuickLogButton(intent: LogNappyIntent(nappy: .both), symbol: "circle.grid.2x2.fill", label: QuickLog.Nappy.both.label, spoken: "Log a wet and dirty nappy")
+        nappyButton(.both, symbol: "circle.grid.2x2.fill", spoken: "Log a wet and dirty nappy")
         QuickLogButton(intent: StartTimerIntent(timer: .feed), symbol: "timer", label: "Feed", spoken: "Start a feed timer")
       }
+    }
+  }
+
+  @ViewBuilder
+  private func nappyButton(_ option: NappyOption, symbol: String, spoken: String) -> some View {
+    if nappiesLocked {
+      QuickLogButton(intent: OpenPaywallIntent(), symbol: "lock.fill", label: option.nappy.label, spoken: Self.lockedLabel)
+    } else {
+      QuickLogButton(intent: LogNappyIntent(nappy: option), symbol: symbol, label: option.nappy.label, spoken: spoken)
     }
   }
 }

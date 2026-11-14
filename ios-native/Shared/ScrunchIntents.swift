@@ -40,11 +40,14 @@ struct BabyQuery: EntityQuery {
 enum ScrunchIntentError: Error, CustomLocalizedStringResourceConvertible {
   case noBaby
   case otherTimerRunning(String)
+  case freeLimit(LogType?)
 
   var localizedStringResource: LocalizedStringResource {
     switch self {
     case .noBaby: "Open Scrunch and add a baby first, then try again."
     case .otherTimerRunning(let timer): "A \(timer) timer is already running. Stop it first."
+    case .freeLimit(let type):
+      "\(FreeAllowance.paywallTitle(type)), so I've kept this one. Open Scrunch to subscribe and it will be saved."
     }
   }
 }
@@ -59,12 +62,56 @@ extension BabyEntity? {
 
 /// Queue a log for the baby and build the Siri reply.
 @MainActor
-private func logNow(_ log: LogEntry, baby: BabyEntity?, minutesAgo: Double = 0, note: String? = nil) async throws -> IntentDialog {
+private func logNow(
+  _ log: LogEntry, baby: BabyEntity?, minutesAgo: Double = 0, note: String? = nil, from intent: any AppIntent
+) async throws -> IntentDialog {
   let ref = try baby.resolved()
   let loggedAt = LoggedAt.snapToMinute(Date().epochMs - minutesAgo * minuteMs)
-  await QuickLogStore.record(PendingLog(babyId: ref.id, loggedAt: loggedAt, log: log, note: note))
+  let outcome = await QuickLogStore.record(PendingLog(babyId: ref.id, loggedAt: loggedAt, log: log, note: note))
+  if case .held(let type) = outcome { throw freeLimitReached(type, from: intent) }
   return "Logged \(log.summary.lowercasedFirst) for \(ref.name)."
 }
+
+/// Past the free allowance the log is held, and Siri opens Scrunch to the paywall. Widget buttons
+/// can't open the app from here, so the widget redraws with buttons that do (see QuickLogWidget).
+@MainActor
+func freeLimitReached(_ type: LogType?, from intent: any AppIntent) -> Error {
+  #if !WIDGET_EXTENSION
+  if let intent = intent as? any ForegroundContinuableIntent {
+    let dialog: IntentDialog = "\(FreeAllowance.paywallTitle(type)), so I've kept this one. Subscribe in Scrunch and it will be saved."
+    return intent.needsToContinueInForegroundError(dialog)
+  }
+  #endif
+  return ScrunchIntentError.freeLimit(type)
+}
+
+/// Opens Scrunch to the paywall. Widget buttons switch to this once the free entries are used.
+struct OpenPaywallIntent: AppIntent {
+  static let title: LocalizedStringResource = "Subscribe to Scrunch"
+  static let isDiscoverable = false
+  static let openAppWhenRun = true
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    GlanceStore.defaults.set(true, forKey: openPaywallKey)
+    return .result()
+  }
+}
+
+let openPaywallKey = "open-paywall"
+
+#if !WIDGET_EXTENSION
+extension LogNappyIntent: ForegroundContinuableIntent {}
+extension LogPottyIntent: ForegroundContinuableIntent {}
+extension LogFeedIntent: ForegroundContinuableIntent {}
+extension LogTummyIntent: ForegroundContinuableIntent {}
+extension LogPumpIntent: ForegroundContinuableIntent {}
+extension LogWeightIntent: ForegroundContinuableIntent {}
+extension LogHeightIntent: ForegroundContinuableIntent {}
+extension LogMedicineIntent: ForegroundContinuableIntent {}
+extension LogActivityIntent: ForegroundContinuableIntent {}
+extension LogCustomIntent: ForegroundContinuableIntent {}
+#endif
 
 extension String {
   var lowercasedFirst: String { prefix(1).lowercased() + dropFirst() }
@@ -184,7 +231,7 @@ struct LogNappyIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    .result(dialog: try await logNow(.nappy(nappy.nappy), baby: baby))
+    .result(dialog: try await logNow(.nappy(nappy.nappy), baby: baby, from: self))
   }
 }
 
@@ -199,7 +246,7 @@ struct LogPottyIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    .result(dialog: try await logNow(.potty(nappy.nappy), baby: baby))
+    .result(dialog: try await logNow(.potty(nappy.nappy), baby: baby, from: self))
   }
 }
 
@@ -235,7 +282,7 @@ struct LogFeedIntent: AppIntent {
       amountMl: amountMl.map(Double.init),
       milk: milk.milk
     )
-    return .result(dialog: try await logNow(log, baby: baby, minutesAgo: Double(minutes ?? 0)))
+    return .result(dialog: try await logNow(log, baby: baby, minutesAgo: Double(minutes ?? 0), from: self))
   }
 }
 
@@ -250,7 +297,7 @@ struct LogSleepIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    .result(dialog: try await logNow(.sleep(minutes: Double(minutes)), baby: baby, minutesAgo: Double(minutes)))
+    .result(dialog: try await logNow(.sleep(minutes: Double(minutes)), baby: baby, minutesAgo: Double(minutes), from: self))
   }
 }
 
@@ -265,7 +312,7 @@ struct LogTummyIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    .result(dialog: try await logNow(.tummy(minutes: Double(minutes)), baby: baby, minutesAgo: Double(minutes)))
+    .result(dialog: try await logNow(.tummy(minutes: Double(minutes)), baby: baby, minutesAgo: Double(minutes), from: self))
   }
 }
 
@@ -288,7 +335,7 @@ struct LogPumpIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let log = LogEntry.pump(side.side, minutes: Double(minutes), amountMl: amountMl.map(Double.init))
-    return .result(dialog: try await logNow(log, baby: baby, minutesAgo: Double(minutes)))
+    return .result(dialog: try await logNow(log, baby: baby, minutesAgo: Double(minutes), from: self))
   }
 }
 
@@ -304,7 +351,7 @@ struct LogWeightIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let grams = weight.converted(to: .grams).value.rounded()
-    return .result(dialog: try await logNow(.weight(grams: grams), baby: baby))
+    return .result(dialog: try await logNow(.weight(grams: grams), baby: baby, from: self))
   }
 }
 
@@ -320,7 +367,7 @@ struct LogHeightIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let cm = (length.converted(to: .centimeters).value * 10).rounded() / 10
-    return .result(dialog: try await logNow(.height(cm: cm), baby: baby))
+    return .result(dialog: try await logNow(.height(cm: cm), baby: baby, from: self))
   }
 }
 
@@ -337,7 +384,7 @@ struct LogMedicineIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     guard let title = name.trimmedOrNil else { throw $name.needsValueError("Which medicine?") }
-    return .result(dialog: try await logNow(.medicine(title: title), baby: baby, note: dose?.trimmedOrNil))
+    return .result(dialog: try await logNow(.medicine(title: title), baby: baby, note: dose?.trimmedOrNil, from: self))
   }
 }
 
@@ -354,7 +401,7 @@ struct LogActivityIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     guard let title = name.trimmedOrNil else { throw $name.needsValueError("What did you do?") }
-    return .result(dialog: try await logNow(.activity(title: title, minutes: minutes.map(Double.init)), baby: baby))
+    return .result(dialog: try await logNow(.activity(title: title, minutes: minutes.map(Double.init)), baby: baby, from: self))
   }
 }
 
@@ -371,7 +418,7 @@ struct LogCustomIntent: AppIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     guard let title = name.trimmedOrNil else { throw $name.needsValueError("What would you like to log?") }
-    return .result(dialog: try await logNow(.custom(title: title), baby: baby, note: note?.trimmedOrNil))
+    return .result(dialog: try await logNow(.custom(title: title), baby: baby, note: note?.trimmedOrNil, from: self))
   }
 }
 
@@ -426,7 +473,9 @@ struct StopTimerIntent: LiveActivityIntent {
     guard let log = session.finishedLog() else {
       return .result(dialog: "That was under five seconds, so nothing was saved.")
     }
-    await QuickLogStore.record(log)
+    if case .held(let type) = await QuickLogStore.record(log) {
+      return .result(dialog: "\(FreeAllowance.paywallTitle(type)), so this one is kept until you subscribe in Scrunch.")
+    }
     return .result(dialog: "Saved \(log.log.summary.lowercasedFirst) for \(name).")
     #endif
   }

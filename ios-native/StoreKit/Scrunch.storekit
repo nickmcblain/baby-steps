@@ -20,12 +20,12 @@
       "id" : "21800001",
       "localizations" : [
         {
-          "description" : "Ask and patterns for Scrunch",
-          "displayName" : "Scrunch Plus",
+          "description" : "Keep logging everything in Scrunch",
+          "displayName" : "Scrunch",
           "locale" : "en_GB"
         }
       ],
-      "name" : "Scrunch Plus",
+      "name" : "Scrunch",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -38,22 +38,16 @@
           "familyShareable" : true,
           "groupNumber" : 1,
           "internalID" : "6780000001",
-          "introductoryOffer" : {
-            "internalID" : "6780000011",
-            "numberOfPeriods" : 1,
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P2W"
-          },
           "localizations" : [
             {
-              "description" : "Ask and 7, 14 and 30-day patterns. Logging stays free.",
-              "displayName" : "Scrunch Plus (monthly)",
+              "description" : "Unlimited logging, Ask and patterns. Sleep stays free.",
+              "displayName" : "Scrunch monthly",
               "locale" : "en_GB"
             }
           ],
           "productID" : "com.nickmcblain.babysteps.plus.monthly",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Plus Monthly",
+          "referenceName" : "Monthly",
           "subscriptionGroupID" : "21800001",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
@@ -73,14 +67,14 @@
           "internalID" : "6780000002",
           "localizations" : [
             {
-              "description" : "Ask and 7, 14 and 30-day patterns. Logging stays free.",
-              "displayName" : "Scrunch Plus (yearly)",
+              "description" : "Unlimited logging, Ask and patterns. Sleep stays free.",
+              "displayName" : "Scrunch yearly",
               "locale" : "en_GB"
             }
           ],
           "productID" : "com.nickmcblain.babysteps.plus.annual",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Plus Annual",
+          "referenceName" : "Annual",
           "subscriptionGroupID" : "21800001",
           "type" : "RecurringSubscription",
           "winbackOffers" : [

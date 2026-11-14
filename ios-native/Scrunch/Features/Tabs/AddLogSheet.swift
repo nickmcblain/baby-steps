@@ -9,6 +9,7 @@ struct AddLogSheet: View {
   @Environment(ConvexService.self) private var convex
   @State private var voice = VoiceLogRecorder()
   @Environment(UndoCenter.self) private var undo
+  @Environment(LogGate.self) private var gate
 
   private struct Tile: Identifiable {
     let screen: BabyScreen
@@ -116,6 +117,7 @@ struct AddLogSheet: View {
       router.popToRoot(tab: .kids)
       return
     }
+    voice.gate = gate
     let result = await voice.toggle(babyId: babyId, convex: convex) { handle($0, babyId: babyId) }
     if let result { handle(result, babyId: babyId) }
   }

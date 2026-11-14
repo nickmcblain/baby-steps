@@ -7,6 +7,7 @@ struct NappyView: View {
   let potty: Bool
 
   @Environment(ConvexService.self) private var convex
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var kind: NappyKind = .wee
@@ -52,11 +53,14 @@ struct NappyView: View {
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     let noteValue = trimmed.isEmpty ? nil : trimmed
     do {
-      if potty {
-        try await convex.mutation(API.events.logPotty(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
-      } else {
-        try await convex.mutation(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+      let saved = try await gate.save(potty ? LogType.potty : .nappy, babyId: babyId) {
+        if potty {
+          try await convex.mutation(API.events.logPotty(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+        } else {
+          try await convex.mutation(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+        }
       }
+      guard saved != nil else { return }
       dismiss()
     } catch {
       alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
@@ -69,6 +73,7 @@ struct MedicineView: View {
   let babyId: BabyID
 
   @Environment(ConvexService.self) private var convex
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var baby = Live<Baby>()
   @State private var loggedAt = LoggedAt.nowSnapped()
@@ -102,7 +107,10 @@ struct MedicineView: View {
     let trimmedDose = dose.trimmingCharacters(in: .whitespacesAndNewlines)
     let doseValue = trimmedDose.isEmpty ? nil : trimmedDose
     do {
-      try await convex.mutation(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
+      let saved = try await gate.save(.medicine, babyId: babyId) {
+        try await convex.mutation(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
+      }
+      guard saved != nil else { return }
       if let remindHours, let baby = baby.value {
         let scheduled = await Reminders.scheduleMedicine(babyId: baby.id, babyName: baby.name, name: title, dose: doseValue, hours: remindHours)
         if !scheduled {
@@ -126,6 +134,7 @@ struct ActivityLogView: View {
   private static let quick = [5, 10, 15, 20, 30, 45]
 
   @Environment(ConvexService.self) private var convex
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var preset = "Play"
@@ -168,13 +177,16 @@ struct ActivityLogView: View {
     guard !title.isEmpty else { return alert = FormAlert(title: "Pick an activity") }
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
-      try await convex.mutation(API.events.logActivity(
-        babyId: babyId,
-        loggedAt: loggedAt,
-        title: title,
-        durationMinutes: minutes.isEmpty ? nil : Double(minutes.trimmingCharacters(in: .whitespaces)),
-        note: trimmed.isEmpty ? nil : trimmed
-      ))
+      let saved = try await gate.save(.activity, babyId: babyId) {
+        try await convex.mutation(API.events.logActivity(
+          babyId: babyId,
+          loggedAt: loggedAt,
+          title: title,
+          durationMinutes: minutes.isEmpty ? nil : Double(minutes.trimmingCharacters(in: .whitespaces)),
+          note: trimmed.isEmpty ? nil : trimmed
+        ))
+      }
+      guard saved != nil else { return }
       dismiss()
     } catch {
       alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
@@ -189,6 +201,7 @@ struct CustomEventView: View {
   private static let presets = ["Midwife visit", "GP visit", "Immunisation", "Health visitor", "Other"]
 
   @Environment(ConvexService.self) private var convex
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var preset = "Midwife visit"
@@ -224,7 +237,10 @@ struct CustomEventView: View {
     guard !title.isEmpty else { return alert = FormAlert(title: "Add a title") }
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
-      try await convex.mutation(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
+      let saved = try await gate.save(.note, babyId: babyId) {
+        try await convex.mutation(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
+      }
+      guard saved != nil else { return }
       dismiss()
     } catch {
       alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
