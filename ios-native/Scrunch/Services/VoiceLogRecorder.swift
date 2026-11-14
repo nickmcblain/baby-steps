@@ -141,7 +141,6 @@ final class VoiceLogRecorder {
 
     do {
       let result = try await convex.action(API.voiceLog.logFromAudio(babyId: babyId, audioBase64: base64))
-      UINotificationFeedbackGenerator().notificationOccurred(.success)
       status = nil
       return result
     } catch {

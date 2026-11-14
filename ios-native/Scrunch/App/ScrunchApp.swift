@@ -8,6 +8,7 @@ struct ScrunchApp: App {
   @State private var convex: ConvexService?
   @State private var router = AppRouter()
   @State private var activeBaby = ActiveBabyStore()
+  @State private var saveFeedback = SaveFeedback()
 
   init() {
     UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
@@ -25,6 +26,7 @@ struct ScrunchApp: App {
             .environment(convex)
             .environment(router)
             .environment(activeBaby)
+            .environment(saveFeedback)
             .environment(TimerStore.shared)
             .prefetchClerkImages()
             // Outermost, so ClerkKitUI modifiers like prefetchClerkImages() can see it too.

@@ -42,6 +42,7 @@ struct FeedManualView: View {
   let handoff: TimerSession.Handoff?
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
   @State private var baby = Live<Baby>()
   @State private var loggedAt: EpochMs
@@ -106,6 +107,7 @@ struct FeedManualView: View {
         milk: kind == .bottle ? milk : nil,
         note: trimmedOrNil(note)
       ))
+      saveFeedback.logged(.feed, babyId: babyId)
       if let baby = baby.value {
         await Reminders.refreshFeed(baby: baby, lastFeedAt: loggedAt + (duration ?? 0) * minuteMs, quiet: false)
       }
@@ -122,6 +124,7 @@ struct PumpManualView: View {
   let handoff: TimerSession.Handoff?
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
   @State private var loggedAt: EpochMs
   @State private var side: Side
@@ -171,6 +174,7 @@ struct PumpManualView: View {
         amountMl: ml.isEmpty ? nil : number(ml),
         note: trimmedOrNil(note)
       ))
+      saveFeedback.logged(.pump, babyId: babyId)
       router.popToRoot()
     } catch {
       alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
@@ -185,6 +189,7 @@ struct DurationManualView: View {
   let handoff: TimerSession.Handoff?
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
   @State private var loggedAt: EpochMs
   @State private var minutes: String
@@ -239,6 +244,7 @@ struct DurationManualView: View {
       } else {
         try await convex.mutation(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
       }
+      saveFeedback.logged(isSleep ? .sleep : .tummy, babyId: babyId)
       router.showHome(babyId)
     } catch {
       alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))

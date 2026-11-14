@@ -7,6 +7,7 @@ struct NappyView: View {
   let potty: Bool
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var kind: NappyKind = .wee
@@ -57,6 +58,7 @@ struct NappyView: View {
       } else {
         try await convex.mutation(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
       }
+      saveFeedback.logged(potty ? .potty : .nappy, babyId: babyId)
       dismiss()
     } catch {
       alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
@@ -69,6 +71,7 @@ struct MedicineView: View {
   let babyId: BabyID
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(\.dismiss) private var dismiss
   @State private var baby = Live<Baby>()
   @State private var loggedAt = LoggedAt.nowSnapped()
@@ -103,6 +106,7 @@ struct MedicineView: View {
     let doseValue = trimmedDose.isEmpty ? nil : trimmedDose
     do {
       try await convex.mutation(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
+      saveFeedback.logged(.medicine, babyId: babyId)
       if let remindHours, let baby = baby.value {
         let scheduled = await Reminders.scheduleMedicine(babyId: baby.id, babyName: baby.name, name: title, dose: doseValue, hours: remindHours)
         if !scheduled {
@@ -126,6 +130,7 @@ struct ActivityLogView: View {
   private static let quick = [5, 10, 15, 20, 30, 45]
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var preset = "Play"
@@ -175,6 +180,7 @@ struct ActivityLogView: View {
         durationMinutes: minutes.isEmpty ? nil : Double(minutes.trimmingCharacters(in: .whitespaces)),
         note: trimmed.isEmpty ? nil : trimmed
       ))
+      saveFeedback.logged(.activity, babyId: babyId)
       dismiss()
     } catch {
       alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
@@ -189,6 +195,7 @@ struct CustomEventView: View {
   private static let presets = ["Midwife visit", "GP visit", "Immunisation", "Health visitor", "Other"]
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var preset = "Midwife visit"
@@ -225,6 +232,7 @@ struct CustomEventView: View {
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
       try await convex.mutation(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
+      saveFeedback.logged(.custom, babyId: babyId)
       dismiss()
     } catch {
       alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))

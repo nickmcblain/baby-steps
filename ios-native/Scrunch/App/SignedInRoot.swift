@@ -9,6 +9,8 @@ struct SignedInRoot: View {
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(SaveFeedback.self) private var saveFeedback
+  @State private var babies = Live<[Baby]>()
   @State private var storedUser = false
   @State private var slowConnect = false
   @State private var undo = UndoCenter()
@@ -24,6 +26,9 @@ struct SignedInRoot: View {
               destination(route)
             }
         }
+        .saveFeedbackHost()
+        .task { await babies.bind(API.babies.list(), convex) }
+        .onChange(of: babies.value) { _, list in saveFeedback.remember(list ?? []) }
         .overlay(alignment: .bottom) {
           // Over the dock, so it never covers the quick-log buttons.
           UndoToastView().padding(.bottom, 6)

@@ -8,6 +8,7 @@ struct GrowthLogView: View {
   let metric: GrowthMetric
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
   @Environment(\.dismiss) private var dismiss
   @State private var series = Live<GrowthSeries>()
@@ -67,6 +68,7 @@ struct GrowthLogView: View {
         guard let cm, cm > 0 else { return alert = FormAlert(title: "Pick a height") }
         try await convex.mutation(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
       }
+      saveFeedback.logged(isWeight ? .weight : .height, babyId: babyId)
       dismiss()
     } catch {
       alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))

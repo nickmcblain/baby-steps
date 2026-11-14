@@ -187,6 +187,21 @@ struct HomeView: View {
         color: C.sky, track: C.skySoft, screen: .tummyPatterns
       )
     }
+
+    if let caughtUp {
+      CaughtUpCard(state: caughtUp)
+    }
+  }
+
+  private var caughtUp: CaughtUp? {
+    guard let baby, dayStart == WeekGrid.startOfLocalDay(now) else { return nil }
+    return CaughtUp.state(
+      lastFeedEndedAt: dash.value?.lastFeed.map(FeedWindows.feedEndedAt),
+      window: FeedWindows.window(for: baby, now: now),
+      napAt: asleep ? nil : napAt,
+      timerRunning: !asleep && timers.session.map { $0.babyId == baby.id && $0.isRunning } ?? false,
+      now: now
+    )
   }
 
   private func insightCard(_ baby: Baby) -> some View {

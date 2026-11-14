@@ -26,6 +26,7 @@ extension View {
 /// Port of app/(app)/babies/new.tsx.
 struct NewBabyView: View {
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
 
@@ -95,6 +96,7 @@ struct NewBabyView: View {
         notes: trimmedNotes.isEmpty ? nil : trimmedNotes
       ))
       activeBaby.select(id)
+      saveFeedback.show("Welcome, \(name.trimmingCharacters(in: .whitespaces))")
       router.popToRoot(tab: .home)
     } catch {
       alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
@@ -107,6 +109,7 @@ struct EditBabyView: View {
   let babyId: BabyID
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(\.dismiss) private var dismiss
   @State private var baby = Live<Baby>()
   @State private var dash = Live<Dashboard>()
@@ -177,6 +180,7 @@ struct EditBabyView: View {
         gestationWeeks: gestationWeeks,
         feedingMode: feedingMode
       ))
+      saveFeedback.show("Changes saved")
       if let current = baby.value {
         let updated = Baby(
           id: babyId,
