@@ -1,5 +1,900 @@
 {
-  "sourceLanguage": "en-GB",
-  "strings": {},
-  "version": "1.0"
+  "sourceLanguage" : "en-GB",
+  "strings" : {
+    "" : {
+
+    },
+    " / %@%@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : " / %1$@%2$@"
+          }
+        }
+      }
+    },
+    " °C" : {
+
+    },
+    " °F" : {
+
+    },
+    "%@ %lld" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$lld"
+          }
+        }
+      }
+    },
+    "%@ side" : {
+
+    },
+    "%@ · %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@ of %@%@. %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@ of %3$@%4$@. %5$@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
+    "%lld days" : {
+
+    },
+    "%lld logged" : {
+
+    },
+    "%lld." : {
+
+    },
+    "%lldh" : {
+
+    },
+    "%lldh %lldm" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lldh %2$lldm"
+          }
+        }
+      }
+    },
+    "%lldm" : {
+
+    },
+    "10" : {
+
+    },
+    "12" : {
+
+    },
+    "15" : {
+
+    },
+    "2.5 ml" : {
+
+    },
+    "40" : {
+
+    },
+    "45" : {
+
+    },
+    "90" : {
+
+    },
+    "Activity" : {
+
+    },
+    "Add a kid to start" : {
+
+    },
+    "Add a medicine name" : {
+
+    },
+    "Add a title" : {
+
+    },
+    "Add baby" : {
+
+    },
+    "Add boy / girl on Edit →" : {
+
+    },
+    "Add event" : {
+
+    },
+    "Add feed" : {
+
+    },
+    "Add nappy" : {
+
+    },
+    "Add sleep" : {
+
+    },
+    "Add tummy time" : {
+
+    },
+    "After bath" : {
+
+    },
+    "Age" : {
+
+    },
+    "Allow mic access in Settings to speak a log." : {
+
+    },
+    "Allow mic access to log feeds and sleeps hands-free." : {
+
+    },
+    "Allow notifications to get the next-dose nudge." : {
+
+    },
+    "Almost there" : {
+
+    },
+    "Amount (%@)" : {
+
+    },
+    "Ask" : {
+
+    },
+    "Ask failed" : {
+
+    },
+    "Back" : {
+
+    },
+    "Bars" : {
+
+    },
+    "Birth centile" : {
+
+    },
+    "Both" : {
+
+    },
+    "Bottle" : {
+
+    },
+    "Boy" : {
+
+    },
+    "Breast" : {
+
+    },
+    "Bring red book" : {
+
+    },
+    "C-section" : {
+
+    },
+    "CLERK_PUBLISHABLE_KEY or CONVEX_URL was not set for this build. Copy Config/Secrets.example.xcconfig to Config/Secrets.xcconfig, fill it in, and build again." : {
+
+    },
+    "Calpol" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Centile" : {
+
+    },
+    "Centimetres" : {
+
+    },
+    "Chart" : {
+
+    },
+    "Chats" : {
+
+    },
+    "Check name and date of birth" : {
+
+    },
+    "Check the code." : {
+
+    },
+    "Checkbox" : {
+
+    },
+    "Clinic visit" : {
+
+    },
+    "Clothing" : {
+
+    },
+    "Code %@" : {
+
+    },
+    "Connecting…" : {
+
+    },
+    "Consent needed" : {
+
+    },
+    "Could not log" : {
+
+    },
+    "Could not log from voice" : {
+
+    },
+    "Could not open chat" : {
+
+    },
+    "Could not save" : {
+
+    },
+    "Could not start chat" : {
+
+    },
+    "Couldn’t delete" : {
+
+    },
+    "Date of birth" : {
+
+    },
+    "Day" : {
+
+    },
+    "Decrease temperature" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Deleting…" : {
+
+    },
+    "Delivery (optional)" : {
+
+    },
+    "Done — add amount" : {
+
+    },
+    "Done — confirm details" : {
+
+    },
+    "Done — fill in details" : {
+
+    },
+    "Dose" : {
+
+    },
+    "Dots: your logs (%@)" : {
+
+    },
+    "Dream feed" : {
+
+    },
+    "Duration" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Email" : {
+
+    },
+    "End" : {
+
+    },
+    "Enter how long they slept" : {
+
+    },
+    "Enter how long tummy time lasted" : {
+
+    },
+    "Enter how long you pumped" : {
+
+    },
+    "Enter their 6-character invite code." : {
+
+    },
+    "Expressed" : {
+
+    },
+    "Feed" : {
+
+    },
+    "Feed patterns" : {
+
+    },
+    "Feeding (optional)" : {
+
+    },
+    "Feeds, sleep, and nappies live here once you add a baby." : {
+
+    },
+    "Feet" : {
+
+    },
+    "Feet & in" : {
+
+    },
+    "Fell asleep" : {
+
+    },
+    "Finish feed" : {
+
+    },
+    "Finish pump" : {
+
+    },
+    "Formula" : {
+
+    },
+    "Gestation weeks (optional)" : {
+
+    },
+    "Gestation weeks should be between 22 and 44" : {
+
+    },
+    "Girl" : {
+
+    },
+    "Go to Kids" : {
+
+    },
+    "Hearing test" : {
+
+    },
+    "Height" : {
+
+    },
+    "Height (optional)" : {
+
+    },
+    "Home" : {
+
+    },
+    "I am a parent or guardian and I consent to Scrunch storing this baby's care details (such as name, date of birth, growth, and logs) so the app can work. Scrunch is not a medical or healthcare service." : {
+
+    },
+    "Inches" : {
+
+    },
+    "Increase temperature" : {
+
+    },
+    "Invite code" : {
+
+    },
+    "Join a partner" : {
+
+    },
+    "Keep the little hours in one place." : {
+
+    },
+    "Kids" : {
+
+    },
+    "Kilograms" : {
+
+    },
+    "Large" : {
+
+    },
+    "Last feed" : {
+
+    },
+    "Last nappy" : {
+
+    },
+    "Left" : {
+
+    },
+    "Length / height for age" : {
+
+    },
+    "Length for age chart" : {
+
+    },
+    "Let-down slow" : {
+
+    },
+    "Lines: 0.4 · 9 · 50 · 91 · 99.6" : {
+
+    },
+    "List" : {
+
+    },
+    "Load older" : {
+
+    },
+    "Loading chart…" : {
+
+    },
+    "Loading week…" : {
+
+    },
+    "Loading…" : {
+
+    },
+    "Lock Screen timer unavailable" : {
+
+    },
+    "Log" : {
+
+    },
+    "Log feed" : {
+
+    },
+    "Log manually" : {
+
+    },
+    "Log pump" : {
+
+    },
+    "Logged" : {
+
+    },
+    "Logged, no reminder" : {
+
+    },
+    "Logging…" : {
+
+    },
+    "Loved the water" : {
+
+    },
+    "Medicine" : {
+
+    },
+    "Medium" : {
+
+    },
+    "Mic produced an empty clip. Check mic permission and try again." : {
+
+    },
+    "Microphone needed" : {
+
+    },
+    "Midwife, GP, jabs, and other appointments — past or upcoming." : {
+
+    },
+    "Minutes" : {
+
+    },
+    "Minutes filled from your timer — add ml if you measured." : {
+
+    },
+    "Minutes filled from your timer — tweak anything before saving." : {
+
+    },
+    "Mixed" : {
+
+    },
+    "Month" : {
+
+    },
+    "Name" : {
+
+    },
+    "Name needed" : {
+
+    },
+    "Nappy" : {
+
+    },
+    "Nappy patterns" : {
+
+    },
+    "New baby" : {
+
+    },
+    "New chat" : {
+
+    },
+    "Next nap" : {
+
+    },
+    "Next nap, last feed and nappy at a glance" : {
+
+    },
+    "Next week" : {
+
+    },
+    "Nico" : {
+
+    },
+    "No audio captured" : {
+
+    },
+    "No chats yet — tap + on Ask to start one." : {
+
+    },
+    "No recording saved — try again." : {
+
+    },
+    "Note" : {
+
+    },
+    "Notes" : {
+
+    },
+    "Notes (optional)" : {
+
+    },
+    "Nothing logged" : {
+
+    },
+    "OK" : {
+
+    },
+    "Off" : {
+
+    },
+    "On the play mat" : {
+
+    },
+    "Optional" : {
+
+    },
+    "Ounces" : {
+
+    },
+    "Past chats" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Paused" : {
+
+    },
+    "Pick a date" : {
+
+    },
+    "Pick a date of birth" : {
+
+    },
+    "Pick a height" : {
+
+    },
+    "Pick a kid first." : {
+
+    },
+    "Pick a weight" : {
+
+    },
+    "Pick an activity" : {
+
+    },
+    "Please confirm you agree to save this baby's details before continuing." : {
+
+    },
+    "Poo" : {
+
+    },
+    "Poo size" : {
+
+    },
+    "Potty" : {
+
+    },
+    "Pounds" : {
+
+    },
+    "Pounds & oz" : {
+
+    },
+    "Pram nap" : {
+
+    },
+    "Prefers left side first" : {
+
+    },
+    "Press and hold to delete" : {
+
+    },
+    "Previous week" : {
+
+    },
+    "Profile" : {
+
+    },
+    "Pump" : {
+
+    },
+    "Remind me" : {
+
+    },
+    "Reset" : {
+
+    },
+    "Resume" : {
+
+    },
+    "Right" : {
+
+    },
+    "Running" : {
+
+    },
+    "SCRUNCH" : {
+
+    },
+    "Sat on their own" : {
+
+    },
+    "Save activity" : {
+
+    },
+    "Save baby" : {
+
+    },
+    "Save changes" : {
+
+    },
+    "Save event" : {
+
+    },
+    "Save feed" : {
+
+    },
+    "Save height" : {
+
+    },
+    "Save medicine" : {
+
+    },
+    "Save nappy" : {
+
+    },
+    "Save potty" : {
+
+    },
+    "Save pump" : {
+
+    },
+    "Save sleep" : {
+
+    },
+    "Save tummy time" : {
+
+    },
+    "Save weigh-in" : {
+
+    },
+    "Scrunch" : {
+
+    },
+    "Seedy mustard" : {
+
+    },
+    "Send" : {
+
+    },
+    "Series" : {
+
+    },
+    "Set boy or girl on Edit profile to plot against UK charts." : {
+
+    },
+    "Sex (for UK growth charts)" : {
+
+    },
+    "Show weights in" : {
+
+    },
+    "Side" : {
+
+    },
+    "Sign out" : {
+
+    },
+    "Skip to manual entry" : {
+
+    },
+    "Sleep" : {
+
+    },
+    "Sleep patterns" : {
+
+    },
+    "Sleep timer" : {
+
+    },
+    "Sleep today" : {
+
+    },
+    "Small" : {
+
+    },
+    "Something went wrong. Try again." : {
+
+    },
+    "Speak a log or question" : {
+
+    },
+    "Start" : {
+
+    },
+    "Start timer" : {
+
+    },
+    "Start when they go on their tummy. Keeps timing on the Lock Screen / Dynamic Island while the app is away." : {
+
+    },
+    "Start when they nod off. Keeps timing on the Lock Screen / Dynamic Island while the app is away." : {
+
+    },
+    "Started" : {
+
+    },
+    "Stop and send" : {
+
+    },
+    "Subscription" : {
+
+    },
+    "Swimming" : {
+
+    },
+    "Tap Speak, talk for a second or two, then tap again to send." : {
+
+    },
+    "Tenths" : {
+
+    },
+    "That clip is too long. Keep it under 30 seconds." : {
+
+    },
+    "Thinking…" : {
+
+    },
+    "This can’t be undone." : {
+
+    },
+    "This week" : {
+
+    },
+    "Time one side at a time. Island keeps the active side running if you leave the app." : {
+
+    },
+    "Timeline" : {
+
+    },
+    "Timer" : {
+
+    },
+    "Timing…" : {
+
+    },
+    "Title" : {
+
+    },
+    "Too short" : {
+
+    },
+    "Try again" : {
+
+    },
+    "Tummy" : {
+
+    },
+    "Tummy patterns" : {
+
+    },
+    "Tummy time" : {
+
+    },
+    "Type" : {
+
+    },
+    "Typical at this age: %@–%@h" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Typical at this age: %1$@–%2$@h"
+          }
+        }
+      }
+    },
+    "Typical day" : {
+
+    },
+    "Use a real phone" : {
+
+    },
+    "Use this date" : {
+
+    },
+    "Use this height" : {
+
+    },
+    "Use this time" : {
+
+    },
+    "Use this weight" : {
+
+    },
+    "Usual day" : {
+
+    },
+    "Vaginal" : {
+
+    },
+    "Voice log" : {
+
+    },
+    "Wee" : {
+
+    },
+    "Wee size" : {
+
+    },
+    "Week" : {
+
+    },
+    "Week chart of sleep, tummy time and logged events" : {
+
+    },
+    "Weigh-in" : {
+
+    },
+    "Weight" : {
+
+    },
+    "Weight for age" : {
+
+    },
+    "Weight for age chart" : {
+
+    },
+    "When" : {
+
+    },
+    "iOS Simulator mic is usually silent, so Whisper hears nothing. Run on a device." : {
+
+    },
+    "kg" : {
+
+    },
+    "lb & oz" : {
+
+    },
+    "°C" : {
+
+    },
+    "°F" : {
+
+    },
+    "±0.5°C" : {
+
+    },
+    "±0.9°F" : {
+
+    },
+    "· %@" : {
+
+    },
+    "•" : {
+
+    }
+  },
+  "version" : "1.0"
 }
