@@ -89,7 +89,7 @@ struct BabyPhotoField: View {
     }
     do {
       guard let data = try await picked.loadTransferable(type: Data.self), let jpeg = Self.jpeg(from: data) else {
-        return alert = FormAlert(title: "Could not use that photo", message: "Try a different one.")
+        return alert = FormAlert(title: "Couldn’t use that photo", message: "Try a different one.")
       }
       let uploadURL = try await convex.mutation(API.babies.generatePhotoUploadUrl(babyId))
       guard let url = URL(string: uploadURL) else { throw URLError(.badURL) }
@@ -103,7 +103,7 @@ struct BabyPhotoField: View {
       try await convex.mutation(API.babies.setPhoto(babyId: babyId, storageId: storageId))
       saveFeedback.show("Photo saved")
     } catch {
-      alert = FormAlert(title: "Could not save photo", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t save the photo", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 
@@ -113,7 +113,7 @@ struct BabyPhotoField: View {
     do {
       try await convex.mutation(API.babies.removePhoto(babyId))
     } catch {
-      alert = FormAlert(title: "Could not remove photo", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t remove the photo", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 

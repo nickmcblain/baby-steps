@@ -52,7 +52,7 @@ private struct TimerFooter: View {
     VStack(spacing: 12) {
       PrimaryButton(label: doneLabel, disabled: !canFinish) { await onDone() }
       Button { Task { await onSkip() } } label: {
-        Text("Skip to manual entry").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8)
+        Text("Enter it by hand").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8)
       }
       .accessibilityAddTraits(.isLink)
       if showReset {
@@ -105,8 +105,8 @@ struct DurationTimerView: View {
     ScreenScaffold {
       ScreenTitle(isSleep ? "Sleep timer" : "Tummy time")
       Text(isSleep
-        ? "Start when they nod off. Keeps timing on the Lock Screen / Dynamic Island while the app is away."
-        : "Start when they go on their tummy. Keeps timing on the Lock Screen / Dynamic Island while the app is away.")
+        ? "Start when they nod off. It keeps counting on your Lock Screen if you leave the app."
+        : "Start when they go on their tummy. It keeps counting on your Lock Screen if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
       Button { Task { await toggle() } } label: {
@@ -145,7 +145,7 @@ struct DurationTimerView: View {
     .task(id: dash.value?.baby) {
       if running { await syncReminders() }
     }
-    .alert("Lock Screen timer unavailable", isPresented: Binding(get: { liveError != nil }, set: { if !$0 { liveError = nil } })) {
+    .alert("Lock Screen timer is off", isPresented: Binding(get: { liveError != nil }, set: { if !$0 { liveError = nil } })) {
       Button("OK", role: .cancel) {}
     } message: {
       Text(liveError ?? "")
@@ -157,7 +157,7 @@ struct DurationTimerView: View {
     if session.isRunning, let error {
       liveError = isSleep
         ? error
-        : "Could not start Dynamic Island / Lock Screen timer."
+        : "The timer is still running here, but it couldn’t show on your Lock Screen."
     }
   }
 
@@ -220,7 +220,7 @@ struct FeedTimerView: View {
 
     ScreenScaffold {
       ScreenTitle(isPump ? "Pump" : "Timer")
-      Text("Time one side at a time. Island keeps the active side running if you leave the app.")
+      Text("Time one side at a time. It keeps counting on your Lock Screen if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
       HStack(spacing: 12) {
@@ -243,7 +243,7 @@ struct FeedTimerView: View {
     .task {
       if let session = model.session { await push(session) }
     }
-    .alert("Lock Screen timer unavailable", isPresented: Binding(get: { liveError != nil }, set: { if !$0 { liveError = nil } })) {
+    .alert("Lock Screen timer is off", isPresented: Binding(get: { liveError != nil }, set: { if !$0 { liveError = nil } })) {
       Button("OK", role: .cancel) {}
     } message: {
       Text(liveError ?? "")
@@ -280,7 +280,7 @@ struct FeedTimerView: View {
   private func push(_ session: TimerSession) async {
     let error = await timers.update(session)
     if session.isRunning, let error {
-      liveError = isPump ? "Could not start Dynamic Island / Lock Screen timer." : error
+      liveError = isPump ? "The timer is still running here, but it couldn’t show on your Lock Screen." : error
     }
   }
 

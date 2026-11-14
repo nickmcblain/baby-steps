@@ -113,7 +113,7 @@ struct FeedManualView: View {
       }
       router.showHome(babyId)
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
@@ -177,7 +177,7 @@ struct PumpManualView: View {
       saveFeedback.logged(.pump, babyId: babyId)
       router.popToRoot()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
@@ -247,7 +247,7 @@ struct DurationManualView: View {
       saveFeedback.logged(isSleep ? .sleep : .tummy, babyId: babyId)
       router.showHome(babyId)
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }

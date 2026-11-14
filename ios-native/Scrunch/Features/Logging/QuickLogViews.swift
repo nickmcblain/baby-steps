@@ -61,7 +61,7 @@ struct NappyView: View {
       saveFeedback.logged(potty ? .potty : .nappy, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
@@ -111,13 +111,13 @@ struct MedicineView: View {
         let scheduled = await Reminders.scheduleMedicine(babyId: baby.id, babyName: baby.name, name: title, dose: doseValue, hours: remindHours)
         if !scheduled {
           let close = dismiss
-          alert = FormAlert(title: "Logged, no reminder", message: "Allow notifications to get the next-dose nudge.", onDismiss: { close() })
+          alert = FormAlert(title: "Saved, but no reminder", message: "Turn on notifications in Settings to get a nudge for the next dose.", onDismiss: { close() })
           return
         }
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
@@ -183,7 +183,7 @@ struct ActivityLogView: View {
       saveFeedback.logged(.activity, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
@@ -210,7 +210,7 @@ struct CustomEventView: View {
   var body: some View {
     ScreenScaffold {
       ScreenTitle("Add event")
-      Hint("Midwife, GP, jabs, and other appointments — past or upcoming.")
+      Hint("Midwife, GP, jabs and other appointments, past or upcoming.")
       FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
@@ -235,7 +235,7 @@ struct CustomEventView: View {
       saveFeedback.logged(.custom, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }

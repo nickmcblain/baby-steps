@@ -71,7 +71,7 @@ struct GrowthLogView: View {
       saveFeedback.logged(isWeight ? .weight : .height, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }

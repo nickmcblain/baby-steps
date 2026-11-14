@@ -94,7 +94,7 @@ final class VoiceLogRecorder {
     } catch {
       recording = false
       status = nil
-      alert = Alert(title: "Could not record", message: error.localizedDescription.isEmpty ? "Try again" : error.localizedDescription)
+      alert = Alert(title: "Couldn’t record", message: error.localizedDescription.isEmpty ? "Try again" : error.localizedDescription)
     }
     #endif
   }
@@ -115,12 +115,12 @@ final class VoiceLogRecorder {
 
     guard let data = try? Data(contentsOf: fileURL) else {
       status = nil
-      alert = Alert(title: "Voice log", message: "No recording saved — try again.")
+      alert = Alert(title: "Nothing recorded", message: "Try again.")
       return nil
     }
     if data.count < Self.minBytes {
       status = nil
-      alert = Alert(title: "No audio captured", message: "Mic produced an empty clip. Check mic permission and try again.")
+      alert = Alert(title: "Didn’t catch that", message: "We didn’t hear anything. Check Scrunch can use the microphone, then try again.")
       return nil
     }
 
@@ -135,7 +135,7 @@ final class VoiceLogRecorder {
     let base64 = data.base64EncodedString()
     guard base64.count <= API.voiceLog.maxAudioBase64Length else {
       status = nil
-      alert = Alert(title: "Voice log", message: "That clip is too long. Keep it under 30 seconds.")
+      alert = Alert(title: "That was a bit long", message: "Keep it under 30 seconds.")
       return nil
     }
 
@@ -146,7 +146,7 @@ final class VoiceLogRecorder {
     } catch {
       UINotificationFeedbackGenerator().notificationOccurred(.error)
       status = nil
-      alert = Alert(title: "Voice log", message: UserMessage.from(error, fallback: "Could not log from voice"))
+      alert = Alert(title: "Voice log", message: UserMessage.from(error, fallback: "Couldn’t log that. Try again."))
       return nil
     }
   }

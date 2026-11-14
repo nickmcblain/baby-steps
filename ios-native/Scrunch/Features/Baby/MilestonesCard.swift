@@ -119,7 +119,7 @@ private struct MilestoneSheet: View {
       saveFeedback.show(MilestoneCopy.saved(milestone, babyName: baby.name))
       onDone()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 
@@ -128,7 +128,7 @@ private struct MilestoneSheet: View {
       try await convex.mutation(API.babies.clearMilestone(babyId: baby.id, milestone: milestone))
       onDone()
     } catch {
-      alert = FormAlert(title: "Could not remove", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t remove that", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }

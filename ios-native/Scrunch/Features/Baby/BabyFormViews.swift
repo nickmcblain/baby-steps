@@ -79,11 +79,11 @@ struct NewBabyView: View {
   }
 
   private func save() async {
-    guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return alert = FormAlert(title: "Name needed") }
+    guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return alert = FormAlert(title: "Add a name") }
     guard let dateOfBirth else { return alert = FormAlert(title: "Pick a date of birth") }
     guard let weightGrams else { return alert = FormAlert(title: "Pick a weight") }
     guard careConsent else {
-      return alert = FormAlert(title: "Consent needed", message: "Please confirm you agree to save this baby's details before continuing.")
+      return alert = FormAlert(title: "One more thing", message: "Tick the box so Scrunch can keep these details safe for you.")
     }
     let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
@@ -99,7 +99,7 @@ struct NewBabyView: View {
       saveFeedback.show("Welcome, \(name.trimmingCharacters(in: .whitespaces))")
       router.popToRoot(tab: .home)
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
@@ -194,7 +194,7 @@ struct EditBabyView: View {
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
