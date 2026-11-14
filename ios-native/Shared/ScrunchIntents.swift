@@ -40,13 +40,11 @@ struct BabyQuery: EntityQuery {
 enum ScrunchIntentError: Error, CustomLocalizedStringResourceConvertible {
   case noBaby
   case otherTimerRunning(String)
-  case needsApp
 
   var localizedStringResource: LocalizedStringResource {
     switch self {
     case .noBaby: "Open Scrunch and add a baby first, then try again."
     case .otherTimerRunning(let timer): "A \(timer) timer is already running. Stop it first."
-    case .needsApp: "Open Scrunch to do that."
     }
   }
 }
@@ -394,7 +392,7 @@ struct StartTimerIntent: LiveActivityIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     #if WIDGET_EXTENSION
-    throw ScrunchIntentError.needsApp
+    return .result(dialog: "Open Scrunch to do that.")
     #else
     let ref = try baby.resolved()
     let kind = timer.kind
@@ -421,7 +419,7 @@ struct StopTimerIntent: LiveActivityIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     #if WIDGET_EXTENSION
-    throw ScrunchIntentError.needsApp
+    return .result(dialog: "Open Scrunch to do that.")
     #else
     let store = TimerStore.shared
     guard var session = store.session else { return .result(dialog: "No timer is running.") }
