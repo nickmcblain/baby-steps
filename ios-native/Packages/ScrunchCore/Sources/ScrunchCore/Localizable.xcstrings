@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "en-GB",
   "strings" : {
+    " · Left" : {
+
+    },
+    " · Right" : {
+
+    },
     "%@ Under 3 months or a lighter baby can use one extra thin layer — never a hat indoors." : {
 
     },
@@ -163,6 +169,12 @@
     "Breast %@" : {
 
     },
+    "Dirty" : {
+
+    },
+    "Dirty nappy logged" : {
+
+    },
     "Event" : {
 
     },
@@ -175,10 +187,19 @@
     "Feed" : {
 
     },
+    "Feed paused" : {
+
+    },
+    "Feed started%@" : {
+
+    },
     "Feed · Left" : {
 
     },
     "Feed · Right" : {
+
+    },
+    "Feeding%@" : {
 
     },
     "Feel the chest or back of the neck. Warm is good; sweaty means strip a layer." : {
@@ -198,6 +219,16 @@
     },
     "If your baby is not breathing normally, is unresponsive, blue/grey, or having a seizure, call 999 now." : {
 
+    },
+    "Last side: %@, %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Last side: %1$@, %2$@"
+          }
+        }
+      }
     },
     "Latest ≈ %@ centile · %@" : {
       "localizations" : {
@@ -294,10 +325,19 @@
     "Pump" : {
 
     },
+    "Pump paused" : {
+
+    },
+    "Pump started" : {
+
+    },
     "Pump · Left" : {
 
     },
     "Pump · Right" : {
+
+    },
+    "Pumping%@" : {
 
     },
     "Right" : {
@@ -315,10 +355,19 @@
     "Sleep" : {
 
     },
+    "Sleep paused" : {
+
+    },
+    "Sleep timer started" : {
+
+    },
     "Sleepsuit" : {
 
     },
     "Sleepsuit or 1.0 TOG bag" : {
+
+    },
+    "Started %@" : {
 
     },
     "Their daytime sleep, with the night you set." : {
@@ -334,6 +383,12 @@
 
     },
     "Tummy time" : {
+
+    },
+    "Tummy time paused" : {
+
+    },
+    "Tummy time started" : {
 
     },
     "UK Red Book centiles (WHO / UK-WHO standards)" : {
@@ -367,6 +422,15 @@
 
     },
     "Weight" : {
+
+    },
+    "Wet" : {
+
+    },
+    "Wet and dirty nappy logged" : {
+
+    },
+    "Wet nappy logged" : {
 
     },
     "Where they usually sleep. Last 2 weeks. Cues first." : {

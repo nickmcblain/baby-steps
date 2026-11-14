@@ -125,7 +125,7 @@ struct DurationTimerView: View {
       }
       .buttonStyle(PressScale())
       .sensoryFeedback(.impact(weight: .light), trigger: running)
-      .accessibilityLabel(running ? "Pause \(isSleep ? "sleep" : "tummy time")" : "Start \(isSleep ? "sleep" : "tummy time")")
+      .accessibilityLabel(running ? (isSleep ? "Pause sleep" : "Pause tummy time") : (isSleep ? "Start sleep" : "Start tummy time"))
 
       if let session { StartShiftChips(session: session) }
 

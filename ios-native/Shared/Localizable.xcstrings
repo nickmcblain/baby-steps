@@ -43,6 +43,9 @@
         }
       }
     },
+    "%@. Lock Screen timer is off in Settings." : {
+
+    },
     "%@: %@ of %@%@. %@" : {
       "localizations" : {
         "en-GB" : {
@@ -183,6 +186,9 @@
     "Breast" : {
 
     },
+    "Breastfeed" : {
+
+    },
     "Bring red book" : {
 
     },
@@ -193,9 +199,6 @@
 
     },
     "Calpol" : {
-
-    },
-    "Cancel" : {
 
     },
     "Centile" : {
@@ -249,7 +252,13 @@
     "Could not start chat" : {
 
     },
-    "Couldn’t delete" : {
+    "Couldn’t delete. Try again." : {
+
+    },
+    "Couldn’t log that nappy. Try again." : {
+
+    },
+    "Couldn’t undo. Delete it from Timeline." : {
 
     },
     "Date of birth" : {
@@ -264,10 +273,10 @@
     "Delete" : {
 
     },
-    "Deleting…" : {
+    "Delivery (optional)" : {
 
     },
-    "Delivery (optional)" : {
+    "Done" : {
 
     },
     "Done — add amount" : {
@@ -312,10 +321,19 @@
     "Enter their 6-character invite code." : {
 
     },
+    "Event" : {
+
+    },
     "Expressed" : {
 
     },
     "Feed" : {
+
+    },
+    "Feed on left side" : {
+
+    },
+    "Feed on right side" : {
 
     },
     "Feed patterns" : {
@@ -340,6 +358,9 @@
 
     },
     "Finish pump" : {
+
+    },
+    "Forgot to start?" : {
 
     },
     "Formula" : {
@@ -420,6 +441,9 @@
     "List" : {
 
     },
+    "Listening" : {
+
+    },
     "Load older" : {
 
     },
@@ -438,13 +462,19 @@
     "Log" : {
 
     },
+    "Log dirty nappy" : {
+
+    },
     "Log feed" : {
 
     },
-    "Log manually" : {
+    "Log pump" : {
 
     },
-    "Log pump" : {
+    "Log wet and dirty nappy" : {
+
+    },
+    "Log wet nappy" : {
 
     },
     "Logged" : {
@@ -463,6 +493,9 @@
 
     },
     "Medium" : {
+
+    },
+    "Meds" : {
 
     },
     "Mic produced an empty clip. Check mic permission and try again." : {
@@ -489,6 +522,9 @@
     "Month" : {
 
     },
+    "Move %lld minutes earlier" : {
+
+    },
     "Name" : {
 
     },
@@ -511,6 +547,9 @@
 
     },
     "Next nap, last feed and nappy at a glance" : {
+
+    },
+    "Next side" : {
 
     },
     "Next week" : {
@@ -549,6 +588,9 @@
     "On the play mat" : {
 
     },
+    "Opens the timer" : {
+
+    },
     "Optional" : {
 
     },
@@ -559,6 +601,15 @@
 
     },
     "Pause" : {
+
+    },
+    "Pause %@" : {
+
+    },
+    "Pause left side" : {
+
+    },
+    "Pause right side" : {
 
     },
     "Paused" : {
@@ -580,6 +631,9 @@
 
     },
     "Pick an activity" : {
+
+    },
+    "Play" : {
 
     },
     "Please confirm you agree to save this baby's details before continuing." : {
@@ -604,9 +658,6 @@
 
     },
     "Prefers left side first" : {
-
-    },
-    "Press and hold to delete" : {
 
     },
     "Previous week" : {
@@ -726,10 +777,25 @@
     "Something went wrong. Try again." : {
 
     },
+    "Speak" : {
+
+    },
     "Speak a log or question" : {
 
     },
     "Start" : {
+
+    },
+    "Start %@" : {
+
+    },
+    "Start breastfeed, left side" : {
+
+    },
+    "Start breastfeed, right side" : {
+
+    },
+    "Start sleep timer" : {
 
     },
     "Start timer" : {
@@ -744,16 +810,34 @@
     "Started" : {
 
     },
+    "Started %lld minutes earlier" : {
+
+    },
     "Stop and send" : {
 
     },
     "Subscription" : {
 
     },
+    "Suggested next side" : {
+
+    },
     "Swimming" : {
 
     },
+    "Swipe left to delete" : {
+
+    },
     "Tap Speak, talk for a second or two, then tap again to send." : {
+
+    },
+    "Tap to pause" : {
+
+    },
+    "Tap to resume" : {
+
+    },
+    "Tap to start" : {
 
     },
     "Tenths" : {
@@ -763,9 +847,6 @@
 
     },
     "Thinking…" : {
-
-    },
-    "This can’t be undone." : {
 
     },
     "This week" : {
@@ -787,6 +868,9 @@
 
     },
     "Too short" : {
+
+    },
+    "Too short to save. Timer cleared." : {
 
     },
     "Try again" : {
@@ -815,6 +899,9 @@
       }
     },
     "Typical day" : {
+
+    },
+    "Undo" : {
 
     },
     "Use a real phone" : {
@@ -893,6 +980,9 @@
 
     },
     "•" : {
+
+    },
+    "−%lld min" : {
 
     }
   },
