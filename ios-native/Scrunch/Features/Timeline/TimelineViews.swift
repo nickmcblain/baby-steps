@@ -301,7 +301,7 @@ struct WeekRhythmChart: View {
     }
   }
 
-  private static let legend: [(String, Color, Bool)] = [
+  private static let legend: [(LocalizedStringKey, Color, Bool)] = [
     ("Sleep", C.purple, true), ("Tummy", C.sky, true),
     ("Feed", C.teal, false), ("Nappy", C.peach, false), ("Weight", C.amber, false),
     ("Height", C.sky, false), ("Event", C.rose, false), ("Pump", C.tealDark, false),
@@ -396,11 +396,12 @@ struct WeekRhythmChart: View {
 
 /// Wrapping, centred legend row.
 private struct FlowLegend: View {
-  let items: [(String, Color, Bool)]
+  let items: [(LocalizedStringKey, Color, Bool)]
 
   var body: some View {
     WrapLayout(spacing: 10, rowSpacing: 6, centered: true) {
-      ForEach(items, id: \.0) { label, color, bar in
+      ForEach(items.indices, id: \.self) { index in
+        let (label, color, bar) = items[index]
         HStack(spacing: 5) {
           RoundedRectangle(cornerRadius: bar ? 4 : 6).fill(color).frame(width: bar ? 12 : 11, height: bar ? 12 : 11)
           Text(label).font(.app(.medium, 12)).foregroundStyle(C.muted)

@@ -47,13 +47,13 @@ struct QuickLogPanel: View {
           .padding(.leading, 4)
       }
       HStack(spacing: 8) {
-        starter("Left", detail: suggested == .left ? "Next side" : "Breastfeed", symbol: "play.fill", filled: suggested == .left, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
+        starter("Left", detail: suggested == .left ? "Next side" : "Breastfeed", accessibility: "Start breastfeed, left side", symbol: "play.fill", filled: suggested == .left, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
           await start(.feed, side: .left)
         }
-        starter("Right", detail: suggested == .right ? "Next side" : "Breastfeed", symbol: "play.fill", filled: suggested == .right, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
+        starter("Right", detail: suggested == .right ? "Next side" : "Breastfeed", accessibility: "Start breastfeed, right side", symbol: "play.fill", filled: suggested == .right, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
           await start(.feed, side: .right)
         }
-        starter("Sleep", detail: "Start timer", symbol: "moon.fill", filled: false, tint: C.purple, soft: C.purpleSoft, ink: C.purple) {
+        starter("Sleep", detail: "Start timer", accessibility: "Start sleep timer", symbol: "moon.fill", filled: false, tint: C.purple, soft: C.purpleSoft, ink: C.purple) {
           await start(.sleep)
         }
       }
@@ -61,7 +61,7 @@ struct QuickLogPanel: View {
   }
 
   private func starter(
-    _ label: String, detail: String, symbol: String, filled: Bool,
+    _ label: LocalizedStringKey, detail: LocalizedStringKey, accessibility: LocalizedStringKey, symbol: String, filled: Bool,
     tint: Color, soft: Color, ink: Color, action: @escaping () async -> Void
   ) -> some View {
     Button { Task { await action() } } label: {
@@ -83,7 +83,7 @@ struct QuickLogPanel: View {
     }
     .buttonStyle(PressScale())
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(label == "Sleep" ? "Start sleep timer" : "Start breastfeed, \(label.lowercased()) side")
+    .accessibilityLabel(accessibility)
     .accessibilityHint(filled ? "Suggested next side" : "")
   }
 
@@ -93,7 +93,7 @@ struct QuickLogPanel: View {
     let liveError = await timers.update(session)
     let message = QuickLog.startedToast(session)
     undo.show(UndoCenter.Toast(
-      message: liveError == nil ? message : "\(message). Lock Screen timer is off in Settings.",
+      message: liveError == nil ? message : String(localized: "\(message). Lock Screen timer is off in Settings."),
       undo: { [timers] in
         guard let current = timers.session, current.kind == kind, current.babyId == session.babyId else { return }
         await timers.stop()
@@ -126,8 +126,16 @@ struct QuickLogPanel: View {
         }
         .buttonStyle(PressScale())
         .disabled(savingNappy != nil)
-        .accessibilityLabel("Log \(nappy == .both ? "wet and dirty" : nappy.label.lowercased()) nappy")
+        .accessibilityLabel(nappyAccessibility(nappy))
       }
+    }
+  }
+
+  private func nappyAccessibility(_ nappy: QuickLog.Nappy) -> LocalizedStringKey {
+    switch nappy {
+    case .wet: "Log wet nappy"
+    case .dirty: "Log dirty nappy"
+    case .both: "Log wet and dirty nappy"
     }
   }
 
@@ -163,7 +171,7 @@ struct QuickLogPanel: View {
       let id = try await convex.mutation(nappyCall(nappy, at: loggedAt))
       showSaved(nappy, saved: SavedLog(id: id, loggedAt: loggedAt))
     } catch {
-      undo.show(UndoCenter.Toast(message: "Couldn’t log that nappy. Try again."))
+      undo.show(UndoCenter.Toast(message: String(localized: "Couldn’t log that nappy. Try again.")))
     }
   }
 
@@ -179,7 +187,7 @@ struct QuickLogPanel: View {
         do {
           try await convex.mutation(API.events.remove(saved.id))
         } catch {
-          undo.show(UndoCenter.Toast(message: "Couldn’t undo. Delete it from Timeline."))
+          undo.show(UndoCenter.Toast(message: String(localized: "Couldn’t undo. Delete it from Timeline.")))
         }
       },
       shift: { [convex] minutes in
@@ -268,16 +276,25 @@ struct RunningTimerControls: View {
 
   private func sideButton(_ side: TimerSide) -> some View {
     let active = session.activeSide == side && session.isRunning
-    let label = side == .left ? "Left" : "Right"
+    let label: LocalizedStringKey = side == .left ? "Left" : "Right"
     return control(label, symbol: active ? "pause.fill" : "play.fill", filled: active) {
       var next = session
       next.tapSide(side, now: Date().epochMs)
       await timers.update(next)
     }
-    .accessibilityLabel(active ? "Pause \(label.lowercased()) side" : "Feed on \(label.lowercased()) side")
+    .accessibilityLabel(sideAccessibility(side, active: active))
   }
 
-  private func control(_ label: String, symbol: String, filled: Bool, action: @escaping () async -> Void) -> some View {
+  private func sideAccessibility(_ side: TimerSide, active: Bool) -> LocalizedStringKey {
+    switch (side, active) {
+    case (.left, true): "Pause left side"
+    case (.left, false): "Feed on left side"
+    case (_, true): "Pause right side"
+    case (_, false): "Feed on right side"
+    }
+  }
+
+  private func control(_ label: LocalizedStringKey, symbol: String, filled: Bool, action: @escaping () async -> Void) -> some View {
     Button { Task { await action() } } label: {
       HStack(spacing: 6) {
         Image(systemName: symbol).font(.system(size: 16, weight: .bold))
@@ -297,7 +314,7 @@ struct RunningTimerControls: View {
     let handoff = next.handoff()
     await timers.stop()
     guard let handoff else {
-      undo.show(UndoCenter.Toast(message: "Too short to save. Timer cleared."))
+      undo.show(UndoCenter.Toast(message: String(localized: "Too short to save. Timer cleared.")))
       return
     }
     let screen: BabyScreen = switch session.kind {
