@@ -35,6 +35,9 @@ struct ScrunchApp: App {
       }
       .preferredColorScheme(.light)
       .tint(C.teal)
+      #if DEBUG
+      .task { router.applyLaunchDebugURL(activeBabyId: activeBaby.babyId) }
+      #endif
       .onOpenURL { url in
         #if DEBUG
         if router.handleDebug(url: url, activeBabyId: activeBaby.babyId) { return }

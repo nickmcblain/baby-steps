@@ -9,8 +9,16 @@ import ScrunchCore
 ///   babysteps://debug/new-baby
 ///   babysteps://debug/baby/{screen}[/{babyId}]   (defaults to the active baby)
 ///
-/// Drive with `xcrun simctl openurl booted <url>`.
+/// Drive with `xcrun simctl openurl booted <url>`, or, to skip the system "Open in Scrunch?"
+/// prompt, relaunch with a launch argument:
+///   xcrun simctl launch --terminate-running-process booted com.nickmcblain.babysteps -debugURL babysteps://debug/tab/kids
 extension AppRouter {
+  /// Applies a `-debugURL` launch argument, if one was passed.
+  func applyLaunchDebugURL(activeBabyId: BabyID?) {
+    guard let raw = UserDefaults.standard.string(forKey: "debugURL"), let url = URL(string: raw) else { return }
+    _ = handleDebug(url: url, activeBabyId: activeBabyId)
+  }
+
   /// Returns true when the URL was a debug link (handled or ignored), false to fall through.
   func handleDebug(url: URL, activeBabyId: BabyID?) -> Bool {
     guard url.scheme == "babysteps", url.host == "debug" else { return false }
