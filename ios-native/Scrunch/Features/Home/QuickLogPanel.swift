@@ -13,6 +13,7 @@ struct QuickLogPanel: View {
   @Environment(TimerStore.self) private var timers
   @Environment(UndoCenter.self) private var undo
   @State private var savingNappy: QuickLog.Nappy?
+  @ScaledMetric(relativeTo: .body) private var nappyIconSize: CGFloat = 22
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
@@ -23,7 +24,9 @@ struct QuickLogPanel: View {
       }
       nappyRow
     }
-    .padding(12)
+    .padding(.horizontal, 12)
+    .padding(.top, 10)
+    .padding(.bottom, 12)
     .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
     .cardShadow(opacity: 0.12)
   }
@@ -33,10 +36,12 @@ struct QuickLogPanel: View {
   private var starters: some View {
     let suggested = QuickLog.suggestedSide(lastFeed: lastFeed)
     return VStack(alignment: .leading, spacing: 8) {
-      Text(QuickLog.lastSideLine(lastFeed: lastFeed, now: now) ?? "Tap to start a timer")
-        .font(.app(.medium, 13))
-        .foregroundStyle(C.muted)
-        .padding(.leading, 4)
+      if let lastSide = QuickLog.lastSideLine(lastFeed: lastFeed, now: now) {
+        Text(lastSide)
+          .font(.app(.medium, 13))
+          .foregroundStyle(C.muted)
+          .padding(.leading, 4)
+      }
       HStack(spacing: 8) {
         starter("Left", detail: suggested == .left ? "Next side" : "Breastfeed", symbol: "play.fill", filled: suggested == .left, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
           await start(.feed, side: .left)
@@ -96,12 +101,14 @@ struct QuickLogPanel: View {
 
   private var nappyRow: some View {
     HStack(spacing: 8) {
-      Text("Nappy")
-        .font(.app(.bold, 13))
-        .foregroundStyle(C.muted)
-        .fixedSize()
+      Image("NappyGlyph")
+        .renderingMode(.template)
+        .resizable()
+        .scaledToFit()
+        .frame(width: nappyIconSize, height: nappyIconSize)
+        .foregroundStyle(C.peach)
         .padding(.horizontal, 4)
-        .accessibilityHidden(true)
+        .accessibilityLabel("Nappy")
       ForEach(QuickLog.Nappy.allCases, id: \.self) { nappy in
         Button { Task { await log(nappy) } } label: {
           ZStack {
