@@ -205,7 +205,7 @@ struct DurationManualView: View {
   private var isSleep: Bool { kind == .sleep }
   private var quick: [Int] { isSleep ? [30, 45, 60, 90, 120, 180] : [3, 5, 10, 15, 20, 30] }
 
-  private func quickLabel(_ m: Int) -> String {
+  private func quickLabel(_ m: Int) -> LocalizedStringKey {
     if !isSleep || m < 60 { return "\(m)m" }
     return m % 60 == 0 ? "\(m / 60)h" : "\(m / 60)h \(m % 60)m"
   }
