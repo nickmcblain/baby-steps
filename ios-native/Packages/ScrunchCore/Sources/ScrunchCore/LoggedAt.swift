@@ -20,18 +20,16 @@ public enum LoggedAt {
 
   /// "20 Aug · 14:30"
   public static func format(_ ms: EpochMs, calendar: Calendar = .current) -> String {
-    let parts = calendar.dateComponents([.month, .day], from: Date(epochMs: ms))
-    return "\(parts.day!) \(Clock.monthsShort[parts.month! - 1]) · \(Clock.h24(ms, calendar: calendar))"
+    DisplayFormat(calendar: calendar).dayMonthTime(ms)
   }
 
   /// "Today", "Yesterday", "Tomorrow" or "18 Aug 2026".
   public static func timelineDay(_ ms: EpochMs, now: EpochMs, calendar: Calendar = .current) -> String {
     let dayStart = calendar.localMidnight(ms)
     let todayStart = calendar.localMidnight(now)
-    if dayStart == todayStart { return "Today" }
-    if dayStart == calendar.addingDays(-1, to: todayStart) { return "Yesterday" }
-    if dayStart == calendar.addingDays(1, to: todayStart) { return "Tomorrow" }
-    let parts = calendar.dateComponents([.year, .month, .day], from: Date(epochMs: ms))
-    return "\(parts.day!) \(Clock.monthsShort[parts.month! - 1]) \(parts.year!)"
+    if dayStart == todayStart { return String(localized: "Today", bundle: .module) }
+    if dayStart == calendar.addingDays(-1, to: todayStart) { return String(localized: "Yesterday", bundle: .module) }
+    if dayStart == calendar.addingDays(1, to: todayStart) { return String(localized: "Tomorrow", bundle: .module) }
+    return DisplayFormat(calendar: calendar).date(ms)
   }
 }

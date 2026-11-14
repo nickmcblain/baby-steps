@@ -82,7 +82,7 @@ struct TimelineView: View {
     }
   }
 
-  private func modePill(_ label: String, _ value: Mode) -> some View {
+  private func modePill(_ label: LocalizedStringKey, _ value: Mode) -> some View {
     Button { mode = value } label: {
       Text(label)
         .font(.app(.bold, 14))

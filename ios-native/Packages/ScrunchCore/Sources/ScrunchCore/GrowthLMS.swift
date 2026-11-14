@@ -1,6 +1,11 @@
 import Foundation
 
-// Port of lib/growth/lms.ts — UK-WHO centiles from WHO LMS tables.
+// Port of lib/growth/lms.ts — UK-WHO centiles as printed in the Red Book (PCHR) 0–4 years chart.
+//
+// UK-WHO = UK90 at birth (term, 40 weeks), no centiles from birth to 2 weeks while weight settles,
+// then WHO 2006 Child Growth Standards. `WHOLMSData` matches the WHO monthly tables and the RCPCH
+// `rcpchgrowth` UK-WHO tables (github.com/rcpch/rcpchgrowth-python, data_tables/who/who_infants.json)
+// to within 0.03% on M. The birth rows are UK90 at 40 weeks from `data_tables/uk90_preterm.json`.
 
 public enum GrowthMetric: String, Sendable {
   case weight, length
@@ -49,6 +54,28 @@ public enum GrowthLMS {
     (metric == .weight ? WHOLMSData.weight : WHOLMSData.length)[sex] ?? []
   }
 
+  /// UK90 term (40 weeks) birth LMS used by UK-WHO at birth.
+  static func ukBirth(_ metric: GrowthMetric, _ sex: Sex) -> (L: Double, M: Double, S: Double) {
+    switch (metric, sex) {
+    case (.weight, .boy): return (0.782, 3.5551, 0.12851)
+    case (.weight, .girl): return (0.501, 3.413, 0.12481)
+    case (.length, .boy): return (1, 50.94454, 0.04197628)
+    case (.length, .girl): return (1, 50.01719, 0.0369674)
+    }
+  }
+
+  /// Measurements on the day of birth use the birth centiles.
+  static let birthWindowMonths = 1 / 30.4375
+  /// UK-WHO draws no centiles between birth and 2 weeks.
+  public static let twoWeeksMonths = 14 / 30.4375
+
+  /// LMS for an age, or nil inside the birth-to-2-weeks gap.
+  static func lms(_ metric: GrowthMetric, _ sex: Sex, month: Double) -> (L: Double, M: Double, S: Double)? {
+    if month < birthWindowMonths { return ukBirth(metric, sex) }
+    if month < twoWeeksMonths { return nil }
+    return interpolate(table(metric, sex), month: month)
+  }
+
   static func interpolate(_ table: [LMSRow], month: Double) -> (L: Double, M: Double, S: Double)? {
     guard let first = table.first, let last = table.last else { return nil }
     let clamped = min(max(month, first.month), last.month)
@@ -63,14 +90,14 @@ public enum GrowthLMS {
 
   /// Measurement (kg or cm) for a z-score via LMS (Cole & Green).
   public static func valueFromZ(_ metric: GrowthMetric, sex: Sex, month: Double, z: Double) -> Double? {
-    guard let lms = interpolate(table(metric, sex), month: month) else { return nil }
+    guard let lms = lms(metric, sex, month: month) else { return nil }
     if abs(lms.L) < 1e-8 { return lms.M * exp(lms.S * z) }
     return lms.M * pow(1 + lms.L * lms.S * z, 1 / lms.L)
   }
 
   /// SDS / z-score for a measurement (kg or cm).
   public static func zScore(_ metric: GrowthMetric, sex: Sex, month: Double, value: Double) -> Double? {
-    guard value > 0, let lms = interpolate(table(metric, sex), month: month) else { return nil }
+    guard value > 0, let lms = lms(metric, sex, month: month) else { return nil }
     if abs(lms.L) < 1e-8 { return log(value / lms.M) / lms.S }
     return (pow(value / lms.M, lms.L) - 1) / (lms.L * lms.S)
   }
@@ -113,12 +140,12 @@ public enum GrowthLMS {
 
   public static func bandLabel(_ band: GrowthBand) -> String {
     switch band {
-    case .veryLow: return "Below the 2nd centile"
-    case .low: return "Between 2nd and 9th centile"
-    case .typical: return "Within expected range"
-    case .high: return "Between 91st and 98th centile"
-    case .veryHigh: return "Above the 98th centile"
-    case .unknown: return "Add sex to see UK chart"
+    case .veryLow: return String(localized: "Below the 2nd centile", bundle: .module)
+    case .low: return String(localized: "Between 2nd and 9th centile", bundle: .module)
+    case .typical: return String(localized: "Within expected range", bundle: .module)
+    case .high: return String(localized: "Between 91st and 98th centile", bundle: .module)
+    case .veryHigh: return String(localized: "Above the 98th centile", bundle: .module)
+    case .unknown: return String(localized: "Add sex to see UK chart", bundle: .module)
     }
   }
 
@@ -131,9 +158,8 @@ public enum GrowthLMS {
     let month = ageMonths(dateOfBirth: dateOfBirth, at: latest.at)
     guard let z = zScore(metric, sex: sex, month: month, value: latest.value) else { return nil }
     let band = band(z)
-    return ("Latest ≈ \(formatCentile(centileFromZ(z))) centile · \(bandLabel(band))", band)
+    return (String(localized: "Latest ≈ \(formatCentile(centileFromZ(z))) centile · \(bandLabel(band))", bundle: .module), band)
   }
 
-  public static let outsideRangeCaution =
-    "Outside usual UK chart range — check with your health visitor or GP. This is not medical advice."
+  public static var outsideRangeCaution: String { HealthRegion.current.growthOutsideRangeCaution }
 }

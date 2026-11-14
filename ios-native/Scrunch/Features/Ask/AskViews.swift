@@ -87,7 +87,7 @@ struct AskView: View {
       do {
         threadId = try await convex.mutation(API.chat.ensureThread(babyId))
       } catch {
-        alert = FormAlert(title: "Could not open chat", message: UserMessage.from(error, fallback: "Try again"))
+        alert = FormAlert(title: "Could not open chat", message: UserMessage.from(error, fallback: String(localized: "Try again")))
       }
     }
     .task(id: threadId) {
@@ -220,7 +220,7 @@ struct AskView: View {
     let text = (textArg ?? draft).trimmingCharacters(in: .whitespacesAndNewlines)
     guard !text.isEmpty, let threadId, !sending else { return }
     if AskSafety.isEmergency(text) {
-      alert = FormAlert(title: AskSafety.emergencyTitle, message: AskSafety.emergencyBody)
+      alert = FormAlert(verbatimTitle: AskSafety.emergencyTitle, message: AskSafety.emergencyBody)
     }
     draft = ""
     pendingUser = text
@@ -232,7 +232,7 @@ struct AskView: View {
     do {
       _ = try await convex.action(API.chatAgent.ask(babyId: babyId, threadId: threadId, message: text))
     } catch {
-      alert = FormAlert(title: "Ask failed", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Ask failed", message: UserMessage.from(error, fallback: String(localized: "Try again")))
       draft = text
     }
   }
@@ -245,7 +245,7 @@ struct AskView: View {
       draft = ""
       pendingUser = nil
     } catch {
-      alert = FormAlert(title: "Could not start chat", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not start chat", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

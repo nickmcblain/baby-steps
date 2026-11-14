@@ -16,11 +16,12 @@ private func initialMinutes(_ handoff: TimerSession.Handoff?) -> String {
 }
 
 struct SectionLabel: View {
-  let text: String
-  init(_ text: String) { self.text = text }
+  let text: LocalizedStringKey
+  init(_ text: LocalizedStringKey) { self.text = text }
 
   var body: some View {
-    Text(text.uppercased())
+    Text(text)
+      .textCase(.uppercase)
       .font(.app(.bold, 13))
       .tracking(0.6)
       .foregroundStyle(C.muted)
@@ -28,8 +29,8 @@ struct SectionLabel: View {
 }
 
 struct Hint: View {
-  let text: String
-  init(_ text: String) { self.text = text }
+  let text: LocalizedStringKey
+  init(_ text: LocalizedStringKey) { self.text = text }
 
   var body: some View {
     Text(text).font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
@@ -50,6 +51,7 @@ struct FeedManualView: View {
   @State private var minutes: String
   @State private var ml = ""
   @State private var milk: Milk = .formula
+  private let units = DisplayFormat.current
   @State private var note: String
   @State private var alert: FormAlert?
 
@@ -80,7 +82,7 @@ struct FeedManualView: View {
         }
         FormField(label: "Minutes", text: $minutes, placeholder: "12", keyboard: .numberPad)
       } else {
-        FormField(label: "Amount (ml)", text: $ml, placeholder: "90", keyboard: .numberPad)
+        FormField(label: "Amount (\(units.volumeSymbol))", text: $ml, placeholder: "90", keyboard: units.volumeUnit == .milliliters ? .numberPad : .decimalPad)
         HStack(spacing: 8) {
           Pill(label: "Formula", selected: milk == .formula) { milk = .formula }
           Pill(label: "Expressed", selected: milk == .expressed) { milk = .expressed }
@@ -102,7 +104,7 @@ struct FeedManualView: View {
         feedKind: kind,
         side: kind == .breast ? side : nil,
         durationMinutes: duration,
-        amountMl: kind == .bottle ? (number(ml) ?? 0) : nil,
+        amountMl: kind == .bottle ? (number(ml).map(units.millilitres(fromInput:)) ?? 0) : nil,
         milk: kind == .bottle ? milk : nil,
         note: trimmedOrNil(note)
       ))
@@ -111,7 +113,7 @@ struct FeedManualView: View {
       }
       router.showHome(babyId)
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -129,6 +131,7 @@ struct PumpManualView: View {
   @State private var ml = ""
   @State private var note: String
   @State private var alert: FormAlert?
+  private let units = DisplayFormat.current
 
   init(babyId: BabyID, handoff: TimerSession.Handoff?) {
     self.babyId = babyId
@@ -151,7 +154,7 @@ struct PumpManualView: View {
         Pill(label: "Both", selected: side == .both) { side = .both }
       }
       FormField(label: "Minutes", text: $minutes, placeholder: "15", keyboard: .numberPad)
-      FormField(label: "Amount (ml)", text: $ml, placeholder: "Optional", keyboard: .numberPad)
+      FormField(label: "Amount (\(units.volumeSymbol))", text: $ml, placeholder: "Optional", keyboard: units.volumeUnit == .milliliters ? .numberPad : .decimalPad)
       FormField(label: "Note", text: $note, placeholder: "Let-down slow")
       PrimaryButton(label: "Save pump") { await save() }
     }
@@ -168,12 +171,12 @@ struct PumpManualView: View {
         loggedAt: loggedAt,
         side: side,
         durationMinutes: duration,
-        amountMl: ml.isEmpty ? nil : number(ml),
+        amountMl: ml.isEmpty ? nil : number(ml).map(units.millilitres(fromInput:)),
         note: trimmedOrNil(note)
       ))
       router.popToRoot()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -241,7 +244,7 @@ struct DurationManualView: View {
       }
       router.showHome(babyId)
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

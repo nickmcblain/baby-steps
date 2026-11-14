@@ -68,7 +68,7 @@ struct DayRhythmBar: View {
   let onTap: () -> Void
 
   private let napFill = Color(hex: 0xC4BEF8)
-  private let ticks = ["7am", "1pm", "7pm", "1am"]
+  private let ticks = [7, 13, 19, 1].map { WeekGrid.formatHourLabel($0) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: embedded ? 8 : 10) {

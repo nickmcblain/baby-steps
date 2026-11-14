@@ -5,8 +5,18 @@ import SwiftUI
 struct FormAlert: Identifiable {
   let id = UUID()
   let title: String
-  var message: String? = nil
-  var onDismiss: (() -> Void)? = nil
+  var message: String?
+  var onDismiss: (() -> Void)?
+
+  init(title: String.LocalizationValue, message: String? = nil, onDismiss: (() -> Void)? = nil) {
+    self.init(verbatimTitle: String(localized: title), message: message, onDismiss: onDismiss)
+  }
+
+  init(verbatimTitle: String, message: String? = nil, onDismiss: (() -> Void)? = nil) {
+    title = verbatimTitle
+    self.message = message
+    self.onDismiss = onDismiss
+  }
 }
 
 extension View {
@@ -82,7 +92,7 @@ struct NewBabyView: View {
     guard let dateOfBirth else { return alert = FormAlert(title: "Pick a date of birth") }
     guard let weightGrams else { return alert = FormAlert(title: "Pick a weight") }
     guard careConsent else {
-      return alert = FormAlert(title: "Consent needed", message: "Please confirm you agree to save this baby's details before continuing.")
+      return alert = FormAlert(title: "Consent needed", message: String(localized: "Please confirm you agree to save this baby's details before continuing."))
     }
     let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
@@ -97,7 +107,7 @@ struct NewBabyView: View {
       activeBaby.select(id)
       router.popToRoot(tab: .home)
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -189,7 +199,7 @@ struct EditBabyView: View {
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

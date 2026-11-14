@@ -12,28 +12,22 @@ public enum Format {
 
   public static func age(dateOfBirth: EpochMs, now: EpochMs) -> String {
     let days = Int(max(0, ((now - dateOfBirth) / dayMs).rounded(.down)))
-    if days < 14 { return "\(days) day\(days == 1 ? "" : "s")" }
+    if days < 14 { return String(localized: "\(days) days", bundle: .module) }
     let weeks = days / 7
-    if weeks < 13 { return "\(weeks) week\(weeks == 1 ? "" : "s")" }
+    if weeks < 13 { return String(localized: "\(weeks) weeks", bundle: .module) }
     let months = Int((Double(days) / 30.437).rounded(.down))
-    if months < 24 { return "\(months) month\(months == 1 ? "" : "s")" }
+    if months < 24 { return String(localized: "\(months) months", bundle: .module) }
     let years = months / 12
     let rem = months % 12
-    if rem == 0 { return "\(years) year\(years == 1 ? "" : "s")" }
-    return "\(years)y \(rem)mo"
+    if rem == 0 { return String(localized: "\(years) years", bundle: .module) }
+    return String(localized: "\(years)y \(rem)mo", bundle: .module)
   }
 
-  public static func kg(_ grams: Double) -> String {
-    let wholeKg = grams.truncatingRemainder(dividingBy: 1000) == 0
-    return "\(jsToFixed(grams / 1000, wholeKg ? 0 : 2)) kg"
-  }
-
-  /// "3 Jan 2026" — DOB is stored as UTC midnight, so format in UTC.
-  public static func dob(_ ms: EpochMs) -> String {
-    var utc = Calendar(identifier: .gregorian)
+  /// "3 Jan 2026" (en-GB). DOB is stored as UTC midnight, so format in UTC.
+  public static func dob(_ ms: EpochMs, calendar: Calendar = .current) -> String {
+    var utc = calendar
     utc.timeZone = TimeZone(identifier: "UTC")!
-    let parts = utc.dateComponents([.year, .month, .day], from: Date(epochMs: ms))
-    return "\(parts.day!) \(Clock.monthsShort[parts.month! - 1]) \(parts.year!)"
+    return DisplayFormat(calendar: utc).date(ms)
   }
 
   /// UTC midnight for a calendar date, as `Date.UTC(y, m, d)`.
@@ -61,13 +55,9 @@ public enum Format {
     jsRound(Double(lb) * gramsPerLb + Double(oz) * gramsPerOz)
   }
 
-  public static func weight(_ grams: Double, unit: WeightUnit = .kg) -> String {
-    if unit == .lb {
-      let parts = gramsToLbOz(grams)
-      return "\(parts.lb) lb \(parts.oz) oz"
-    }
-    let parts = gramsToKgParts(grams)
-    return parts.tenths == 0 ? "\(parts.kg) kg" : "\(parts.kg).\(parts.tenths) kg"
+  /// In the user's weight unit unless one is given.
+  public static func weight(_ grams: Double, unit: WeightUnit? = nil) -> String {
+    DisplayFormat.current.weight(grams, unit: unit)
   }
 
   public static func cmToParts(_ cm: Double) -> (whole: Int, tenths: Int) {
@@ -88,22 +78,17 @@ public enum Format {
     jsRound(Double(ft * 12 + inch) * cmPerInch * 10) / 10
   }
 
-  public static func height(_ cm: Double, unit: HeightUnit = .cm) -> String {
-    if unit == .inches {
-      let parts = cmToFtIn(cm)
-      return "\(parts.ft)′ \(parts.inch)″"
-    }
-    let parts = cmToParts(cm)
-    return parts.tenths == 0 ? "\(parts.whole) cm" : "\(parts.whole).\(parts.tenths) cm"
+  public static func height(_ cm: Double, unit: HeightUnit? = nil) -> String {
+    DisplayFormat.current.length(cm, unit: unit)
   }
 
   public static func relative(_ loggedAt: EpochMs, now: EpochMs) -> String {
     let delta = max(0, now - loggedAt)
     let minutes = Int((delta / minuteMs).rounded(.down))
-    if minutes < 1 { return "just now" }
-    if minutes < 60 { return "\(minutes)m ago" }
+    if minutes < 1 { return String(localized: "just now", bundle: .module) }
+    if minutes < 60 { return String(localized: "\(minutes)m ago", bundle: .module) }
     let hours = minutes / 60
-    if hours < 24 { return "\(hours)h \(minutes % 60)m ago" }
-    return "\(hours / 24)d ago"
+    if hours < 24 { return String(localized: "\(hours)h \(minutes % 60)m ago", bundle: .module) }
+    return String(localized: "\(hours / 24)d ago", bundle: .module)
   }
 }

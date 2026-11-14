@@ -43,7 +43,7 @@ struct KidsView: View {
                     .frame(width: 44, height: 44)
                     .background(C.purpleSoft, in: Circle())
                   Text(baby.name).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(1)
-                  Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
+                  Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.weight(baby.weightGrams))")
                     .font(.app(.body, 13)).foregroundStyle(C.muted)
                   Text("Share code \(baby.inviteCode)")
                     .font(.app(.medium, 12)).foregroundStyle(C.purple)
@@ -129,7 +129,7 @@ struct JoinPartnerSheet: View {
       let id = try await convex.mutation(API.babies.joinByCode(next))
       onJoined(id)
     } catch {
-      self.error = UserMessage.from(error, fallback: "Check the code.")
+      self.error = UserMessage.from(error, fallback: String(localized: "Check the code."))
       busy = false
     }
   }

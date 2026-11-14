@@ -69,7 +69,7 @@ struct GrowthLogView: View {
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -102,7 +102,7 @@ struct GrowthChart: View {
     VStack(alignment: .leading, spacing: 6) {
       Text(metric == .weight ? "Weight for age" : "Length / height for age")
         .font(.app(.display, 18)).foregroundStyle(C.ink)
-      Text("UK Red Book centiles (WHO / UK-WHO standards)")
+      Text(HealthRegion.current.growthChartSource)
         .font(.app(.body, 12)).foregroundStyle(C.muted).padding(.bottom, 4)
 
       if let sex {
@@ -156,9 +156,15 @@ struct GrowthChart: View {
 
     return Chart {
       ForEach(centiles) { point in
-        LineMark(x: .value("Month", point.month), y: .value("Centile", point.value), series: .value("Centile", point.centile))
-          .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
-          .lineStyle(StrokeStyle(lineWidth: point.centile == "50th" ? 2 : 1))
+        if point.month == 0 {
+          PointMark(x: .value("Month", point.month), y: .value("Birth centile", point.value))
+            .symbolSize(12)
+            .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
+        } else {
+          LineMark(x: .value("Month", point.month), y: .value("Centile", point.value), series: .value("Centile", point.centile))
+            .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
+            .lineStyle(StrokeStyle(lineWidth: point.centile == "50th" ? 2 : 1))
+        }
       }
       if logs.count > 1 {
         ForEach(logs) { point in

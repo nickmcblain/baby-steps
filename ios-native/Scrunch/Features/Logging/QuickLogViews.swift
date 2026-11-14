@@ -59,7 +59,7 @@ struct NappyView: View {
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -107,13 +107,13 @@ struct MedicineView: View {
         let scheduled = await Reminders.scheduleMedicine(babyId: baby.id, babyName: baby.name, name: title, dose: doseValue, hours: remindHours)
         if !scheduled {
           let close = dismiss
-          alert = FormAlert(title: "Logged, no reminder", message: "Allow notifications to get the next-dose nudge.", onDismiss: { close() })
+          alert = FormAlert(title: "Logged, no reminder", message: String(localized: "Allow notifications to get the next-dose nudge."), onDismiss: { close() })
           return
         }
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -145,7 +145,7 @@ struct ActivityLogView: View {
       SectionLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
-          Pill(label: item, selected: preset == item, tint: C.purpleSoft, ink: C.purple) { preset = item }
+          Pill(label: LocalizedStringKey(item), selected: preset == item, tint: C.purpleSoft, ink: C.purple) { preset = item }
         }
       }
       if preset == "Other" {
@@ -177,7 +177,7 @@ struct ActivityLogView: View {
       ))
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -207,7 +207,7 @@ struct CustomEventView: View {
       FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
-          Pill(label: item, selected: preset == item, tint: C.roseSoft, ink: C.rose) { preset = item }
+          Pill(label: LocalizedStringKey(item), selected: preset == item, tint: C.roseSoft, ink: C.rose) { preset = item }
         }
       }
       if preset == "Other" {
@@ -227,7 +227,7 @@ struct CustomEventView: View {
       try await convex.mutation(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

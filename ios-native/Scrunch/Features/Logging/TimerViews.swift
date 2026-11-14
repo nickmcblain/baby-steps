@@ -41,7 +41,7 @@ private struct ClockText: View {
 }
 
 private struct TimerFooter: View {
-  let doneLabel: String
+  let doneLabel: LocalizedStringKey
   let canFinish: Bool
   let showReset: Bool
   let onDone: () async -> Void
@@ -250,11 +250,12 @@ struct FeedTimerView: View {
     }
   }
 
-  private func sideCard(_ label: String, _ side: TimerSide, session: TimerSession?, ms: Double) -> some View {
+  private func sideCard(_ label: LocalizedStringKey, _ side: TimerSide, session: TimerSession?, ms: Double) -> some View {
     let running = session?.activeSide == side && session?.isRunning == true
     return Button { Task { await tap(side) } } label: {
       VStack(spacing: 8) {
-        Text(label.uppercased())
+        Text(label)
+          .textCase(.uppercase)
           .font(.app(.bold, 13))
           .tracking(0.6)
           .foregroundStyle(running ? .white.opacity(0.85) : C.muted)
