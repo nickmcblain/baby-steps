@@ -1,14 +1,14 @@
 import ScrunchCore
 import SwiftUI
 
-/// Port of components/AddLogSheet.tsx: 11 log tiles plus the Speak tile.
+/// Port of components/AddLogSheet.tsx: 11 log tiles plus the Speak tile, three across.
 struct AddLogSheet: View {
   let babyId: BabyID?
 
   @Environment(AppRouter.self) private var router
   @Environment(ConvexService.self) private var convex
   @State private var voice = VoiceLogRecorder()
-  @State private var loggedMessage: String?
+  @Environment(UndoCenter.self) private var undo
 
   private struct Tile: Identifiable {
     let screen: BabyScreen
@@ -18,12 +18,16 @@ struct AddLogSheet: View {
     var id: String { label }
   }
 
-  private let tiles: [Tile] = [
+  /// Most-logged first; Speak sits in the second row.
+  private let topTiles: [Tile] = [
     Tile(screen: .feedTimer, label: "Feed", tint: C.teal, symbol: "drop.fill"),
     Tile(screen: .sleepTimer, label: "Sleep", tint: C.purple, symbol: "moon.fill"),
     Tile(screen: .nappy, label: "Nappy", tint: C.peach, symbol: "circle.grid.2x2.fill"),
     Tile(screen: .tummyTimer, label: "Tummy", tint: C.sky, symbol: "figure.arms.open"),
     Tile(screen: .pumpTimer, label: "Pump", tint: C.tealDark, symbol: "drop.halffull"),
+  ]
+
+  private let moreTiles: [Tile] = [
     Tile(screen: .medicine, label: "Medicine", tint: C.amber, symbol: "pills.fill"),
     Tile(screen: .potty, label: "Potty", tint: C.peach, symbol: "toilet.fill"),
     Tile(screen: .activity, label: "Activity", tint: C.purple, symbol: "figure.play"),
@@ -32,19 +36,17 @@ struct AddLogSheet: View {
     Tile(screen: .ask(question: nil), label: "Ask", tint: C.teal, symbol: "bubble.left.and.text.bubble.right.fill"),
   ]
 
+  /// Fits four rows of three without scrolling.
+  static let detentHeight: CGFloat = 460
+
   /// Idle Speak well: darker than ink-on-light, still fine for a white glyph.
   private let speakWell = Color(hex: 0x3E4654)
 
   var body: some View {
     ScrollView {
       VStack(spacing: 12) {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-          ForEach(tiles) { tile in
-            Button { go(tile.screen) } label: {
-              tileLabel(tile.label) { IconWell(systemImage: tile.symbol, tint: tile.tint) }
-            }
-            .buttonStyle(PressScale())
-          }
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
+          ForEach(topTiles) { tileButton($0) }
           Button { Task { await speak() } } label: {
             tileLabel(voice.recording ? "Listening" : "Speak") {
               ZStack {
@@ -60,6 +62,7 @@ struct AddLogSheet: View {
           .buttonStyle(PressScale())
           .disabled(voice.busy)
           .accessibilityLabel(voice.recording ? "Stop and send" : "Speak a log or question")
+          ForEach(moreTiles) { tileButton($0) }
         }
         if let status = voice.status {
           Text(status)
@@ -68,19 +71,21 @@ struct AddLogSheet: View {
             .multilineTextAlignment(.center)
         }
       }
-      .padding(.horizontal, 20)
-      .padding(.top, 28)
+      .padding(.horizontal, 16)
+      .padding(.top, 24)
       .padding(.bottom, 16)
     }
     .onDisappear { voice.cancel() }
     .alert(item: $voice.alert) { alert in
       Alert(title: Text(alert.title), message: Text(alert.message))
     }
-    .alert("Logged", isPresented: Binding(get: { loggedMessage != nil }, set: { if !$0 { loggedMessage = nil } })) {
-      Button("OK") { router.addLogOpen = false }
-    } message: {
-      Text(loggedMessage ?? "")
+  }
+
+  private func tileButton(_ tile: Tile) -> some View {
+    Button { go(tile.screen) } label: {
+      tileLabel(tile.label) { IconWell(systemImage: tile.symbol, tint: tile.tint) }
     }
+    .buttonStyle(PressScale())
   }
 
   private func tileLabel<Icon: View>(_ label: String, @ViewBuilder icon: () -> Icon) -> some View {
@@ -89,8 +94,8 @@ struct AddLogSheet: View {
       Text(label).font(.app(.bold, 14)).foregroundStyle(C.ink)
     }
     .frame(maxWidth: .infinity)
-    .padding(.vertical, 14)
-    .padding(.horizontal, 10)
+    .padding(.vertical, 12)
+    .padding(.horizontal, 6)
     .background(C.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     .cardShadow()
   }
@@ -121,6 +126,7 @@ struct AddLogSheet: View {
       router.push(babyId, .ask(question: result.transcript))
       return
     }
-    loggedMessage = result.confirmation
+    router.addLogOpen = false
+    undo.show(UndoCenter.Toast(message: result.confirmation))
   }
 }
