@@ -140,11 +140,15 @@ struct HomeView: View {
   @ViewBuilder
   private var content: some View {
     HStack(spacing: 10) {
-      Image("BrandMark")
-        .resizable()
-        .frame(width: 28, height: 28)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityHidden(true)
+      if let baby {
+        BabyAvatar(babyId: baby.id, name: baby.name, size: 32)
+      } else {
+        Image("BrandMark")
+          .resizable()
+          .frame(width: 28, height: 28)
+          .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+          .accessibilityHidden(true)
+      }
       Text(baby?.name ?? " ")
         .font(.app(.displayBold, 26))
         .foregroundStyle(C.ink)

@@ -127,6 +127,7 @@ struct EditBabyView: View {
   var body: some View {
     ScreenScaffold {
       ScreenTitle("Edit")
+      BabyPhotoField(babyId: babyId, name: name)
       FormField(label: "Name", text: $name)
       DateOfBirthField(value: $dateOfBirth)
       ToggleRow(label: "Sex (for UK growth charts)", options: [(Sex.boy, "Boy"), (Sex.girl, "Girl")], selection: $sex)

@@ -37,11 +37,7 @@ struct KidsView: View {
             VStack(alignment: .leading, spacing: 0) {
               Button { open(baby.id) } label: {
                 VStack(alignment: .leading, spacing: 8) {
-                  Text(baby.name.prefix(1).uppercased())
-                    .font(.app(.displayBold, 20))
-                    .foregroundStyle(C.purple)
-                    .frame(width: 44, height: 44)
-                    .background(C.purpleSoft, in: Circle())
+                  BabyAvatar(babyId: baby.id, name: baby.name)
                   Text(baby.name).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(1)
                   Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
                     .font(.app(.body, 13)).foregroundStyle(C.muted)
