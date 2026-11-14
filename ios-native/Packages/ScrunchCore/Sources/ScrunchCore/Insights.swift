@@ -70,7 +70,7 @@ public enum Insights {
       breastSide(input),
       lastNappy(input, calendar: calendar),
       awake(input),
-      tonightTog(input),
+      tonightTog(input, calendar: calendar),
     ].compactMap { $0 }
   }
 
@@ -101,17 +101,17 @@ public enum Insights {
     guard let last = all.last else {
       return Insight(
         kind: .nextFeed,
-        headline: "Log a feed to see when the next is likely",
-        detail: "We'll start with typical gaps for \(input.baby.name)'s age."
+        headline: String(localized: "Log a feed to see when the next is likely", bundle: .module),
+        detail: String(localized: "We'll start with typical gaps for \(input.baby.name)'s age.", bundle: .module)
       )
     }
     let since = max(0, input.now - last.loggedAt)
-    let sinceText = "Last feed \(span(since)) ago"
+    let sinceText = String(localized: "Last feed \(span(since)) ago", bundle: .module)
     if since >= staleFeedMs {
       return Insight(
         kind: .nextFeed,
-        headline: "No feed logged for \(span(since))",
-        detail: "Log feeds as they happen and the estimate comes back."
+        headline: String(localized: "No feed logged for \(span(since))", bundle: .module),
+        detail: String(localized: "Log feeds as they happen and the estimate comes back.", bundle: .module)
       )
     }
 
@@ -120,22 +120,22 @@ public enum Insights {
     let gapMs: Double
     if let personal = personalGapMs(all, now: input.now) {
       gapMs = personal.gapMs
-      source = "based on the last \(personal.count) feeds"
+      source = String(localized: "based on the last \(personal.count) feeds", bundle: .module)
     } else {
       gapMs = window.intervalMs
-      source = "typical at this age is \(window.label)"
+      source = String(localized: "typical at this age is \(window.label)", bundle: .module)
     }
     let due = roundTo5Min(last.loggedAt + gapMs)
     if due <= input.now {
       return Insight(
         kind: .nextFeed,
-        headline: "Feed may be due now",
-        detail: "\(sinceText) · watch for hunger cues"
+        headline: String(localized: "Feed may be due now", bundle: .module),
+        detail: String(localized: "\(sinceText) · watch for hunger cues", bundle: .module)
       )
     }
     return Insight(
       kind: .nextFeed,
-      headline: "Next feed likely around \(Clock.h12(due, calendar: calendar))",
+      headline: String(localized: "Next feed likely around \(Clock.time(due, calendar: calendar))", bundle: .module),
       detail: "\(sinceText) · \(source)"
     )
   }
@@ -148,31 +148,31 @@ public enum Insights {
     else { return nil }
     switch side {
     case .left:
-      return Insight(kind: .breastSide, headline: "Last side: left", detail: "Try starting on the right next time.")
+      return Insight(kind: .breastSide, headline: String(localized: "Last side: left", bundle: .module), detail: String(localized: "Try starting on the right next time.", bundle: .module))
     case .right:
-      return Insight(kind: .breastSide, headline: "Last side: right", detail: "Try starting on the left next time.")
+      return Insight(kind: .breastSide, headline: String(localized: "Last side: right", bundle: .module), detail: String(localized: "Try starting on the left next time.", bundle: .module))
     case .both:
-      return Insight(kind: .breastSide, headline: "Last feed: both sides", detail: "Start on whichever feels fuller.")
+      return Insight(kind: .breastSide, headline: String(localized: "Last feed: both sides", bundle: .module), detail: String(localized: "Start on whichever feels fuller.", bundle: .module))
     }
   }
 
   public static func lastNappy(_ input: InsightInput, calendar: Calendar = .current) -> Insight? {
     guard let nappy = input.lastNappy else {
-      return Insight(kind: .lastNappy, headline: "No nappies logged yet", detail: "Log a wee or poo to keep track.")
+      return Insight(kind: .lastNappy, headline: String(localized: "No nappies logged yet", bundle: .module), detail: String(localized: "Log a wee or poo to keep track.", bundle: .module))
     }
     let since = max(0, input.now - nappy.loggedAt)
     let what = HomeCopy.lastNappyKind(nappy)
     if since >= staleNappyMs {
       return Insight(
         kind: .lastNappy,
-        headline: "No nappy logged for \(span(since))",
-        detail: "Log nappies as you change them to keep this useful."
+        headline: String(localized: "No nappy logged for \(span(since))", bundle: .module),
+        detail: String(localized: "Log nappies as you change them to keep this useful.", bundle: .module)
       )
     }
     return Insight(
       kind: .lastNappy,
-      headline: "Last nappy \(span(since)) ago",
-      detail: "\(what) at \(Clock.h12(nappy.loggedAt, calendar: calendar))"
+      headline: String(localized: "Last nappy \(span(since)) ago", bundle: .module),
+      detail: String(localized: "\(what) at \(Clock.time(nappy.loggedAt, calendar: calendar))", bundle: .module)
     )
   }
 
@@ -196,23 +196,23 @@ public enum Insights {
     if awakeMs > range.highMin * minuteMs {
       return Insight(
         kind: .awake,
-        headline: "Awake \(span(awakeMs)), longer than usual",
-        detail: "Typical at this age: \(rangeText). Look for yawns, rubbing eyes or staring."
+        headline: String(localized: "Awake \(span(awakeMs)), longer than usual", bundle: .module),
+        detail: String(localized: "Typical at this age: \(rangeText). Look for yawns, rubbing eyes or staring.", bundle: .module)
       )
     }
     return Insight(
       kind: .awake,
-      headline: "Awake for \(span(awakeMs))",
-      detail: "Typical at this age: \(rangeText). Tired signs matter more than the clock."
+      headline: String(localized: "Awake for \(span(awakeMs))", bundle: .module),
+      detail: String(localized: "Typical at this age: \(rangeText). Tired signs matter more than the clock.", bundle: .module)
     )
   }
 
-  public static func tonightTog(_ input: InsightInput) -> Insight? {
+  public static func tonightTog(_ input: InsightInput, calendar: Calendar = .current) -> Insight? {
     guard let tempC = input.baby.lastRoomTempC else {
       return Insight(
         kind: .tonightTog,
-        headline: "Tonight's sleeping bag",
-        detail: "Set the room temperature for a TOG suggestion."
+        headline: String(localized: "Tonight's sleeping bag", bundle: .module),
+        detail: String(localized: "Set the room temperature for a TOG suggestion.", bundle: .module)
       )
     }
     let advice = Clothing.advice(
@@ -223,7 +223,7 @@ public enum Insights {
     }
     return Insight(
       kind: .tonightTog,
-      headline: "Tonight at \(Clothing.formatTemp(tempC, fahrenheit: false))°C: \(advice.tog)",
+      headline: String(localized: "Tonight at \(DisplayFormat(calendar: calendar).temperature(tempC)): \(advice.tog)", bundle: .module),
       detail: layers.joined(separator: ", ")
     )
   }
@@ -233,9 +233,9 @@ public enum Insights {
     let total = Int((max(0, ms) / minuteMs).rounded(.down))
     let hours = total / 60
     let minutes = total % 60
-    if hours == 0 { return "\(minutes)m" }
-    if minutes == 0 { return "\(hours)h" }
-    return "\(hours)h \(minutes)m"
+    if hours == 0 { return String(localized: "\(minutes)m", bundle: .module) }
+    if minutes == 0 { return String(localized: "\(hours)h", bundle: .module) }
+    return String(localized: "\(hours)h \(minutes)m", bundle: .module)
   }
 
   static func roundTo5Min(_ ms: EpochMs) -> EpochMs {
@@ -245,9 +245,11 @@ public enum Insights {
 
 public enum PartnerInvite {
   public static func message(babyName: String, code: String) -> String {
-    "Join me on Scrunch so we can both log \(babyName)'s feeds, sleeps and nappies. "
-      + "Open Scrunch, go to Kids, tap Join with a code and enter \(code)."
+    String(
+      localized: "Join me on Scrunch so we can both log \(babyName)'s feeds, sleeps and nappies. Open Scrunch, go to Kids, tap Join with a code and enter \(code).",
+      bundle: .module
+    )
   }
 
-  public static let howTo = "Send your partner or carer the code. They tap Join with a code on their Kids tab."
+  public static var howTo: String { String(localized: "Send your partner or carer the code. They tap Join with a code on their Kids tab.", bundle: .module) }
 }

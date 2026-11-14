@@ -49,6 +49,13 @@ final class LocaleFormattingTests: XCTestCase {
     XCTAssertEqual(us.millilitres(fromInput: 4), 118)
   }
 
+  func testIntentSummariesFollowRegion() {
+    let bottle = LogEntry.feed(.bottle, side: nil, minutes: nil, amountMl: 120, milk: nil)
+    XCTAssertEqual(bottle.summary(format: gb), "Bottle · 120 ml")
+    XCTAssertEqual(bottle.summary(format: us), "Bottle · 4.1 fl oz")
+    XCTAssertEqual(LogEntry.height(cm: 55).summary(format: au), "Height · 55 cm")
+  }
+
   func testTemperature() {
     XCTAssertEqual(gb.temperature(18), "18°C")
     XCTAssertEqual(au.temperature(18.5), "18.5°C")
