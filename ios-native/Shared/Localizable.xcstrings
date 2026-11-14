@@ -603,13 +603,16 @@
     "Pause" : {
 
     },
-    "Pause %@" : {
-
-    },
     "Pause left side" : {
 
     },
     "Pause right side" : {
+
+    },
+    "Pause sleep" : {
+
+    },
+    "Pause tummy time" : {
 
     },
     "Paused" : {
@@ -786,19 +789,22 @@
     "Start" : {
 
     },
-    "Start %@" : {
-
-    },
     "Start breastfeed, left side" : {
 
     },
     "Start breastfeed, right side" : {
 
     },
+    "Start sleep" : {
+
+    },
     "Start sleep timer" : {
 
     },
     "Start timer" : {
+
+    },
+    "Start tummy time" : {
 
     },
     "Start when they go on their tummy. Keeps timing on the Lock Screen / Dynamic Island while the app is away." : {
