@@ -32,8 +32,14 @@ struct WeekStrip: View {
 
   var body: some View {
     if typeSize.isAccessibilitySize {
-      ScrollView(.horizontal, showsIndicators: false) { days }
-        .scrollClipDisabled()
+      ScrollViewReader { proxy in
+        ScrollView(.horizontal, showsIndicators: false) { days }
+          .scrollClipDisabled()
+          .onAppear { proxy.scrollTo(selectedDayStart, anchor: .center) }
+          .onChange(of: selectedDayStart) { _, day in
+            withAnimation { proxy.scrollTo(day, anchor: .center) }
+          }
+      }
     } else {
       days
     }
@@ -70,6 +76,7 @@ struct WeekStrip: View {
         .accessibilityValue(isToday ? "Today" : "")
         .accessibilityInputLabels([day.label, "\(day.label) \(day.dateNum)"])
         .accessibilityAddTraits(selected ? .isSelected : [])
+        .id(day.dayStartMs)
       }
     }
   }
