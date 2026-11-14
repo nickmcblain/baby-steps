@@ -20,6 +20,9 @@
     " °F" : {
 
     },
+    "%@" : {
+
+    },
     "%@ %lld" : {
       "localizations" : {
         "en-GB" : {
@@ -42,6 +45,9 @@
           }
         }
       }
+    },
+    "%@. Every answer says where it comes from." : {
+
     },
     "%@. Lock Screen timer is off in Settings." : {
 
@@ -105,6 +111,18 @@
     "90" : {
 
     },
+    "A feed timer is already running. Stop it first." : {
+
+    },
+    "A nap timer is already running. Stop it first." : {
+
+    },
+    "A pump timer is already running. Stop it first." : {
+
+    },
+    "A tummy time timer is already running. Stop it first." : {
+
+    },
     "Activity" : {
 
     },
@@ -159,10 +177,19 @@
     "Amount (%@)" : {
 
     },
+    "Amount (ml)" : {
+
+    },
+    "Apple Intelligence isn't available on this iPhone. Try \"Log a wet nappy in Scrunch\" instead." : {
+
+    },
     "Ask" : {
 
     },
     "Ask failed" : {
+
+    },
+    "Baby" : {
 
     },
     "Back" : {
@@ -228,9 +255,6 @@
     "Clothing" : {
 
     },
-    "Code %@" : {
-
-    },
     "Connecting…" : {
 
     },
@@ -276,6 +300,9 @@
     "Delivery (optional)" : {
 
     },
+    "Describe a feed, nappy, sleep or medicine in your own words and Scrunch logs it, using Apple Intelligence on this iPhone." : {
+
+    },
     "Done" : {
 
     },
@@ -318,7 +345,7 @@
     "Enter how long you pumped" : {
 
     },
-    "Enter their 6-character invite code." : {
+    "Enter the 6-character code your partner sent. You'll both see the same feeds, sleeps and nappies." : {
 
     },
     "Event" : {
@@ -328,6 +355,9 @@
 
     },
     "Feed" : {
+
+    },
+    "Feed %@" : {
 
     },
     "Feed on left side" : {
@@ -390,6 +420,9 @@
     "Home" : {
 
     },
+    "How much did they have, in ml?" : {
+
+    },
     "I am a parent or guardian and I consent to Scrunch storing this baby's care details (such as name, date of birth, growth, and logs) so the app can work. Scrunch is not a medical or healthcare service." : {
 
     },
@@ -402,7 +435,10 @@
     "Invite code" : {
 
     },
-    "Join a partner" : {
+    "Invite partner" : {
+
+    },
+    "Join with a code" : {
 
     },
     "Keep the little hours in one place." : {
@@ -424,6 +460,9 @@
 
     },
     "Left" : {
+
+    },
+    "Length" : {
 
     },
     "Length / height for age" : {
@@ -462,13 +501,71 @@
     "Log" : {
 
     },
+    "Log %@ for %@?" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Log %1$@ for %2$@?"
+          }
+        }
+      }
+    },
+    "Log a dirty nappy" : {
+
+    },
+    "Log a feed" : {
+
+    },
+    "Log a length" : {
+
+    },
+    "Log a medicine" : {
+
+    },
+    "Log a moment" : {
+
+    },
+    "Log a nappy" : {
+
+    },
+    "Log a nappy or start a feed without opening Scrunch." : {
+
+    },
+    "Log a potty visit" : {
+
+    },
+    "Log a pump" : {
+
+    },
+    "Log a sleep" : {
+
+    },
+    "Log a weight" : {
+
+    },
+    "Log a wet and dirty nappy" : {
+
+    },
+    "Log a wet nappy" : {
+
+    },
+    "Log an activity" : {
+
+    },
     "Log dirty nappy" : {
 
     },
     "Log feed" : {
 
     },
+    "Log from a description" : {
+
+    },
     "Log pump" : {
+
+    },
+    "Log tummy time" : {
 
     },
     "Log wet and dirty nappy" : {
@@ -480,10 +577,53 @@
     "Logged" : {
 
     },
+    "Logged %@ for %@." : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Logged %1$@ for %2$@."
+          }
+        }
+      }
+    },
     "Logged, no reminder" : {
 
     },
     "Logging…" : {
+
+    },
+    "Logs a breast or bottle feed that has already happened." : {
+
+    },
+    "Logs a length or height measurement." : {
+
+    },
+    "Logs a medicine dose, such as Calpol." : {
+
+    },
+    "Logs a nap or sleep that has just ended." : {
+
+    },
+    "Logs a wee, poo or both on the potty." : {
+
+    },
+    "Logs a weigh-in, in kilograms or pounds." : {
+
+    },
+    "Logs a wet, dirty or wet and dirty nappy." : {
+
+    },
+    "Logs an activity, such as a bath or a walk." : {
+
+    },
+    "Logs an expressing session that has just ended." : {
+
+    },
+    "Logs anything else, with an optional note." : {
+
+    },
+    "Logs tummy time that has just ended." : {
 
     },
     "Loved the water" : {
@@ -505,6 +645,9 @@
 
     },
     "Midwife, GP, jabs, and other appointments — past or upcoming." : {
+
+    },
+    "Milk" : {
 
     },
     "Minutes" : {
@@ -567,6 +710,9 @@
     "No recording saved — try again." : {
 
     },
+    "No timer is running." : {
+
+    },
     "Note" : {
 
     },
@@ -586,6 +732,12 @@
 
     },
     "On the play mat" : {
+
+    },
+    "Open Scrunch and add a baby first, then try again." : {
+
+    },
+    "Open Scrunch to do that." : {
 
     },
     "Opens the timer" : {
@@ -672,6 +824,9 @@
     "Pump" : {
 
     },
+    "Quick log" : {
+
+    },
     "Remind me" : {
 
     },
@@ -682,6 +837,9 @@
 
     },
     "Right" : {
+
+    },
+    "Right now" : {
 
     },
     "Running" : {
@@ -732,6 +890,16 @@
     "Save weigh-in" : {
 
     },
+    "Saved %@ for %@." : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saved %1$@ for %2$@."
+          }
+        }
+      }
+    },
     "Scrunch" : {
 
     },
@@ -748,6 +916,12 @@
 
     },
     "Sex (for UK growth charts)" : {
+
+    },
+    "Share code %@" : {
+
+    },
+    "Shares code %@ with a friendly message" : {
 
     },
     "Show weights in" : {
@@ -780,6 +954,9 @@
     "Something went wrong. Try again." : {
 
     },
+    "Sorry, I couldn't tell what to log. Try \"Log a feed in Scrunch\"." : {
+
+    },
     "Speak" : {
 
     },
@@ -787,6 +964,18 @@
 
     },
     "Start" : {
+
+    },
+    "Start a feed" : {
+
+    },
+    "Start a feed timer" : {
+
+    },
+    "Start a nap" : {
+
+    },
+    "Start a timer" : {
 
     },
     "Start breastfeed, left side" : {
@@ -819,7 +1008,37 @@
     "Started %lld minutes earlier" : {
 
     },
+    "Started a feed timer for %@." : {
+
+    },
+    "Started a nap timer for %@." : {
+
+    },
+    "Started a pump timer for %@." : {
+
+    },
+    "Started a tummy time timer for %@." : {
+
+    },
+    "Starts a feed timer for your baby." : {
+
+    },
+    "Starts a feed, nap, tummy time or pump timer on the Lock Screen and Dynamic Island." : {
+
+    },
+    "Starts a sleep timer for your baby." : {
+
+    },
+    "Stop and save" : {
+
+    },
     "Stop and send" : {
+
+    },
+    "Stop the timer" : {
+
+    },
+    "Stops the running timer and saves it." : {
 
     },
     "Subscription" : {
@@ -850,6 +1069,21 @@
 
     },
     "That clip is too long. Keep it under 30 seconds." : {
+
+    },
+    "That was under five seconds, so nothing was saved." : {
+
+    },
+    "The feed timer is already running for %@." : {
+
+    },
+    "The nap timer is already running for %@." : {
+
+    },
+    "The pump timer is already running for %@." : {
+
+    },
+    "The tummy time timer is already running for %@." : {
 
     },
     "Thinking…" : {
@@ -958,7 +1192,43 @@
     "Weight for age chart" : {
 
     },
+    "What" : {
+
+    },
+    "What did you do?" : {
+
+    },
+    "What happened?" : {
+
+    },
+    "What would you like to log?" : {
+
+    },
     "When" : {
+
+    },
+    "Which medicine?" : {
+
+    },
+    "bottle" : {
+
+    },
+    "breast" : {
+
+    },
+    "breastfeed" : {
+
+    },
+    "dirty" : {
+
+    },
+    "expressing" : {
+
+    },
+    "feed" : {
+
+    },
+    "formula" : {
 
     },
     "iOS Simulator mic is usually silent, so Whisper hears nothing. Run on a device." : {
@@ -968,6 +1238,57 @@
 
     },
     "lb & oz" : {
+
+    },
+    "mixed" : {
+
+    },
+    "nap" : {
+
+    },
+    "nursing" : {
+
+    },
+    "poo" : {
+
+    },
+    "pooey" : {
+
+    },
+    "poopy" : {
+
+    },
+    "pump" : {
+
+    },
+    "pumping" : {
+
+    },
+    "sleep" : {
+
+    },
+    "tummy" : {
+
+    },
+    "tummy time" : {
+
+    },
+    "wee" : {
+
+    },
+    "wee and poo" : {
+
+    },
+    "weeing" : {
+
+    },
+    "wet" : {
+
+    },
+    "wet and dirty" : {
+
+    },
+    "your baby" : {
 
     },
     "°C" : {

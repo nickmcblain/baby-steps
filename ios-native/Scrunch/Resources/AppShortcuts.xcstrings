@@ -1,7 +1,152 @@
 {
   "sourceLanguage" : "en-GB",
   "strings" : {
-
+    "Log a ${feed} feed in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Log a ${feed} feed in ${applicationName}",
+              "Log a feed in ${applicationName}",
+              "Log a bottle in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Log a ${nappy} nappy in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Log a ${nappy} nappy in ${applicationName}",
+              "Log a ${nappy} nappy with ${applicationName}",
+              "${applicationName} ${nappy} nappy",
+              "Log a nappy in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Log a ${nappy} potty visit in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Log a ${nappy} potty visit in ${applicationName}",
+              "Log the potty in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Log a medicine in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Log a medicine in ${applicationName}",
+              "Log a dose in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Log a nap in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Log a nap in ${applicationName}",
+              "Log a sleep in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Log a pump in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Log a pump in ${applicationName}",
+              "Log expressing in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Log a weight in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Log a weight in ${applicationName}",
+              "Log a weigh-in in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Log tummy time in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Log tummy time in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Start a ${timer} in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Start a ${timer} in ${applicationName}",
+              "Start a ${timer} with ${applicationName}",
+              "Start a ${timer} timer in ${applicationName}",
+              "Start ${timer} in ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Stop the timer in ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Stop the timer in ${applicationName}",
+              "Stop the ${applicationName} timer",
+              "End the feed in ${applicationName}",
+              "End the nap in ${applicationName}"
+            ]
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }

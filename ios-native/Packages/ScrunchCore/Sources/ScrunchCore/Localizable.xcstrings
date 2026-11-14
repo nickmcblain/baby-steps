@@ -10,6 +10,16 @@
     "%@ Under 3 months or a lighter baby can use one extra thin layer — never a hat indoors." : {
 
     },
+    "%@ at %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ at %2$@"
+          }
+        }
+      }
+    },
     "%@ min" : {
 
     },
@@ -20,6 +30,9 @@
 
     },
     "%@ · nap window soon" : {
+
+    },
+    "%@ · watch for hunger cues" : {
 
     },
     "%@h" : {
@@ -127,13 +140,22 @@
     "Activity" : {
 
     },
+    "Activity · %@" : {
+
+    },
     "Add sex to see UK chart" : {
+
+    },
+    "Answers from NHS and Lullaby Trust guidance" : {
 
     },
     "Around %@ since the last feed — offer if they're stirring." : {
 
     },
     "Around %@ since the last feed — time for a gentle check." : {
+
+    },
+    "Ask Scrunch" : {
 
     },
     "Ask about newborn care…" : {
@@ -146,6 +168,12 @@
 
     },
     "At this age and weight, an active sleep timer pauses feed reminders so you can leave them sleeping." : {
+
+    },
+    "Awake %@, longer than usual" : {
+
+    },
+    "Awake for %@" : {
 
     },
     "Bedtime" : {
@@ -166,10 +194,19 @@
     "Bottle" : {
 
     },
+    "Bottle feed" : {
+
+    },
+    "Bottle · %@" : {
+
+    },
     "Breast %@" : {
 
     },
     "Dirty" : {
+
+    },
+    "Dirty nappy" : {
 
     },
     "Dirty nappy logged" : {
@@ -187,10 +224,16 @@
     "Feed" : {
 
     },
+    "Feed may be due now" : {
+
+    },
     "Feed paused" : {
 
     },
     "Feed started%@" : {
+
+    },
+    "Feed · Both" : {
 
     },
     "Feed · Left" : {
@@ -211,13 +254,44 @@
     "From their last two weeks" : {
 
     },
+    "General guidance. No specific NHS or Lullaby Trust page matched, so check nhs.uk or ask your health visitor." : {
+
+    },
     "Guidance, not medical advice. No hats or hoods indoors for sleep." : {
 
     },
     "Height" : {
 
     },
+    "Height · %@" : {
+
+    },
+    "How many wet nappies should I expect?" : {
+
+    },
+    "How often do newborns usually feed?" : {
+
+    },
     "If your baby is not breathing normally, is unresponsive, blue/grey, or having a seizure, call 999 now." : {
+
+    },
+    "Join me on Scrunch so we can both log %@'s feeds, sleeps and nappies. Open Scrunch, go to Kids, tap Join with a code and enter %@." : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Join me on Scrunch so we can both log %1$@'s feeds, sleeps and nappies. Open Scrunch, go to Kids, tap Join with a code and enter %2$@."
+          }
+        }
+      }
+    },
+    "Last feed %@ ago" : {
+
+    },
+    "Last feed: both sides" : {
+
+    },
+    "Last nappy %@ ago" : {
 
     },
     "Last side: %@, %@" : {
@@ -229,6 +303,12 @@
           }
         }
       }
+    },
+    "Last side: left" : {
+
+    },
+    "Last side: right" : {
+
     },
     "Latest ≈ %@ centile · %@" : {
       "localizations" : {
@@ -256,7 +336,22 @@
     "Light cellular blanket if still cool" : {
 
     },
+    "Log a feed to see when the next is likely" : {
+
+    },
+    "Log a wee or poo to keep track." : {
+
+    },
+    "Log feeds as they happen and the estimate comes back." : {
+
+    },
+    "Log nappies as you change them to keep this useful." : {
+
+    },
     "Medicine" : {
+
+    },
+    "Medicine · %@" : {
 
     },
     "NHS, not a timetable." : {
@@ -268,16 +363,28 @@
     "Next dose due%@." : {
 
     },
+    "Next feed likely around %@" : {
+
+    },
     "Next nap" : {
 
     },
     "Night you set. Daytime naps still follow the age shape." : {
 
     },
+    "No feed logged for %@" : {
+
+    },
     "No feeds yet" : {
 
     },
+    "No nappies logged yet" : {
+
+    },
     "No nappies yet" : {
+
+    },
+    "No nappy logged for %@" : {
 
     },
     "No sleep yet" : {
@@ -322,6 +429,9 @@
     "Potty" : {
 
     },
+    "Potty · %@" : {
+
+    },
     "Pump" : {
 
     },
@@ -330,6 +440,16 @@
     },
     "Pump started" : {
 
+    },
+    "Pump · %@ · %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pump · %1$@ · %2$@"
+          }
+        }
+      }
     },
     "Pump · Left" : {
 
@@ -349,6 +469,12 @@
     "Seek urgent help" : {
 
     },
+    "Send your partner or carer the code. They tap Join with a code on their Kids tab." : {
+
+    },
+    "Set the room temperature for a TOG suggestion." : {
+
+    },
     "Short-sleeve vest if needed" : {
 
     },
@@ -361,10 +487,16 @@
     "Sleep timer started" : {
 
     },
+    "Sleep · %@" : {
+
+    },
     "Sleepsuit" : {
 
     },
     "Sleepsuit or 1.0 TOG bag" : {
+
+    },
+    "Start on whichever feels fuller." : {
 
     },
     "Started %@" : {
@@ -382,6 +514,25 @@
     "Tomorrow" : {
 
     },
+    "Tonight at %@: %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tonight at %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "Tonight's sleeping bag" : {
+
+    },
+    "Try starting on the left next time." : {
+
+    },
+    "Try starting on the right next time." : {
+
+    },
     "Tummy time" : {
 
     },
@@ -389,6 +540,15 @@
 
     },
     "Tummy time started" : {
+
+    },
+    "Tummy time · %@" : {
+
+    },
+    "Typical at this age: %@. Look for yawns, rubbing eyes or staring." : {
+
+    },
+    "Typical at this age: %@. Tired signs matter more than the clock." : {
 
     },
     "UK Red Book centiles (WHO / UK-WHO standards)" : {
@@ -412,6 +572,9 @@
     "Watch cues" : {
 
     },
+    "We'll start with typical gaps for %@'s age." : {
+
+    },
     "Wee" : {
 
     },
@@ -424,19 +587,40 @@
     "Weight" : {
 
     },
+    "Weight · %@" : {
+
+    },
     "Wet" : {
+
+    },
+    "Wet and dirty nappy" : {
 
     },
     "Wet and dirty nappy logged" : {
 
     },
+    "Wet nappy" : {
+
+    },
     "Wet nappy logged" : {
+
+    },
+    "What does safer sleep look like?" : {
+
+    },
+    "What should my baby wear to sleep tonight?" : {
 
     },
     "Where they usually sleep. Last 2 weeks. Cues first." : {
 
     },
+    "Where this comes from" : {
+
+    },
     "Within expected range" : {
+
+    },
+    "Worried? Call your GP or NHS 111. Emergency: call 999." : {
 
     },
     "Yesterday" : {
@@ -469,6 +653,9 @@
     "about 4 hours" : {
 
     },
+    "based on the last %lld feeds" : {
+
+    },
     "both sides" : {
 
     },
@@ -479,6 +666,9 @@
 
     },
     "right" : {
+
+    },
+    "typical at this age is %@" : {
 
     }
   },
