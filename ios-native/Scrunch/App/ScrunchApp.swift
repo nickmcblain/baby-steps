@@ -35,7 +35,12 @@ struct ScrunchApp: App {
       }
       .preferredColorScheme(.light)
       .tint(C.teal)
-      .onOpenURL { router.handle(url: $0) }
+      .onOpenURL { url in
+        #if DEBUG
+        if router.handleDebug(url: url, activeBabyId: activeBaby.babyId) { return }
+        #endif
+        router.handle(url: url)
+      }
     }
   }
 }
