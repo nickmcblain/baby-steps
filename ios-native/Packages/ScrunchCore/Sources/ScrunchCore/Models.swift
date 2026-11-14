@@ -331,6 +331,11 @@ public struct TummyPatterns: Decodable, Equatable, Sendable {
 public struct Citation: Decodable, Equatable, Hashable, Sendable {
   public let title: String
   public let url: String?
+
+  public init(title: String, url: String?) {
+    self.title = title
+    self.url = url
+  }
 }
 
 public struct ChatThread: Decodable, Equatable, Sendable, Identifiable {
