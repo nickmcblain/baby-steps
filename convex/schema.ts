@@ -69,9 +69,12 @@ export default defineSchema({
     heightCm: v.optional(v.number()),
     title: v.optional(v.string()),
     note: v.optional(v.string()),
+    /** Idempotency key from the client's offline queue, so a replayed log can't duplicate. */
+    clientId: v.optional(v.string()),
   })
     .index("by_baby_kind_loggedAt", ["babyId", "kind", "loggedAt"])
-    .index("by_baby_and_loggedAt", ["babyId", "loggedAt"]),
+    .index("by_baby_and_loggedAt", ["babyId", "loggedAt"])
+    .index("by_baby_and_clientId", ["babyId", "clientId"]),
 
   chatThreads: defineTable({
     babyId: v.id("babies"),

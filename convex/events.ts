@@ -13,6 +13,7 @@ import {
   insertHeight,
   insertMedicine,
   insertNappy,
+  insertOnce,
   insertPotty,
   insertPump,
   insertSleep,
@@ -294,11 +295,14 @@ export const logFeed = authedMutation({
     amountMl: v.optional(v.number()),
     milk: v.optional(milkValidator),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertFeed(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertFeed(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -310,11 +314,14 @@ export const logNappy = authedMutation({
     weeSize: v.optional(sizeValidator),
     pooSize: v.optional(sizeValidator),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertNappy(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertNappy(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -324,11 +331,14 @@ export const logWeight = authedMutation({
     loggedAt: v.number(),
     weightGrams: v.number(),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertWeight(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertWeight(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -338,11 +348,14 @@ export const logSleep = authedMutation({
     loggedAt: v.number(),
     durationMinutes: v.number(),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertSleep(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertSleep(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -352,11 +365,14 @@ export const logTummy = authedMutation({
     loggedAt: v.number(),
     durationMinutes: v.number(),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertTummy(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertTummy(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -366,11 +382,14 @@ export const logHeight = authedMutation({
     loggedAt: v.number(),
     heightCm: v.number(),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertHeight(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertHeight(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -380,11 +399,14 @@ export const logCustom = authedMutation({
     loggedAt: v.number(),
     title: v.string(),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertCustom(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertCustom(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -396,11 +418,14 @@ export const logPump = authedMutation({
     durationMinutes: v.number(),
     amountMl: v.optional(v.number()),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertPump(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertPump(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -410,11 +435,14 @@ export const logMedicine = authedMutation({
     loggedAt: v.number(),
     title: v.string(),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertMedicine(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertMedicine(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -426,11 +454,14 @@ export const logPotty = authedMutation({
     weeSize: v.optional(sizeValidator),
     pooSize: v.optional(sizeValidator),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertPotty(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertPotty(ctx, ctx.user._id, args),
+    );
   },
 });
 
@@ -441,11 +472,14 @@ export const logActivity = authedMutation({
     title: v.string(),
     durationMinutes: v.optional(v.number()),
     note: v.optional(v.string()),
+    clientId: v.optional(v.string()),
   },
   returns: v.id("events"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, { clientId, ...args }) => {
     await requireBabyMember(ctx, args.babyId, ctx.user._id);
-    return await insertActivity(ctx, ctx.user._id, args);
+    return await insertOnce(ctx, args.babyId, clientId, () =>
+      insertActivity(ctx, ctx.user._id, args),
+    );
   },
 });
 
