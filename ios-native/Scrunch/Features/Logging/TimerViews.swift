@@ -65,6 +65,21 @@ private struct TimerFooter: View {
   }
 }
 
+/// The big glyph that makes the whole timer card read as the Start button.
+private struct PlayPauseIcon: View {
+  let running: Bool
+  let tint: Color
+
+  var body: some View {
+    Image(systemName: running ? "pause.fill" : "play.fill")
+      .font(.system(size: 26, weight: .bold))
+      .foregroundStyle(running ? tint : C.onAccent)
+      .frame(width: 64, height: 64)
+      .background(running ? C.onAccent : tint, in: Circle())
+      .accessibilityHidden(true)
+  }
+}
+
 // MARK: - Sleep / tummy
 
 struct DurationTimerView: View {
@@ -96,9 +111,10 @@ struct DurationTimerView: View {
 
       Button { Task { await toggle() } } label: {
         VStack(spacing: 10) {
+          PlayPauseIcon(running: running, tint: accent)
           ClockText(session: session, value: { $0.elapsed(now: $1) }, font: .app(.displayBold, 48), color: running ? .white : C.ink)
-          Text(running ? "Pause" : elapsed > 0 ? "Resume" : "Start")
-            .font(.app(.medium, 15))
+          Text(running ? "Tap to pause" : elapsed > 0 ? "Tap to resume" : "Tap to start")
+            .font(.app(.bold, 15))
             .foregroundStyle(running ? .white.opacity(0.9) : accent)
         }
         .frame(maxWidth: .infinity)
@@ -109,6 +125,9 @@ struct DurationTimerView: View {
       }
       .buttonStyle(PressScale())
       .sensoryFeedback(.impact(weight: .light), trigger: running)
+      .accessibilityLabel(running ? "Pause \(isSleep ? "sleep" : "tummy time")" : "Start \(isSleep ? "sleep" : "tummy time")")
+
+      if let session { StartShiftChips(session: session) }
 
       TimerFooter(
         doneLabel: "Done — confirm details",
@@ -209,6 +228,8 @@ struct FeedTimerView: View {
         sideCard("Right", .right, session: session, ms: rightMs)
       }
 
+      if let session { StartShiftChips(session: session) }
+
       TimerFooter(
         doneLabel: isPump ? "Done — add amount" : "Done — fill in details",
         canFinish: session?.canFinish(now: now) ?? false,
@@ -237,11 +258,12 @@ struct FeedTimerView: View {
           .font(.app(.bold, 13))
           .tracking(0.6)
           .foregroundStyle(running ? .white.opacity(0.85) : C.muted)
+        PlayPauseIcon(running: running, tint: C.teal)
         ClockText(session: session, value: { $0.sideElapsed(side, now: $1) }, font: .app(.displayBold, 36), color: running ? .white : C.ink)
           .lineLimit(1)
           .minimumScaleFactor(0.6)
-        Text(running ? "Pause" : ms > 0 ? "Resume" : "Start")
-          .font(.app(.medium, 14))
+        Text(running ? "Tap to pause" : ms > 0 ? "Tap to resume" : "Tap to start")
+          .font(.app(.bold, 14))
           .foregroundStyle(running ? .white.opacity(0.9) : C.tealDark)
       }
       .frame(maxWidth: .infinity)
