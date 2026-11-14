@@ -22,12 +22,13 @@ struct ScrunchApp: App {
       Group {
         if let convex {
           RootView()
-            .environment(Clerk.shared)
             .environment(convex)
             .environment(router)
             .environment(activeBaby)
             .environment(TimerStore.shared)
             .prefetchClerkImages()
+            // Outermost, so ClerkKitUI modifiers like prefetchClerkImages() can see it too.
+            .environment(Clerk.shared)
         } else {
           MissingConfigView()
         }
