@@ -15,6 +15,11 @@ final class ActiveBabyStore {
     babyId = id
     UserDefaults.standard.set(id, forKey: Self.key)
   }
+
+  func clear() {
+    babyId = nil
+    UserDefaults.standard.removeObject(forKey: Self.key)
+  }
 }
 
 enum Tab: Hashable { case home, timeline, kids, profile }

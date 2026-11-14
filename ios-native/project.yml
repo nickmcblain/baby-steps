@@ -55,6 +55,8 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.com.nickmcblain.babysteps
+        com.apple.developer.applesignin:
+          - Default
     info:
       path: Scrunch/Info.plist
       properties:
@@ -66,13 +68,15 @@ targets:
             CFBundleURLSchemes: [babysteps]
         ClerkPublishableKey: $(CLERK_PUBLISHABLE_KEY)
         ConvexDeploymentURL: $(CONVEX_URL)
+        PrivacyPolicyURL: $(PRIVACY_POLICY_URL)
+        SupportEmail: $(SUPPORT_EMAIL)
         AppGroupIdentifier: group.com.nickmcblain.babysteps
         CADisableMinimumFrameDurationOnPhone: true
         ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
         NSSupportsLiveActivities: true
         NSSupportsLiveActivitiesFrequentUpdates: true
-        NSMicrophoneUsageDescription: Scrunch uses the microphone so you can log feeds, sleeps, and nappies hands-free.
+        NSMicrophoneUsageDescription: Scrunch uses the microphone when you tap Speak, so you can log feeds, sleeps and nappies hands-free. The recording is sent for transcription and isn't kept.
         UIUserInterfaceStyle: Light
         UILaunchScreen:
           UIColorName: LaunchBackground

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
@@ -58,7 +58,12 @@ async function seedChat(
   });
 }
 
-describe("account.deleteMyData", () => {
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
+
+describe("account.deleteAccount", () => {
   test("deletes a baby only this user can see, with every log and chat", async () => {
     const { t, asAlice } = await setup();
     const babyId = await asAlice.mutation(api.babies.create, newBaby("Ada"));
@@ -70,8 +75,8 @@ describe("account.deleteMyData", () => {
     });
     await seedChat(t, babyId, alice.tokenIdentifier);
 
-    const result = await asAlice.mutation(api.account.deleteMyData, {});
-    expect(result).toEqual({ deletedBabies: 1, leftSharedBabies: 0 });
+    const result = await asAlice.action(api.account.deleteAccount, {});
+    expect(result).toEqual({ deletedBabies: 1, leftSharedBabies: 0, signInDeleted: false });
     await t.finishAllScheduledFunctions(() => {});
 
     await t.run(async (ctx) => {
@@ -93,8 +98,8 @@ describe("account.deleteMyData", () => {
     await seedChat(t, babyId, alice.tokenIdentifier);
     await seedChat(t, babyId, bob.tokenIdentifier);
 
-    const result = await asAlice.mutation(api.account.deleteMyData, {});
-    expect(result).toEqual({ deletedBabies: 0, leftSharedBabies: 1 });
+    const result = await asAlice.action(api.account.deleteAccount, {});
+    expect(result).toEqual({ deletedBabies: 0, leftSharedBabies: 1, signInDeleted: false });
     await t.finishAllScheduledFunctions(() => {});
 
     const kept = await asBob.query(api.babies.get, { babyId });
@@ -128,7 +133,7 @@ describe("account.deleteMyData", () => {
         });
       }
     });
-    await asAlice.mutation(api.account.deleteMyData, {});
+    await asAlice.action(api.account.deleteAccount, {});
     await t.finishAllScheduledFunctions(() => {});
     await t.run(async (ctx) => {
       expect(await ctx.db.query("events").collect()).toHaveLength(0);
@@ -139,8 +144,37 @@ describe("account.deleteMyData", () => {
     const t = convexTest(schema, modules);
     const result = await t
       .withIdentity({ tokenIdentifier: "clerk|new" })
-      .mutation(api.account.deleteMyData, {});
-    expect(result).toEqual({ deletedBabies: 0, leftSharedBabies: 0 });
+      .action(api.account.deleteAccount, {});
+    expect(result).toEqual({ deletedBabies: 0, leftSharedBabies: 0, signInDeleted: false });
+  });
+
+  test("deletes the Clerk user through the Backend API when the secret is set", async () => {
+    const { t, asAlice } = await setup();
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test_123");
+    const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await t
+      .withIdentity({ ...alice, subject: "user_alice" })
+      .action(api.account.deleteAccount, {});
+
+    expect(result.signInDeleted).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.clerk.com/v1/users/user_alice",
+      { method: "DELETE", headers: { Authorization: "Bearer sk_test_123" } },
+    );
+    await expect(asAlice.query(api.users.current, {})).resolves.toBeNull();
+  });
+
+  test("reports a failed Clerk deletion so the app can retry on the device", async () => {
+    const { t } = await setup();
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test_123");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("nope", { status: 403 })));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const result = await t
+      .withIdentity({ ...alice, subject: "user_alice" })
+      .action(api.account.deleteAccount, {});
+    expect(result.signInDeleted).toBe(false);
   });
 });
 

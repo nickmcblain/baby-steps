@@ -1,23 +1,69 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { internalMutation, mutation, type MutationCtx } from "./_generated/server";
-import { getUserByToken, requireIdentity } from "./lib/auth";
+import {
+  action,
+  internalMutation,
+  type MutationCtx,
+} from "./_generated/server";
+import { getUserByToken } from "./lib/auth";
 
 const BATCH = 400;
 
+const deletedDataValidator = v.object({
+  deletedBabies: v.number(),
+  leftSharedBabies: v.number(),
+});
+
 /**
- * Deletes the signed-in user's Scrunch data. Babies only this user can see are
- * deleted with all their logs and chats. Babies shared with a partner stay for
- * the partner; this user's membership, Ask chats and remembered facts go.
- * The Clerk account is deleted by the client afterwards.
+ * Deletes the signed-in user's Scrunch data, then their Clerk user when
+ * CLERK_SECRET_KEY is set. `signInDeleted: false` tells the app to delete the
+ * Clerk user itself with the client SDK.
  */
-export const deleteMyData = mutation({
+export const deleteAccount = action({
   args: {},
-  returns: v.object({ deletedBabies: v.number(), leftSharedBabies: v.number() }),
-  handler: async (ctx) => {
-    const identity = await requireIdentity(ctx);
-    const user = await getUserByToken(ctx, identity.tokenIdentifier);
+  returns: deletedDataValidator.extend({ signInDeleted: v.boolean() }),
+  handler: async (
+    ctx,
+  ): Promise<{
+    deletedBabies: number;
+    leftSharedBabies: number;
+    signInDeleted: boolean;
+  }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+    const result = await ctx.runMutation(internal.account.deleteUserData, {
+      tokenIdentifier: identity.tokenIdentifier,
+    });
+    const signInDeleted = await deleteClerkUser(identity.subject);
+    return { ...result, signInDeleted };
+  },
+});
+
+async function deleteClerkUser(clerkUserId: string): Promise<boolean> {
+  const secret = process.env.CLERK_SECRET_KEY;
+  if (!secret) return false;
+  const response = await fetch(
+    `https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`,
+    { method: "DELETE", headers: { Authorization: `Bearer ${secret}` } },
+  );
+  if (response.ok || response.status === 404) return true;
+  console.error("Clerk user deletion failed", response.status);
+  return false;
+}
+
+/**
+ * Babies only this user can see are deleted with all their logs and chats.
+ * Babies shared with a partner stay for the partner; this user's membership,
+ * Ask chats and remembered facts go.
+ */
+export const deleteUserData = internalMutation({
+  args: { tokenIdentifier: v.string() },
+  returns: deletedDataValidator,
+  handler: async (ctx, args) => {
+    const user = await getUserByToken(ctx, args.tokenIdentifier);
     if (!user) {
       return { deletedBabies: 0, leftSharedBabies: 0 };
     }
