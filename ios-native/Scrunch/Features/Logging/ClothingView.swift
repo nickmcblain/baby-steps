@@ -43,7 +43,11 @@ struct ClothingView: View {
           }
         HStack(spacing: 20) {
           arrow("chevron.left", "Decrease temperature") { tempC = Clothing.nudge(tempC, by: -Clothing.stepC) }
-          Text("±0.5°C").font(.app(.medium, 13)).foregroundStyle(C.muted).frame(minWidth: 56)
+          Text("±0.5°C")
+            .font(.app(.medium, 13))
+            .foregroundStyle(C.muted)
+            .frame(minWidth: 56)
+            .accessibilityLabel("Adjusts by 0.5 degrees Celsius")
           arrow("chevron.right", "Increase temperature") { tempC = Clothing.nudge(tempC, by: Clothing.stepC) }
         }
       }

@@ -111,6 +111,8 @@ struct DayRhythmBar: View {
         .background(C.line)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
       }
+      .frame(minHeight: 44)
+      .contentShape(Rectangle())
       .buttonStyle(.plain)
       .accessibilityLabel(rhythm.source == .logs ? "Usual day" : "Typical day")
       .accessibilityValue(rhythm.caption)

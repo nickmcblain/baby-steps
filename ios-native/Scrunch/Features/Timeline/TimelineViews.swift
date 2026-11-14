@@ -213,7 +213,10 @@ struct EventListView: View {
             .font(.app(.medium, 13))
             .foregroundStyle(C.muted)
         }
-        Text(EventCopy.title(event)).font(.app(.bold, 17)).foregroundStyle(C.ink)
+        Text(EventCopy.title(event))
+          .font(.app(.bold, 17))
+          .foregroundStyle(C.ink)
+          .fixedSize(horizontal: false, vertical: true)
         if let note {
           Text(note).font(.app(.body, 15)).foregroundStyle(C.ink.opacity(0.75)).padding(.top, 2)
         }

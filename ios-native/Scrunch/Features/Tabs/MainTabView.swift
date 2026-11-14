@@ -27,7 +27,7 @@ struct MainTabView: View {
     .toolbar(.hidden, for: .navigationBar)
     .sheet(isPresented: $router.addLogOpen) {
       AddLogSheet(babyId: activeBaby.babyId)
-        .presentationDetents([.medium, .large])
+        .adaptiveDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(32)
         .presentationBackground(C.bg)
