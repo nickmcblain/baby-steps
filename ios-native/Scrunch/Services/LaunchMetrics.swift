@@ -23,16 +23,19 @@ enum LaunchMetrics {
   static func homeUsable(fromCache: Bool) {
     guard !homeShown, let interval else { return }
     homeShown = true
-    signposter.endInterval(usableHome, interval, "\(fromCache ? "cache" : "live", privacy: .public)")
-    log.notice("Usable home \(sinceProcessStart(), privacy: .public) ms after process start (\(fromCache ? "cache" : "live", privacy: .public))")
+    let source = fromCache ? "cache" : "live"
+    let ms = sinceProcessStart()
+    signposter.endInterval(usableHome, interval, "\(source, privacy: .public)")
+    log.notice("Usable home \(ms, privacy: .public) ms after process start (\(source, privacy: .public))")
   }
 
   /// Convex has answered the home queries this session.
   static func homeLive() {
     guard !liveShown else { return }
     liveShown = true
+    let ms = sinceProcessStart()
     signposter.emitEvent("HomeLiveData")
-    log.notice("Live home data \(sinceProcessStart(), privacy: .public) ms after process start")
+    log.notice("Live home data \(ms, privacy: .public) ms after process start")
   }
 
   /// Wall time since the kernel started this process, so pre-`main` work is counted too.
