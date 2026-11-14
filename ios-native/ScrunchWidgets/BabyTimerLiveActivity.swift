@@ -20,6 +20,7 @@ struct BabyTimerLiveActivity: Widget {
         }
         Spacer()
         TimerClockText(state: state, size: 28).frame(width: 110, alignment: .trailing)
+        StopTimerButton(accent: state.accent)
       }
       .padding(14)
       .activityBackgroundTint(Color.black.opacity(0.85))
@@ -43,11 +44,15 @@ struct BabyTimerLiveActivity: Widget {
           .padding(10)
         }
         DynamicIslandExpandedRegion(.bottom) {
-          VStack(alignment: .leading, spacing: 2) {
-            Text(state.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
-            if !state.subtitle.isEmpty {
-              Text(state.subtitle).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6))
+          HStack {
+            VStack(alignment: .leading, spacing: 2) {
+              Text(state.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
+              if !state.subtitle.isEmpty {
+                Text(state.subtitle).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6))
+              }
             }
+            Spacer()
+            StopTimerButton(accent: state.accent)
           }
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 12)
@@ -62,6 +67,23 @@ struct BabyTimerLiveActivity: Widget {
       }
       .widgetURL(context.attributes.deepLink)
     }
+  }
+}
+
+/// Saves the timer as a log and ends the Live Activity, without opening the app.
+struct StopTimerButton: View {
+  let accent: Color
+
+  var body: some View {
+    Button(intent: StopTimerIntent()) {
+      Image(systemName: "stop.fill")
+        .font(.system(size: 16, weight: .bold))
+        .foregroundStyle(.white)
+        .frame(width: 40, height: 40)
+        .background(accent, in: Circle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Stop and save")
   }
 }
 

@@ -12,6 +12,7 @@ struct SignedInRoot: View {
   @State private var storedUser = false
   @State private var slowConnect = false
   @State private var undo = UndoCenter()
+  @State private var babies = Live<[Baby]>()
 
   var body: some View {
     @Bindable var router = router
@@ -32,6 +33,7 @@ struct SignedInRoot: View {
         .environment(undo)
         .onChange(of: scenePhase) { _, phase in
           if phase == .background { undo.settle() }
+          if phase == .active { Task { await PendingLogSender.shared.send() } }
         }
         .onChange(of: router.requestedBabyId) { _, id in
           guard let id else { return }
@@ -43,10 +45,19 @@ struct SignedInRoot: View {
           // Auth may still be settling; reactive queries recover either way.
           if (try? await convex.mutation(API.users.store())) != nil { storedUser = true }
         }
+        .task { await PendingLogSender.shared.send() }
+        .task { await babies.bind(API.babies.list(), convex) }
+        .onChange(of: babies.value, initial: true) { syncIntentBabies() }
+        .onChange(of: activeBaby.babyId) { syncIntentBabies() }
       case .loading, .signedOut:
         connecting
       }
     }
+  }
+
+  private func syncIntentBabies() {
+    guard let list = babies.value else { return }
+    PendingLogSender.publish(babies: list, activeId: activeBaby.babyId)
   }
 
   private var connecting: some View {

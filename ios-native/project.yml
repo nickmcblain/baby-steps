@@ -107,6 +107,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.nickmcblain.babysteps.widgets
         PRODUCT_NAME: ScrunchWidgets
         SKIP_INSTALL: YES
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) WIDGET_EXTENSION
     entitlements:
       path: ScrunchWidgets/ScrunchWidgets.entitlements
       properties:

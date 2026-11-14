@@ -29,12 +29,25 @@ struct GlanceProvider: TimelineProvider {
 struct BabyGlanceWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: GlanceStore.widgetKind, provider: GlanceProvider()) { entry in
-      GlanceView(snapshot: entry.snapshot)
+      GlanceRouter(snapshot: entry.snapshot)
         .containerBackground(for: .widget) { Color(.systemBackground) }
     }
     .configurationDisplayName("Scrunch")
     .description("Next nap, last feed and nappy at a glance")
-    .supportedFamilies([.systemSmall, .systemMedium])
+    .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline])
+  }
+}
+
+private struct GlanceRouter: View {
+  let snapshot: GlanceSnapshot
+
+  @Environment(\.widgetFamily) private var family
+
+  var body: some View {
+    switch family {
+    case .accessoryRectangular, .accessoryInline: GlanceAccessoryView(snapshot: snapshot)
+    default: GlanceView(snapshot: snapshot)
+    }
   }
 }
 

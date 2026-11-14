@@ -13,7 +13,9 @@ struct ScrunchApp: App {
     UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
     if AppConfig.isComplete {
       Clerk.configure(publishableKey: AppConfig.clerkPublishableKey)
-      _convex = State(initialValue: ConvexService(deploymentUrl: AppConfig.convexURL))
+      let convex = ConvexService(deploymentUrl: AppConfig.convexURL)
+      PendingLogSender.shared.convex = convex
+      _convex = State(initialValue: convex)
     }
   }
 
