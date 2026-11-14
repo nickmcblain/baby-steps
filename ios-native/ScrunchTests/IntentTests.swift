@@ -15,9 +15,9 @@ final class IntentTests: XCTestCase {
   }
 
   func testOptionsMapToCoreKinds() {
-    XCTAssertEqual(NappyOption.wet.kind, .wee)
-    XCTAssertEqual(NappyOption.dirty.kind, .poo)
-    XCTAssertEqual(NappyOption.both.kind, .both)
+    XCTAssertEqual(NappyOption.wet.nappy, .wet)
+    XCTAssertEqual(NappyOption.dirty.nappy.kind, .poo)
+    XCTAssertEqual(NappyOption.both.nappy.kind, .both)
     XCTAssertEqual(TimerOption.nap.kind, .sleep)
     XCTAssertEqual(TimerOption.feed.kind, .feed)
     for kind in [TimerKind.sleep, .feed, .tummy, .pump] {
@@ -39,6 +39,6 @@ final class IntentTests: XCTestCase {
   }
 
   func testSpokenSummariesStartLowercase() {
-    XCTAssertEqual(QuickLog.nappy(.wee).summary.lowercasedFirst, "wet nappy")
+    XCTAssertEqual(LogEntry.nappy(.wet).summary.lowercasedFirst, "wet nappy")
   }
 }

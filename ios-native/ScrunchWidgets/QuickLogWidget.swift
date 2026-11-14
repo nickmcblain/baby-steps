@@ -32,7 +32,7 @@ struct QuickLogView: View {
           AccessoryWidgetBackground()
           VStack(spacing: 0) {
             Image(systemName: "drop.fill").font(.system(size: 16, weight: .bold))
-            Text("Wee").font(.system(size: 11, weight: .bold))
+            Text(QuickLog.Nappy.wet.label).font(.system(size: 11, weight: .bold))
           }
         }
       }
@@ -68,11 +68,11 @@ struct QuickLogView: View {
   private var buttons: some View {
     Grid(horizontalSpacing: 6, verticalSpacing: 6) {
       GridRow {
-        QuickLogButton(intent: LogNappyIntent(nappy: .wet), symbol: "drop.fill", label: "Wee", spoken: "Log a wet nappy")
-        QuickLogButton(intent: LogNappyIntent(nappy: .dirty), symbol: "circle.fill", label: "Poo", spoken: "Log a dirty nappy")
+        QuickLogButton(intent: LogNappyIntent(nappy: .wet), symbol: "drop.fill", label: QuickLog.Nappy.wet.label, spoken: "Log a wet nappy")
+        QuickLogButton(intent: LogNappyIntent(nappy: .dirty), symbol: "circle.fill", label: QuickLog.Nappy.dirty.label, spoken: "Log a dirty nappy")
       }
       GridRow {
-        QuickLogButton(intent: LogNappyIntent(nappy: .both), symbol: "circle.grid.2x2.fill", label: "Both", spoken: "Log a wet and dirty nappy")
+        QuickLogButton(intent: LogNappyIntent(nappy: .both), symbol: "circle.grid.2x2.fill", label: QuickLog.Nappy.both.label, spoken: "Log a wet and dirty nappy")
         QuickLogButton(intent: StartTimerIntent(timer: .feed), symbol: "timer", label: "Feed", spoken: "Start a feed timer")
       }
     }

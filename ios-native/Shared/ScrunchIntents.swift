@@ -59,7 +59,7 @@ extension BabyEntity? {
 
 /// Queue a log for the baby and build the Siri reply.
 @MainActor
-private func logNow(_ log: QuickLog, baby: BabyEntity?, minutesAgo: Double = 0, note: String? = nil) async throws -> IntentDialog {
+private func logNow(_ log: LogEntry, baby: BabyEntity?, minutesAgo: Double = 0, note: String? = nil) async throws -> IntentDialog {
   let ref = try baby.resolved()
   let loggedAt = LoggedAt.snapToMinute(Date().epochMs - minutesAgo * minuteMs)
   await QuickLogStore.record(PendingLog(babyId: ref.id, loggedAt: loggedAt, log: log, note: note))
@@ -87,10 +87,10 @@ enum NappyOption: String, AppEnum {
     .both: DisplayRepresentation(title: "wet and dirty", synonyms: ["mixed", "wee and poo"]),
   ]
 
-  var kind: NappyKind {
+  var nappy: QuickLog.Nappy {
     switch self {
-    case .wet: .wee
-    case .dirty: .poo
+    case .wet: .wet
+    case .dirty: .dirty
     case .both: .both
     }
   }
@@ -184,7 +184,7 @@ struct LogNappyIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    .result(dialog: try await logNow(.nappy(nappy.kind), baby: baby))
+    .result(dialog: try await logNow(.nappy(nappy.nappy), baby: baby))
   }
 }
 
@@ -199,7 +199,7 @@ struct LogPottyIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    .result(dialog: try await logNow(.potty(nappy.kind), baby: baby))
+    .result(dialog: try await logNow(.potty(nappy.nappy), baby: baby))
   }
 }
 
@@ -228,7 +228,7 @@ struct LogFeedIntent: AppIntent {
     if feed == .bottle, amountMl == nil {
       throw $amountMl.needsValueError("How much did they have, in ml?")
     }
-    let log = QuickLog.feed(
+    let log = LogEntry.feed(
       feed.kind,
       side: side?.side,
       minutes: minutes.map(Double.init),
@@ -287,7 +287,7 @@ struct LogPumpIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    let log = QuickLog.pump(side.side, minutes: Double(minutes), amountMl: amountMl.map(Double.init))
+    let log = LogEntry.pump(side.side, minutes: Double(minutes), amountMl: amountMl.map(Double.init))
     return .result(dialog: try await logNow(log, baby: baby, minutesAgo: Double(minutes)))
   }
 }
@@ -403,10 +403,7 @@ struct StartTimerIntent: LiveActivityIntent {
       }
       throw ScrunchIntentError.otherTimerRunning(TimerOption(running.kind).spoken)
     }
-    let now = Date().epochMs
-    var session = TimerSession(kind: kind, babyId: ref.id, babyName: ref.name, now: now)
-    if kind.isSided { session.tapSide(.left, now: now) } else { session.toggle(now: now) }
-    await store.update(session)
+    await store.update(.started(kind: kind, babyId: ref.id, babyName: ref.name, now: Date().epochMs))
     return .result(dialog: "Started a \(timer.spoken) timer for \(ref.name).")
     #endif
   }

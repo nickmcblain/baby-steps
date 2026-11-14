@@ -25,7 +25,7 @@ struct DescribeLogIntent: AppIntent {
       Wee means a wet nappy and poo means a dirty nappy. Only fill in numbers the parent said.
       """)
     let parsed = try await session.respond(to: text, generating: DescribedLog.self).content
-    guard let log = parsed.quickLog else { throw DescribeLogError.notUnderstood }
+    guard let log = parsed.entry else { throw DescribeLogError.notUnderstood }
     try await requestConfirmation(actionName: .add, dialog: "Log \(log.summary.lowercasedFirst) for \(ref.name)?")
     let loggedAt = LoggedAt.snapToMinute(Date().epochMs - Double(max(0, parsed.minutesAgo ?? 0)) * minuteMs)
     await QuickLogStore.record(PendingLog(babyId: ref.id, loggedAt: loggedAt, log: log))
@@ -66,12 +66,12 @@ struct DescribedLog {
   @Guide(description: "true if the bottle was expressed breast milk rather than formula")
   var expressed: Bool?
 
-  var quickLog: QuickLog? {
+  var entry: LogEntry? {
     let minutes = minutes.map(Double.init).flatMap { $0 > 0 ? $0 : nil }
     let ml = millilitres.map(Double.init).flatMap { $0 > 0 ? $0 : nil }
     switch kind {
-    case .wetNappy: return .nappy(.wee)
-    case .dirtyNappy: return .nappy(.poo)
+    case .wetNappy: return .nappy(.wet)
+    case .dirtyNappy: return .nappy(.dirty)
     case .wetAndDirtyNappy: return .nappy(.both)
     case .breastFeed: return .feed(.breast, side: nil, minutes: minutes, amountMl: nil, milk: nil)
     case .bottleFeed:
