@@ -160,11 +160,7 @@ struct HomeView: View {
       EmptyState(
         symbol: "drop.fill",
         title: HomeCopy.welcomeTitle(babyName: baby.name),
-        message: HomeCopy.welcomeBody(babyName: baby.name),
-        actionLabel: "Log a feed",
-        action: { router.push(baby.id, .feedTimer) },
-        secondaryLabel: "Log a nappy",
-        secondaryAction: { router.push(baby.id, .nappy) }
+        message: HomeCopy.welcomeBody(babyName: baby.name)
       )
     case .stale(let lastLoggedAt):
       EmptyState(

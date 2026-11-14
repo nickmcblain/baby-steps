@@ -104,7 +104,7 @@ public enum HomeCopy {
   }
 
   public static func welcomeBody(babyName: String) -> String {
-    "Log feeds, sleeps and nappies as they happen. After a day or so, \(babyName)’s rhythm and nap times show up here."
+    "Tap Left or Right below to start a feed, or Wet, Dirty or Both after a nappy change. After a day or so, \(babyName)’s rhythm and nap times show up here."
   }
 
   public static let targetsFootnote = "Rings fill towards a typical day at this age."
