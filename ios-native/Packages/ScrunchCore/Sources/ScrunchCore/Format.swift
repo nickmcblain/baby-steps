@@ -12,15 +12,19 @@ public enum Format {
 
   public static func age(dateOfBirth: EpochMs, now: EpochMs) -> String {
     let days = Int(max(0, ((now - dateOfBirth) / dayMs).rounded(.down)))
-    if days < 14 { return String(localized: "\(days) days", bundle: .module) }
+    if days < 14 { return counted("^[\(days) day](inflect: true)") }
     let weeks = days / 7
-    if weeks < 13 { return String(localized: "\(weeks) weeks", bundle: .module) }
+    if weeks < 13 { return counted("^[\(weeks) week](inflect: true)") }
     let months = Int((Double(days) / 30.437).rounded(.down))
-    if months < 24 { return String(localized: "\(months) months", bundle: .module) }
+    if months < 24 { return counted("^[\(months) month](inflect: true)") }
     let years = months / 12
     let rem = months % 12
-    if rem == 0 { return String(localized: "\(years) years", bundle: .module) }
+    if rem == 0 { return counted("^[\(years) year](inflect: true)") }
     return String(localized: "\(years)y \(rem)mo", bundle: .module)
+  }
+
+  private static func counted(_ value: String.LocalizationValue) -> String {
+    String(AttributedString(localized: value, bundle: .module).characters)
   }
 
   /// "3 Jan 2026" (en-GB). DOB is stored as UTC midnight, so format in UTC.
