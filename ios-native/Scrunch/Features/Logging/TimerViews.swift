@@ -42,15 +42,29 @@ private struct ClockText: View {
 
 private struct TimerFooter: View {
   let doneLabel: String
-  let canFinish: Bool
+  let session: TimerSession?
   let showReset: Bool
   let onDone: () async -> Void
   let onSkip: () async -> Void
   let onReset: () async -> Void
 
   var body: some View {
+    // Done appears once something has been timed, so re-check while the clock runs.
+    if let session, session.isRunning {
+      SwiftUI.TimelineView(.periodic(from: .now, by: 1)) { context in
+        content(canFinish: session.canFinish(now: context.date.epochMs))
+      }
+    } else {
+      content(canFinish: session?.canFinish(now: Date().epochMs) ?? false)
+    }
+  }
+
+  private func content(canFinish: Bool) -> some View {
     VStack(spacing: 12) {
-      PrimaryButton(label: doneLabel, disabled: !canFinish) { await onDone() }
+      if canFinish {
+        PrimaryButton(label: doneLabel) { await onDone() }
+          .transition(.opacity.combined(with: .move(edge: .bottom)))
+      }
       Button { Task { await onSkip() } } label: {
         Text("Skip to manual entry").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8)
       }
@@ -62,6 +76,7 @@ private struct TimerFooter: View {
       }
     }
     .padding(.top, 8)
+    .animation(.easeOut(duration: 0.2), value: canFinish)
   }
 }
 
@@ -105,8 +120,8 @@ struct DurationTimerView: View {
     ScreenScaffold {
       ScreenTitle(isSleep ? "Sleep timer" : "Tummy time")
       Text(isSleep
-        ? "Start when they nod off. Keeps timing on the Lock Screen / Dynamic Island while the app is away."
-        : "Start when they go on their tummy. Keeps timing on the Lock Screen / Dynamic Island while the app is away.")
+        ? "Start when they nod off. Keeps running on your Lock Screen if you leave the app."
+        : "Start when they go on their tummy. Keeps running on your Lock Screen if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
       Button { Task { await toggle() } } label: {
@@ -131,7 +146,7 @@ struct DurationTimerView: View {
 
       TimerFooter(
         doneLabel: "Done — confirm details",
-        canFinish: session?.canFinish(now: Date().epochMs) ?? false,
+        session: session,
         showReset: elapsed > 0 && !running,
         onDone: finish,
         onSkip: skip,
@@ -157,7 +172,7 @@ struct DurationTimerView: View {
     if session.isRunning, let error {
       liveError = isSleep
         ? error
-        : "Could not start Dynamic Island / Lock Screen timer."
+        : "Couldn’t start the Lock Screen timer."
     }
   }
 
@@ -219,8 +234,8 @@ struct FeedTimerView: View {
     let rightMs = session?.sideElapsed(.right, now: now) ?? 0
 
     ScreenScaffold {
-      ScreenTitle(isPump ? "Pump" : "Timer")
-      Text("Time one side at a time. Island keeps the active side running if you leave the app.")
+      ScreenTitle(isPump ? "Pump timer" : "Feed timer")
+      Text("Time one side at a time. Keeps running on your Lock Screen if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
       HStack(spacing: 12) {
@@ -232,7 +247,7 @@ struct FeedTimerView: View {
 
       TimerFooter(
         doneLabel: isPump ? "Done — add amount" : "Done — fill in details",
-        canFinish: session?.canFinish(now: now) ?? false,
+        session: session,
         showReset: (leftMs > 0 || rightMs > 0) && session?.activeSide == nil,
         onDone: finish,
         onSkip: skip,
@@ -254,9 +269,8 @@ struct FeedTimerView: View {
     let running = session?.activeSide == side && session?.isRunning == true
     return Button { Task { await tap(side) } } label: {
       VStack(spacing: 8) {
-        Text(label.uppercased())
-          .font(.app(.bold, 13))
-          .tracking(0.6)
+        Text(label)
+          .font(.app(.bold, 15))
           .foregroundStyle(running ? .white.opacity(0.85) : C.muted)
         PlayPauseIcon(running: running, tint: C.teal)
         ClockText(session: session, value: { $0.sideElapsed(side, now: $1) }, font: .app(.displayBold, 36), color: running ? .white : C.ink)
@@ -280,7 +294,7 @@ struct FeedTimerView: View {
   private func push(_ session: TimerSession) async {
     let error = await timers.update(session)
     if session.isRunning, let error {
-      liveError = isPump ? "Could not start Dynamic Island / Lock Screen timer." : error
+      liveError = isPump ? "Couldn’t start the Lock Screen timer." : error
     }
   }
 

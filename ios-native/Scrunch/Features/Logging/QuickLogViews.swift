@@ -32,7 +32,7 @@ struct NappyView: View {
         FieldLabel("Poo size")
         sizeRow($poo)
       }
-      FormField(label: "Note", text: $note, placeholder: potty ? "Sat on their own" : "Seedy mustard")
+      FormField(label: "Note", text: $note, placeholder: potty ? "e.g. Sat on their own" : "e.g. Seedy mustard")
       PrimaryButton(label: potty ? "Save potty" : "Save nappy") { await save() }
     }
     .formAlert($alert)
@@ -81,8 +81,8 @@ struct MedicineView: View {
     ScreenScaffold {
       ScreenTitle("Medicine")
       LoggedAtField(value: $loggedAt)
-      FormField(label: "Name", text: $name, placeholder: "Calpol")
-      FormField(label: "Dose", text: $dose, placeholder: "2.5 ml")
+      FormField(label: "Name", text: $name, placeholder: "e.g. Calpol")
+      FormField(label: "Dose", text: $dose, placeholder: "e.g. 2.5 ml")
       FieldLabel("Remind me")
       HStack(spacing: 8) {
         ForEach(ReminderPlans.medicineReminderHours.compactMap { $0 }, id: \.self) { hours in
@@ -142,23 +142,23 @@ struct ActivityLogView: View {
     ScreenScaffold {
       ScreenTitle("Activity")
       LoggedAtField(value: $loggedAt)
-      SectionLabel("Type")
+      FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
           Pill(label: item, selected: preset == item, tint: C.purpleSoft, ink: C.purple) { preset = item }
         }
       }
       if preset == "Other" {
-        FormField(label: "Title", text: $customTitle, placeholder: "Swimming")
+        FormField(label: "Title", text: $customTitle, placeholder: "e.g. Swimming")
       }
-      SectionLabel("Duration")
+      FieldLabel("Duration")
       WrapLayout {
         ForEach(Self.quick, id: \.self) { m in
           Pill(label: "\(m)m", selected: Double(minutes) == Double(m), tint: C.purpleSoft, ink: C.purple) { minutes = String(m) }
         }
       }
       FormField(label: "Minutes", text: $minutes, placeholder: "Optional", keyboard: .numberPad)
-      FormField(label: "Note", text: $note, placeholder: "Loved the water")
+      FormField(label: "Note", text: $note, placeholder: "e.g. Loved the water")
       PrimaryButton(label: "Save activity") { await save() }
     }
     .formAlert($alert)
@@ -207,14 +207,14 @@ struct CustomEventView: View {
       FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
-          Pill(label: item, selected: preset == item, tint: C.roseSoft, ink: C.rose) { preset = item }
+          Pill(label: item, selected: preset == item) { preset = item }
         }
       }
       if preset == "Other" {
-        FormField(label: "Title", text: $customTitle, placeholder: "Hearing test")
+        FormField(label: "Title", text: $customTitle, placeholder: "e.g. Hearing test")
       }
       LoggedAtField(value: $loggedAt, label: "When", allowFuture: true)
-      FormField(label: "Note", text: $note, placeholder: "Bring red book")
+      FormField(label: "Note", text: $note, placeholder: "e.g. Bring red book")
       PrimaryButton(label: "Save event") { await save() }
     }
     .formAlert($alert)

@@ -59,7 +59,7 @@ struct AskView: View {
             Color.clear.frame(height: 1).id("bottom")
           }
           .padding(.horizontal, 20)
-          .padding(.top, 64)
+          .padding(.top, 8)
           .padding(.bottom, 12)
         }
         .defaultScrollAnchor(.bottom)
@@ -68,17 +68,8 @@ struct AskView: View {
         .onChange(of: sending) { scrollToEnd(proxy) }
         .onChange(of: showPendingUser) { scrollToEnd(proxy) }
       }
+      .safeAreaInset(edge: .top, spacing: 0) { header }
       .safeAreaInset(edge: .bottom) { composer }
-
-      HStack {
-        CircleIconButton(systemImage: "chevron.left", label: "Back") { dismiss() }
-        Spacer()
-        CircleIconButton(systemImage: "plus", label: "New chat") { Task { await startNewChat() } }
-        CircleIconButton(systemImage: "list.bullet", label: "Past chats") { router.push(babyId, .askHistory) }
-          .padding(.leading, 8)
-      }
-      .padding(.horizontal, 16)
-      .padding(.top, 4)
     }
     .toolbar(.hidden, for: .navigationBar)
     .formAlert($alert)
@@ -126,6 +117,24 @@ struct AskView: View {
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
+  private var header: some View {
+    HStack(spacing: 8) {
+      CircleIconButton(systemImage: "chevron.left", label: "Back") { dismiss() }
+      Text("Ask")
+        .font(.app(.displayBold, 22, relativeTo: .title2))
+        .foregroundStyle(C.ink)
+        .padding(.leading, 4)
+        .accessibilityAddTraits(.isHeader)
+      Spacer()
+      CircleIconButton(systemImage: "plus", label: "New chat") { Task { await startNewChat() } }
+      CircleIconButton(systemImage: "list.bullet", label: "Past chats") { router.push(babyId, .askHistory) }
+    }
+    .padding(.horizontal, 16)
+    .padding(.top, 4)
+    .padding(.bottom, 8)
+    .background(C.bg)
+  }
+
   private var composer: some View {
     VStack(alignment: .leading, spacing: 8) {
       Text(AskSafety.disclaimer)
@@ -168,21 +177,18 @@ struct AskView: View {
     if message.role == .user {
       userBubble(message.content)
     } else {
-      VStack(alignment: .leading, spacing: 6) {
-        MarkdownText(text: message.content)
-        VStack(alignment: .leading, spacing: 2) {
-          Text(AskSafety.sourcesHeading).font(.app(.bold, 12)).foregroundStyle(C.ink)
-          ForEach(AskSafety.sourceLines(message.citations), id: \.self) { citation in
-            if let url = citation.url.flatMap(URL.init(string:)) {
-              Link("· \(citation.title)", destination: url)
-                .font(.app(.medium, 12))
-                .foregroundStyle(C.tealDark)
-            } else {
-              Text("· \(citation.title)").font(.app(.medium, 12)).foregroundStyle(C.muted)
-            }
+      let answer = AskAnswer.split(message.content)
+      let sources = AskSafety.sourceLines(AskAnswer.merge(answer.sources, message.citations))
+      VStack(alignment: .leading, spacing: 10) {
+        MarkdownText(text: answer.body)
+        VStack(alignment: .leading, spacing: 6) {
+          Text(AskSafety.sourcesHeading).font(.app(.bold, 13)).foregroundStyle(C.muted)
+          ForEach(sources, id: \.self) { source in
+            sourceRow(source)
           }
         }
-        .padding(.top, 4)
+        .padding(.top, 10)
+        .overlay(alignment: .top) { Rectangle().fill(C.line).frame(height: 1) }
         Text(AskSafety.helpLine)
           .font(.app(.bold, 12))
           .foregroundStyle(C.ink)
@@ -197,6 +203,25 @@ struct AskView: View {
       .cardShadow()
       .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in width * 0.92 }
       .frame(maxWidth: .infinity, alignment: .leading)
+    }
+  }
+
+  @ViewBuilder
+  private func sourceRow(_ source: Citation) -> some View {
+    let label = HStack(alignment: .firstTextBaseline, spacing: 6) {
+      Image(systemName: source.url == nil ? "book.closed.fill" : "link")
+        .font(.system(size: 11, weight: .semibold))
+        .accessibilityHidden(true)
+      Text(source.title)
+        .font(.app(.medium, 13))
+        .multilineTextAlignment(.leading)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    if let url = source.url.flatMap(URL.init(string:)) {
+      Link(destination: url) { label.foregroundStyle(C.tealDark) }
+        .accessibilityHint("Opens in Safari")
+    } else {
+      label.foregroundStyle(C.muted)
     }
   }
 
@@ -299,8 +324,16 @@ struct AskHistoryView: View {
     let now = Date().epochMs
     ScreenScaffold {
       ScreenTitle("Chats")
-      if (threads.value ?? []).isEmpty {
-        Text("No chats yet — tap + on Ask to start one.").font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4)
+      if threads.value == nil {
+        LoadingView().frame(minHeight: 200)
+      } else if threads.value?.isEmpty == true {
+        EmptyState(
+          symbol: "bubble.left.and.text.bubble.right.fill",
+          title: "No chats yet",
+          message: "Ask about feeding, sleep or anything else. Answers draw on NHS and Lullaby Trust guidance.",
+          actionLabel: "Ask a question",
+          action: { router.replaceTop(babyId, .ask(question: nil)) }
+        )
       } else {
         VStack(spacing: 10) {
           ForEach(threads.value ?? []) { thread in

@@ -9,6 +9,7 @@ struct AddLogSheet: View {
   @Environment(ConvexService.self) private var convex
   @State private var voice = VoiceLogRecorder()
   @Environment(UndoCenter.self) private var undo
+  @State private var baby = Live<Baby>()
 
   private struct Tile: Identifiable {
     let screen: BabyScreen
@@ -31,7 +32,7 @@ struct AddLogSheet: View {
     Tile(screen: .medicine, label: "Medicine", tint: C.amber, symbol: "pills.fill"),
     Tile(screen: .potty, label: "Potty", tint: C.peach, symbol: "toilet.fill"),
     Tile(screen: .activity, label: "Activity", tint: C.purple, symbol: "figure.play"),
-    Tile(screen: .customEvent, label: "Note", tint: C.rose, symbol: "calendar.badge.plus"),
+    Tile(screen: .customEvent, label: "Event", tint: C.rose, symbol: "calendar.badge.plus"),
     Tile(screen: .clothing, label: "Clothing", tint: C.amber, symbol: "tshirt.fill"),
     Tile(screen: .ask(question: nil), label: "Ask", tint: C.teal, symbol: "bubble.left.and.text.bubble.right.fill"),
   ]
@@ -41,6 +42,12 @@ struct AddLogSheet: View {
 
   /// Idle Speak well: darker than ink-on-light, still fine for a white glyph.
   private let speakWell = Color(hex: 0x3E4654)
+
+  /// Potty waits until the baby is old enough (and stays hidden until we know their age).
+  private var visibleMoreTiles: [Tile] {
+    let showsPotty = baby.value.map { LogTypes.showsPotty(dateOfBirth: $0.dateOfBirth, now: Date().epochMs) } ?? false
+    return moreTiles.filter { $0.screen != .potty || showsPotty }
+  }
 
   var body: some View {
     ScrollView {
@@ -62,7 +69,7 @@ struct AddLogSheet: View {
           .buttonStyle(PressScale())
           .disabled(voice.busy)
           .accessibilityLabel(voice.recording ? "Stop and send" : "Speak a log or question")
-          ForEach(moreTiles) { tileButton($0) }
+          ForEach(visibleMoreTiles) { tileButton($0) }
         }
         if let status = voice.status {
           Text(status)
@@ -74,6 +81,10 @@ struct AddLogSheet: View {
       .padding(.horizontal, 16)
       .padding(.top, 24)
       .padding(.bottom, 16)
+    }
+    .task(id: babyId) {
+      guard let babyId else { return }
+      await baby.bind(API.babies.get(babyId), convex)
     }
     .onDisappear { voice.cancel() }
     .alert(item: $voice.alert) { alert in
