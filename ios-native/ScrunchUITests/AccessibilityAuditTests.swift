@@ -2,7 +2,7 @@ import XCTest
 
 /// Runs Xcode's accessibility audit on the main screens, reached through the DEBUG
 /// `-debugURL` launch argument. Needs a simulator that is already signed in with at
-/// least one baby; otherwise each screen is skipped rather than failed.
+/// least one baby; otherwise the whole test is skipped rather than failed.
 @MainActor
 final class AccessibilityAuditTests: XCTestCase {
   private struct Screen {
@@ -45,18 +45,19 @@ final class AccessibilityAuditTests: XCTestCase {
   }
 
   private func auditAll(textSize: String?) throws {
-    var audited = 0
-    for screen in Self.screens {
+    for (index, screen) in Self.screens.enumerated() {
       try XCTContext.runActivity(named: "Audit \(screen.path)") { _ in
-        guard let app = launch(screen, textSize: textSize) else { return }
-        audited += 1
+        guard let app = launch(screen, textSize: textSize) else {
+          if index == 0 {
+            throw XCTSkip("Home did not load: sign in on this simulator and add a baby first")
+          }
+          XCTFail("\(screen.path) never showed \"\(screen.ready)\"")
+          return
+        }
         try app.performAccessibilityAudit(for: Self.auditTypes) { issue in
           Self.isKnownSystemIssue(issue)
         }
       }
-    }
-    if audited == 0 {
-      throw XCTSkip("No screen loaded: sign in on this simulator and add a baby first")
     }
   }
 
@@ -68,10 +69,7 @@ final class AccessibilityAuditTests: XCTestCase {
     }
     app.launch()
     let ready = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", screen.ready)).firstMatch
-    guard ready.waitForExistence(timeout: 30) else {
-      XCTContext.runActivity(named: "Skipped \(screen.path): not signed in or no baby") { _ in }
-      return nil
-    }
+    guard ready.waitForExistence(timeout: 30) else { return nil }
     // Let reactive queries fill the screen before auditing.
     Thread.sleep(forTimeInterval: 2)
     return app
