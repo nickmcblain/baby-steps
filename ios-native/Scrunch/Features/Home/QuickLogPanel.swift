@@ -96,6 +96,12 @@ struct QuickLogPanel: View {
 
   private var nappyRow: some View {
     HStack(spacing: 8) {
+      Text("Nappy")
+        .font(.app(.bold, 13))
+        .foregroundStyle(C.muted)
+        .fixedSize()
+        .padding(.horizontal, 4)
+        .accessibilityHidden(true)
       ForEach(QuickLog.Nappy.allCases, id: \.self) { nappy in
         Button { Task { await log(nappy) } } label: {
           ZStack {
@@ -147,7 +153,7 @@ struct QuickLogPanel: View {
       shift: { [convex] minutes in
         let movedAt = QuickLog.shifted(saved.loggedAt, minutes: minutes)
         guard let movedId = try? await convex.mutation(nappyCall(nappy, at: movedAt)) else { return nil }
-        try? await convex.mutation(API.events.remove(saved.id))
+        _ = try? await convex.mutation(API.events.remove(saved.id))
         saved.id = movedId
         saved.loggedAt = movedAt
         return QuickLog.savedCopy(nappy.loggedCopy, loggedAt: movedAt)
@@ -155,7 +161,6 @@ struct QuickLogPanel: View {
     ))
   }
 
-  @MainActor
   private final class SavedLog {
     var id: EventID
     var loggedAt: EpochMs
