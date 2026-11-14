@@ -14,7 +14,16 @@ struct KidsView: View {
       HStack {
         ScreenTitle("Kids")
         Spacer()
-        CircleIconButton(systemImage: "figure.and.child.holdinghands", label: "Join a partner") { joinOpen = true }
+        Button { joinOpen = true } label: {
+          Text("Join with a code")
+            .font(.app(.bold, 13))
+            .foregroundStyle(C.ink)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 44)
+            .background(C.card, in: Capsule())
+            .cardShadow()
+        }
+        .buttonStyle(PressScale())
         CircleIconButton(systemImage: "plus", label: "Add baby") { router.path.append(.newBaby) }
           .padding(.leading, 8)
       }
@@ -25,26 +34,42 @@ struct KidsView: View {
         let now = Date().epochMs
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
           ForEach(babies.value ?? []) { baby in
-            Button { open(baby.id) } label: {
-              VStack(alignment: .leading, spacing: 8) {
-                Text(baby.name.prefix(1).uppercased())
-                  .font(.app(.displayBold, 20))
-                  .foregroundStyle(C.purple)
-                  .frame(width: 44, height: 44)
-                  .background(C.purpleSoft, in: Circle())
-                Text(baby.name).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(1)
-                Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
-                  .font(.app(.body, 13)).foregroundStyle(C.muted)
-                Text("Code \(baby.inviteCode)")
-                  .font(.app(.medium, 12)).foregroundStyle(C.purple).padding(.top, 2)
+            VStack(alignment: .leading, spacing: 0) {
+              Button { open(baby.id) } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                  Text(baby.name.prefix(1).uppercased())
+                    .font(.app(.displayBold, 20))
+                    .foregroundStyle(C.purple)
+                    .frame(width: 44, height: 44)
+                    .background(C.purpleSoft, in: Circle())
+                  Text(baby.name).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(1)
+                  Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
+                    .font(.app(.body, 13)).foregroundStyle(C.muted)
+                  Text("Share code \(baby.inviteCode)")
+                    .font(.app(.medium, 12)).foregroundStyle(C.purple)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .contentShape(Rectangle())
               }
-              .padding(16)
-              .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
-              .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
-              .cardShadow()
+              .buttonStyle(PressScale())
+              ShareLink(item: PartnerInvite.message(babyName: baby.name, code: baby.inviteCode)) {
+                Label("Invite partner", systemImage: "person.badge.plus")
+                  .font(.app(.bold, 13))
+                  .foregroundStyle(C.purple)
+                  .frame(maxWidth: .infinity, minHeight: 44)
+                  .background(C.purpleSoft, in: Capsule())
+              }
+              .padding([.horizontal, .bottom], 12)
+              .accessibilityHint("Shares code \(baby.inviteCode) with a friendly message")
             }
-            .buttonStyle(PressScale())
+            .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+            .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+            .cardShadow()
           }
+        }
+        if !(babies.value ?? []).isEmpty {
+          Text(PartnerInvite.howTo).font(.app(.body, 13)).foregroundStyle(C.muted)
         }
       }
     }
@@ -54,7 +79,7 @@ struct KidsView: View {
         joinOpen = false
         open(id)
       }
-      .presentationDetents([.height(260)])
+      .presentationDetents([.height(300)])
       .presentationDragIndicator(.visible)
       .presentationCornerRadius(32)
       .presentationBackground(C.bg)
@@ -77,8 +102,10 @@ struct JoinPartnerSheet: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text("Join a partner").font(.app(.bold, 22)).foregroundStyle(C.ink)
-      Text("Enter their 6-character invite code.").font(.app(.body, 15)).foregroundStyle(C.muted).padding(.bottom, 8)
+      Text("Join with a code").font(.app(.bold, 22)).foregroundStyle(C.ink)
+      Text("Enter the 6-character code your partner sent. You'll both see the same feeds, sleeps and nappies.")
+        .font(.app(.body, 15)).foregroundStyle(C.muted).padding(.bottom, 8)
+        .fixedSize(horizontal: false, vertical: true)
       InviteCodeField(code: $code, editable: !busy)
         .onChange(of: code) { _, next in
           error = nil

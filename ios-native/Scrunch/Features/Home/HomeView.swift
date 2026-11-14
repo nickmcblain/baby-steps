@@ -157,6 +157,7 @@ struct HomeView: View {
         vital("Height", baby.heightCm.map { Format.height($0) } ?? "—") { router.push(baby.id, .height) }
         vital("Weight", Format.weight(baby.weightGrams, unit: .lb)) { router.push(baby.id, .weight) }
       }
+      insightCard(baby)
     }
 
     WeekStrip(selectedDayStart: dayStart) { dayStart = $0 }
@@ -185,6 +186,31 @@ struct HomeView: View {
         last: HomeCopy.lastTummyStrip(dash.value?.lastTummy, now: now),
         color: C.sky, track: C.skySoft, screen: .tummyPatterns
       )
+    }
+  }
+
+  private func insightCard(_ baby: Baby) -> some View {
+    let isToday = dayStart == WeekGrid.startOfLocalDay(now)
+    let todayEvents = isToday ? summary.value?.events ?? [] : []
+    let lastSleep = dash.value?.lastSleep
+    let input = InsightInput(
+      baby: baby,
+      now: now,
+      recentFeeds: todayEvents + [dash.value?.lastFeed].compactMap { $0 },
+      lastNappy: dash.value?.lastNappy,
+      lastSleepEndMs: lastSleep.map { $0.loggedAt + ($0.durationMinutes ?? 0) * minuteMs },
+      asleep: asleep
+    )
+    // The quick-log panel already shows the last and next breast side.
+    return InsightCard(insights: Insights.all(input).filter { $0.kind != .breastSide }) { kind in
+      switch kind {
+      case .nextFeed, .breastSide: router.push(baby.id, .feedPatterns)
+      case .lastNappy: router.push(baby.id, .nappyPatterns)
+      case .awake: router.push(baby.id, .sleepPatterns)
+      case .tonightTog: router.push(baby.id, .clothing)
+      }
+    } onAsk: {
+      router.push(baby.id, .ask())
     }
   }
 

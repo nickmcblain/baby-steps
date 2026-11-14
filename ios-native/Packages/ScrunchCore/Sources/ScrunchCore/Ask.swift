@@ -44,8 +44,8 @@ public enum AskSafety {
   public static let starterQuestions = [
     "What should my baby wear to sleep tonight?",
     "How many wet nappies should I expect?",
-    "How do I know if my baby is getting enough milk?",
-    "When should I call 111 about a temperature?",
+    "How often do newborns usually feed?",
+    "What does safer sleep look like?",
   ]
 
   /// Source lines for a reply. Never empty: with no citations it says so plainly.
