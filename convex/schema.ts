@@ -13,6 +13,8 @@ import {
   sideValidator,
   sizeValidator,
 } from "./lib/validators";
+import { subscriptionStatusValidator } from "./lib/appStore";
+import { logTypeValidator } from "./lib/allowance";
 
 export default defineSchema({
   users: defineTable({
@@ -100,4 +102,30 @@ export default defineSchema({
   })
     .index("by_baby", ["babyId"])
     .index("by_baby_and_key", ["babyId", "key"]),
+
+  /** One row per user. Written only from Apple-signed data. */
+  subscriptions: defineTable({
+    userId: v.id("users"),
+    /** Passed to StoreKit as appAccountToken so Apple's notifications map back to this user. */
+    appAccountToken: v.string(),
+    status: subscriptionStatusValidator,
+    productId: v.optional(v.string()),
+    originalTransactionId: v.optional(v.string()),
+    expiresAt: v.optional(v.number()),
+    willAutoRenew: v.optional(v.boolean()),
+    familyShared: v.optional(v.boolean()),
+    environment: v.optional(v.string()),
+    signedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_app_account_token", ["appAccountToken"])
+    .index("by_original_transaction_id", ["originalTransactionId"]),
+
+  /** Entries ever created per baby and log type. Deleting a log doesn't give one back. */
+  logAllowances: defineTable({
+    babyId: v.id("babies"),
+    type: logTypeValidator,
+    used: v.number(),
+  }).index("by_baby_and_type", ["babyId", "type"]),
 });

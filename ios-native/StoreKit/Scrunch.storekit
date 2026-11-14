@@ -1,0 +1,97 @@
+{
+  "identifier" : "5C1A3E2B",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_developerTeamID" : "8W9QBY4PYJ",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_GB",
+    "_storefront" : "GBR",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21800001",
+      "localizations" : [
+        {
+          "description" : "Ask and patterns for Scrunch",
+          "displayName" : "Scrunch Plus",
+          "locale" : "en_GB"
+        }
+      ],
+      "name" : "Scrunch Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "6780000001",
+          "introductoryOffer" : {
+            "internalID" : "6780000011",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P2W"
+          },
+          "localizations" : [
+            {
+              "description" : "Ask and 7, 14 and 30-day patterns. Logging stays free.",
+              "displayName" : "Scrunch Plus (monthly)",
+              "locale" : "en_GB"
+            }
+          ],
+          "productID" : "com.nickmcblain.babysteps.plus.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Plus Monthly",
+          "subscriptionGroupID" : "21800001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "24.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "6780000002",
+          "localizations" : [
+            {
+              "description" : "Ask and 7, 14 and 30-day patterns. Logging stays free.",
+              "displayName" : "Scrunch Plus (yearly)",
+              "locale" : "en_GB"
+            }
+          ],
+          "productID" : "com.nickmcblain.babysteps.plus.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Plus Annual",
+          "subscriptionGroupID" : "21800001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
