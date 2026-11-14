@@ -26,10 +26,7 @@ struct DescribeLogIntent: AppIntent {
       """)
     let parsed = try await session.respond(to: text, generating: DescribedLog.self).content
     guard let log = parsed.quickLog else { throw DescribeLogError.notUnderstood }
-    try await requestConfirmation(
-      result: .result(dialog: "Log \(log.summary.lowercasedFirst) for \(ref.name)?"),
-      confirmationActionName: .add
-    )
+    try await requestConfirmation(actionName: .add, dialog: "Log \(log.summary.lowercasedFirst) for \(ref.name)?")
     let loggedAt = LoggedAt.snapToMinute(Date().epochMs - Double(max(0, parsed.minutesAgo ?? 0)) * minuteMs)
     await QuickLogStore.record(PendingLog(babyId: ref.id, loggedAt: loggedAt, log: log))
     return .result(dialog: "Logged \(log.summary.lowercasedFirst) for \(ref.name).")
