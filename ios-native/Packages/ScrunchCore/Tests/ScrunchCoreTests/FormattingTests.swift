@@ -104,8 +104,8 @@ final class WeekGridTests: XCTestCase {
     let labels = WeekGrid.weekDayLabels(at(2026, 7, 3), calendar: london)
     XCTAssertEqual(labels.map(\.label), ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
     XCTAssertEqual(labels.map(\.dateNum), [3, 4, 5, 6, 7, 8, 9])
-    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 7, 3), calendar: london), "3–9 Aug")
-    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 6, 27), calendar: london), "27 Jul – 2 Aug")
+    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 7, 3), calendar: london), "3\u{2009}–\u{2009}9 Aug")
+    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 6, 27), calendar: london), "27 Jul\u{2009}–\u{2009}2 Aug")
   }
 
   func testDSTWeekHasSevenDistinctMidnights() {

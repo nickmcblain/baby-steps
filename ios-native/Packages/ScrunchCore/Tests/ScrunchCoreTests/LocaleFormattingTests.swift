@@ -90,7 +90,7 @@ final class LocaleFormattingTests: XCTestCase {
 
   func testWeekRange() {
     XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 7, 3), calendar: calendar("en_US")), "Aug 3\u{2009}–\u{2009}9")
-    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 7, 3), calendar: calendar("en_AU")), "3–9 Aug")
+    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 7, 3), calendar: calendar("en_AU")), "3\u{2009}–\u{2009}9 Aug")
   }
 
   func testDurationsAreTheSameInEveryEnglish() {

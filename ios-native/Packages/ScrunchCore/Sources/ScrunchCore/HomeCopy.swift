@@ -9,9 +9,9 @@ public enum HomeCopy {
     let total = Int((ms / 60_000).rounded(.up))
     let hours = total / 60
     let minutes = total % 60
-    if hours == 0 { return String(localized: "\\(minutes)m", bundle: .module) }
-    if minutes == 0 { return String(localized: "\\(hours)h", bundle: .module) }
-    return String(localized: "\\(hours)h \\(minutes)m", bundle: .module)
+    if hours == 0 { return String(localized: "\(minutes)m", bundle: .module) }
+    if minutes == 0 { return String(localized: "\(hours)h", bundle: .module) }
+    return String(localized: "\(hours)h \(minutes)m", bundle: .module)
   }
 
   /// "13.4h", "12h"
