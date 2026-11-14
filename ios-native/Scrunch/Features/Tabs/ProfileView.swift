@@ -43,7 +43,7 @@ struct ProfileView: View {
 
       SettingsSection(title: "Partner sharing") {
         ForEach(babies.value ?? []) { baby in
-          ShareLink(item: "Join \(baby.name) on Scrunch with invite code \(baby.inviteCode).") {
+          ShareLink(item: PartnerInvite.message(babyName: baby.name, code: baby.inviteCode)) {
             SettingsRowLabel(title: "Invite to \(baby.name)", value: baby.inviteCode, systemImage: "person.2.fill", tint: C.purple, accessory: "square.and.arrow.up")
           }
           .buttonStyle(PressScale())
