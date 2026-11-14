@@ -118,15 +118,10 @@ struct DayRhythmBar: View {
       .accessibilityValue(rhythm.caption)
       .accessibilityHint("Opens sleep patterns")
       .accessibilityInputLabels(["Day rhythm", "Usual day", "Typical day"])
-      HStack {
-        ForEach(ticks, id: \.self) { tick in
-          Text(tick)
-            .font(.app(.medium, 11, relativeTo: .caption2))
-            .foregroundStyle(C.muted)
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-          if tick != ticks.last { Spacer(minLength: 4) }
-        }
+      ViewThatFits(in: .horizontal) {
+        tickRow(ticks)
+        tickRow(ticks.enumerated().filter { $0.offset.isMultiple(of: 2) }.map(\.element))
+        tickRow([ticks[0]])
       }
       .accessibilityHidden(true)
     }
@@ -134,6 +129,18 @@ struct DayRhythmBar: View {
     .background {
       if !embedded {
         RoundedRectangle(cornerRadius: Radius.tile, style: .continuous).fill(C.card).cardShadow()
+      }
+    }
+  }
+
+  private func tickRow(_ labels: [String]) -> some View {
+    HStack {
+      ForEach(labels, id: \.self) { tick in
+        Text(tick)
+          .font(.app(.medium, 11, relativeTo: .caption2))
+          .foregroundStyle(C.muted)
+          .fixedSize()
+        if tick != labels.last { Spacer(minLength: 4) }
       }
     }
   }
@@ -147,19 +154,16 @@ struct DayRhythmBar: View {
   }
 }
 
-/// Hairline-topped one-line footer used under the home cards.
+/// Hairline-topped footer used under the home cards.
 struct LastStrip: View {
   let text: String
   var inset: CGFloat = 12
-
-  @Environment(\.dynamicTypeSize) private var typeSize
 
   var body: some View {
     Text(text)
       .font(.app(.medium, 11, relativeTo: .caption2))
       .foregroundStyle(C.muted)
-      .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
-      .fixedSize(horizontal: false, vertical: typeSize.isAccessibilitySize)
+      .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, inset)
       .padding(.vertical, 8)
       .frame(maxWidth: .infinity, alignment: .leading)

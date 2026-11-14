@@ -115,7 +115,7 @@ struct BabyHomeView: View {
     Button(action: action) {
       VStack(alignment: .leading, spacing: 4) {
         Text(label).font(.app(.medium, 13)).foregroundStyle(C.muted)
-        Text(value).font(.app(.displayBold, 22)).foregroundStyle(C.ink).lineLimit(1).minimumScaleFactor(0.7)
+        Text(value).font(.app(.displayBold, 22)).foregroundStyle(C.ink)
       }
       .padding(16)
       .frame(maxWidth: .infinity, alignment: .leading)

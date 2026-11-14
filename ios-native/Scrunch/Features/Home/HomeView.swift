@@ -258,8 +258,9 @@ struct HomeView: View {
     Button(action: action) {
       VStack(spacing: 2) {
         Text(label).font(.app(.medium, 11, relativeTo: .caption2)).foregroundStyle(C.muted)
-        Text(value).font(.app(.bold, 14)).foregroundStyle(C.ink).lineLimit(1).minimumScaleFactor(0.8)
+        Text(value).font(.app(.bold, 14)).foregroundStyle(C.ink)
       }
+      .multilineTextAlignment(.center)
       .frame(maxWidth: .infinity)
       .padding(10)
       .background(C.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))

@@ -23,12 +23,11 @@ struct ClothingView: View {
 
       VStack(spacing: 18) {
         (Text(Clothing.formatTemp(tempC, fahrenheit: fahrenheit))
-          .font(.app(.displayBold, 56))
+          .font(.app(.displayBold, 56, relativeTo: .largeTitle))
           .foregroundStyle(C.ink)
-          + Text(fahrenheit ? " °F" : " °C").font(.app(.bold, 22)).foregroundStyle(C.muted))
+          + Text(fahrenheit ? " °F" : " °C").font(.app(.bold, 22, relativeTo: .title2)).foregroundStyle(C.muted))
           .tracking(-1)
-          .lineLimit(1)
-          .minimumScaleFactor(0.5)
+          .multilineTextAlignment(.center)
           .numericTextTransition(value: tempC)
           .motionSafeAnimation(.snappy, value: tempC)
           .accessibilityElement(children: .ignore)
