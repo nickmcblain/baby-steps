@@ -1,3 +1,4 @@
+import Accessibility
 import ScrunchCore
 import SwiftUI
 
@@ -47,14 +48,15 @@ struct TimelineView: View {
   @State private var mode: Mode = .list
   @State private var weekStartMs = WeekGrid.startOfWeekMonday(Date().epochMs)
   @State private var week = Live<WeekGridData>()
+  @Environment(\.dynamicTypeSize) private var typeSize
 
   enum Mode { case list, week }
 
   var body: some View {
-    ScreenScaffold(showsBack: showsBack, clearDock: !showsBack, scrolls: mode == .list) {
-      HStack(spacing: 12) {
+    ScreenScaffold(showsBack: showsBack, clearDock: !showsBack, scrolls: mode == .list || typeSize.isAccessibilitySize) {
+      AdaptiveStack(spacing: 12) {
         ScreenTitle("Timeline")
-        Spacer()
+        Spacer(minLength: 0)
         HStack(spacing: 8) {
           modePill("List", .list)
           modePill("Week", .week)
@@ -90,8 +92,12 @@ struct TimelineView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(mode == value ? C.ink : C.card, in: Capsule())
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
     }
     .buttonStyle(PressScale())
+    .accessibilityLabel("\(label) view")
+    .accessibilityInputLabels([label, "\(label) view"])
     .accessibilityAddTraits(mode == value ? .isSelected : [])
   }
 }
@@ -150,6 +156,7 @@ struct EventListView: View {
             .font(.app(.bold, 13))
             .tracking(0.7)
             .foregroundStyle(C.tealDark)
+            .accessibilityLabel(section.label)
             .accessibilityAddTraits(.isHeader)
           VStack(spacing: 0) {
             ForEach(Array(section.items.enumerated()), id: \.element.id) { index, event in
@@ -182,7 +189,10 @@ struct EventListView: View {
   }
 
   private func row(_ event: Event, now: EpochMs, last: Bool) -> some View {
-    HStack(alignment: .top, spacing: 12) {
+    let kind = EventCopy.kindLabel(event, now: now)
+    let time = LoggedAt.format(event.loggedAt).components(separatedBy: " · ").last ?? ""
+    let note = event.note.flatMap { $0.isEmpty ? nil : $0 }
+    return HStack(alignment: .top, spacing: 12) {
       VStack(spacing: 4) {
         Circle().fill(event.kind.ink).frame(width: 12, height: 12).padding(.top, 18)
         if !last {
@@ -190,20 +200,21 @@ struct EventListView: View {
         }
       }
       .frame(width: 18)
+      .accessibilityHidden(true)
 
       VStack(alignment: .leading, spacing: 4) {
-        HStack {
-          Text(EventCopy.kindLabel(event, now: now).uppercased())
+        AdaptiveStack(spacing: 2) {
+          Text(kind.uppercased())
             .font(.app(.bold, 12))
             .tracking(0.6)
             .foregroundStyle(event.kind.ink)
-          Spacer()
-          Text(LoggedAt.format(event.loggedAt).components(separatedBy: " · ").last ?? "")
+          Spacer(minLength: 0)
+          Text(time)
             .font(.app(.medium, 13))
             .foregroundStyle(C.muted)
         }
         Text(EventCopy.title(event)).font(.app(.bold, 17)).foregroundStyle(C.ink)
-        if let note = event.note, !note.isEmpty {
+        if let note {
           Text(note).font(.app(.body, 15)).foregroundStyle(C.ink.opacity(0.75)).padding(.top, 2)
         }
       }
@@ -215,8 +226,8 @@ struct EventListView: View {
       .contentShape(Rectangle())
       .onLongPressGesture(minimumDuration: 0.38) { pendingDelete = event }
       .sensoryFeedback(.impact(weight: .light), trigger: pendingDelete?.id == event.id)
-      .accessibilityElement(children: .combine)
-      .accessibilityHint("Press and hold to delete")
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel("\(kind), \(EventCopy.title(event)), \(time)\(note.map { ". \($0)" } ?? "")")
       .accessibilityAction(named: "Delete") { pendingDelete = event }
     }
     .frame(minHeight: 72)
@@ -259,7 +270,7 @@ private struct DeleteEventSheet: View {
     .padding(.top, 28)
     .sensoryFeedback(.impact(weight: .medium), trigger: deletedTick)
     .interactiveDismissDisabled(deleting)
-    .presentationDetents([.height(330)])
+    .adaptiveDetents([.height(330)])
     .presentationDragIndicator(.visible)
     .presentationCornerRadius(32)
     .presentationBackground(C.bg)
@@ -319,49 +330,82 @@ struct WeekRhythmChart: View {
     }
   }
 
-  private static let legend: [(String, Color, Bool)] = [
-    ("Sleep", C.purple, true), ("Tummy", C.sky, true),
-    ("Feed", C.teal, false), ("Nappy", C.peach, false), ("Weight", C.amber, false),
-    ("Height", C.sky, false), ("Event", C.rose, false), ("Pump", C.tealDark, false),
-    ("Meds", C.amber, false), ("Potty", C.peach, false), ("Play", C.purple, false),
+  /// `nil` kind = a sleep / tummy bar (sleep is drawn wider than tummy).
+  private static let legend: [LegendItem] = [
+    LegendItem(label: "Sleep", color: C.purple, kind: nil, barWidth: 12),
+    LegendItem(label: "Tummy", color: C.sky, kind: nil, barWidth: 6),
+    LegendItem(label: "Feed", color: C.teal, kind: .feed), LegendItem(label: "Nappy", color: C.peach, kind: .nappy),
+    LegendItem(label: "Weight", color: C.amber, kind: .weight), LegendItem(label: "Height", color: C.sky, kind: .height),
+    LegendItem(label: "Event", color: C.rose, kind: .custom), LegendItem(label: "Pump", color: C.tealDark, kind: .pump),
+    LegendItem(label: "Meds", color: C.amber, kind: .medicine), LegendItem(label: "Potty", color: C.peach, kind: .potty),
+    LegendItem(label: "Play", color: C.purple, kind: .activity),
   ]
+
+  @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
 
   var body: some View {
     let days = WeekGrid.weekDayLabels(data.weekStartMs)
     let thisWeek = WeekGrid.startOfWeekMonday(Date().epochMs) == data.weekStartMs
+    let glyphs = differentiateWithoutColor
 
     VStack(spacing: 12) {
       HStack {
         Button(action: onPrevWeek) {
-          Image(systemName: "chevron.left").font(.system(size: 20, weight: .bold)).foregroundStyle(C.ink).padding(8)
+          Image(systemName: "chevron.left").font(.system(size: 20, weight: .bold)).foregroundStyle(C.ink).frame(width: 44, height: 44)
         }
         .accessibilityLabel("Previous week")
+        .accessibilityInputLabels(["Previous week", "Back a week", "Previous"])
         Spacer()
         VStack(spacing: 2) {
           Text(thisWeek ? "This week" : "Week").font(.app(.bold, 17)).foregroundStyle(C.ink)
           Text(WeekGrid.formatWeekRange(data.weekStartMs)).font(.app(.body, 13)).foregroundStyle(C.muted)
         }
+        .multilineTextAlignment(.center)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
         Spacer()
         Button(action: onNextWeek) {
-          Image(systemName: "chevron.right").font(.system(size: 20, weight: .bold)).foregroundStyle(C.ink).padding(8)
+          Image(systemName: "chevron.right").font(.system(size: 20, weight: .bold)).foregroundStyle(C.ink).frame(width: 44, height: 44)
         }
         .accessibilityLabel("Next week")
+        .accessibilityInputLabels(["Next week", "Forward a week", "Next"])
       }
 
-      FlowLegend(items: Self.legend)
+      FlowLegend(items: Self.legend, glyphs: glyphs)
 
       Canvas { context, size in
-        draw(context: context, size: size, days: days)
+        draw(context: context, size: size, days: days, glyphs: glyphs)
       }
+      .dynamicTypeSize(...DynamicTypeSize.xLarge)
       .frame(maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
       .background(C.card)
       .padding(.horizontal, -20)
       .padding(.bottom, -20)
       .accessibilityLabel("Week chart of sleep, tummy time and logged events")
+      .accessibilityChildren {
+        HStack(spacing: 0) {
+          ForEach(days, id: \.dayStartMs) { day in
+            Rectangle()
+              .accessibilityElement()
+              .accessibilityLabel(Text(Date(epochMs: day.dayStartMs), format: .dateTime.weekday(.wide).day().month(.wide)))
+              .accessibilityValue(daySummary(day.dayStartMs))
+          }
+        }
+      }
+      .accessibilityChartDescriptor(WeekChartDescriptor(days: days, data: data, summary: daySummary))
     }
   }
 
-  private func draw(context: GraphicsContext, size: CGSize, days: [WeekDayLabel]) {
+  private func daySummary(_ dayStartMs: EpochMs) -> String {
+    Spoken.weekDay(
+      dayStartMs: dayStartMs,
+      sleeps: data.sleeps.map { ($0.startMs, $0.endMs) },
+      tummies: data.tummies.map { ($0.startMs, $0.endMs) },
+      markers: data.markers.map { ($0.kind, $0.atMs) }
+    )
+  }
+
+  private func draw(context: GraphicsContext, size: CGSize, days: [WeekDayLabel], glyphs: Bool) {
     let pad = Self.pad
     let plotW = max(0, size.width - pad.left - pad.right)
     let plotH = max(0, size.height - pad.top - pad.bottom)
@@ -407,26 +451,84 @@ struct WeekRhythmChart: View {
       let cx = pad.left + Double(dayIndex) * colW + colW / 2 + Self.kindOffset(marker.kind)
       let cy = y(WeekGrid.minutesOfDay(marker.atMs))
       let r = Self.dotRadius
-      context.fill(Path(ellipseIn: CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2)), with: .color(Self.markerColor(marker.kind)))
+      let color = Self.markerColor(marker.kind)
+      if glyphs {
+        context.draw(
+          Text(Image(systemName: marker.kind.symbol)).font(.system(size: 13, weight: .bold)).foregroundStyle(color),
+          at: CGPoint(x: cx, y: cy)
+        )
+      } else {
+        context.fill(Path(ellipseIn: CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2)), with: .color(color))
+      }
     }
   }
 }
 
-/// Wrapping, centred legend row.
+private struct LegendItem {
+  let label: String
+  let color: Color
+  let kind: WeekMarkerKind?
+  var barWidth: CGFloat = 12
+}
+
+/// Wrapping, centred legend row. With `glyphs`, markers show their chart symbol.
 private struct FlowLegend: View {
-  let items: [(String, Color, Bool)]
+  let items: [LegendItem]
+  let glyphs: Bool
 
   var body: some View {
     WrapLayout(spacing: 10, rowSpacing: 6, centered: true) {
-      ForEach(items, id: \.0) { label, color, bar in
+      ForEach(items, id: \.label) { item in
         HStack(spacing: 5) {
-          RoundedRectangle(cornerRadius: bar ? 4 : 6).fill(color).frame(width: bar ? 12 : 11, height: bar ? 12 : 11)
-          Text(label).font(.app(.medium, 12)).foregroundStyle(C.muted)
+          if let kind = item.kind {
+            if glyphs {
+              Image(systemName: kind.symbol).font(.system(size: 11, weight: .bold)).foregroundStyle(item.color)
+            } else {
+              Circle().fill(item.color).frame(width: 11, height: 11)
+            }
+          } else {
+            RoundedRectangle(cornerRadius: 3).fill(item.color).frame(width: item.barWidth, height: 12)
+          }
+          Text(item.label).font(.app(.medium, 12)).foregroundStyle(C.muted)
         }
       }
     }
     .frame(maxWidth: .infinity)
     .accessibilityHidden(true)
+  }
+}
+
+/// Audio graph for the week chart: minutes of sleep and tummy time per day.
+private struct WeekChartDescriptor: AXChartDescriptorRepresentable {
+  let days: [WeekDayLabel]
+  let data: WeekGridData
+  let summary: (EpochMs) -> String
+
+  private func minutes(_ blocks: [WeekSegment], on dayStartMs: EpochMs) -> Double {
+    blocks.flatMap { WeekGrid.splitAcrossLocalDays($0.startMs, $0.endMs) }
+      .filter { $0.dayStartMs == dayStartMs }
+      .reduce(0) { $0 + $1.endMin - $1.startMin }
+  }
+
+  func makeChartDescriptor() -> AXChartDescriptor {
+    let labels = days.map { "\($0.label) \($0.dateNum)" }
+    let sleep = days.map { minutes(data.sleeps, on: $0.dayStartMs) }
+    let tummy = days.map { minutes(data.tummies, on: $0.dayStartMs) }
+    let top = max(60, (sleep + tummy).max() ?? 60)
+    func series(_ name: String, _ values: [Double]) -> AXDataSeriesDescriptor {
+      AXDataSeriesDescriptor(name: name, isContinuous: false, dataPoints: zip(days, values).enumerated().map { index, pair in
+        AXDataPoint(x: labels[index], y: pair.1, additionalValues: [], label: summary(pair.0.dayStartMs))
+      })
+    }
+    let totalSleep = sleep.reduce(0, +)
+    return AXChartDescriptor(
+      title: "Week of \(WeekGrid.formatWeekRange(data.weekStartMs))",
+      summary: "\(Spoken.minutes(totalSleep)) of sleep logged this week, \(data.markers.count) other logs.",
+      xAxis: AXCategoricalDataAxisDescriptor(title: "Day", categoryOrder: labels),
+      yAxis: AXNumericDataAxisDescriptor(title: "Minutes", range: 0...top, gridlinePositions: []) { Spoken.minutes($0) },
+      additionalAxes: [],
+      series: [series("Sleep", sleep), series("Tummy time", tummy)]
+    )
   }
 }
 
@@ -447,8 +549,8 @@ struct WrapLayout: Layout {
     for row in rows(width: bounds.width, subviews: subviews) {
       var x = bounds.minX + (centered ? (bounds.width - row.width) / 2 : 0)
       for index in row.indices {
-        let size = subviews[index].sizeThatFits(.unspecified)
-        subviews[index].place(at: CGPoint(x: x, y: y + (row.height - size.height) / 2), proposal: .unspecified)
+        let size = Self.size(of: subviews[index], width: bounds.width)
+        subviews[index].place(at: CGPoint(x: x, y: y + (row.height - size.height) / 2), proposal: ProposedViewSize(size))
         x += size.width + spacing
       }
       y += row.height + rowSpacing
@@ -457,10 +559,17 @@ struct WrapLayout: Layout {
 
   private struct Row { var indices: [Int] = []; var width: CGFloat = 0; var height: CGFloat = 0 }
 
+  /// Ideal size, but never wider than a row, so large text wraps inside the item instead of overflowing.
+  private static func size(of subview: LayoutSubview, width: CGFloat) -> CGSize {
+    let ideal = subview.sizeThatFits(.unspecified)
+    guard width.isFinite, ideal.width > width else { return ideal }
+    return subview.sizeThatFits(ProposedViewSize(width: width, height: nil))
+  }
+
   private func rows(width: CGFloat, subviews: Subviews) -> [Row] {
     var rows: [Row] = [Row()]
     for (index, subview) in subviews.enumerated() {
-      let size = subview.sizeThatFits(.unspecified)
+      let size = Self.size(of: subview, width: width)
       let extra = rows[rows.count - 1].indices.isEmpty ? size.width : size.width + spacing
       if rows[rows.count - 1].width + extra > width, !rows[rows.count - 1].indices.isEmpty {
         rows.append(Row())

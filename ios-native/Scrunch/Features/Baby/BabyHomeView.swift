@@ -10,6 +10,7 @@ struct BabyHomeView: View {
   @Environment(\.scenePhase) private var scenePhase
   @State private var data = Live<Dashboard>()
   @State private var sheet: LogChoice?
+  @Environment(\.dynamicTypeSize) private var typeSize
 
   enum LogChoice: String, Identifiable {
     case feed, sleep, tummy
@@ -23,11 +24,14 @@ struct BabyHomeView: View {
           Text("Edit")
             .font(.app(.bold, 13))
             .foregroundStyle(C.ink)
-            .frame(width: 44, height: 44)
-            .background(C.card, in: Circle())
+            .lineLimit(1)
+            .padding(.horizontal, 6)
+            .frame(minWidth: 44, minHeight: 44)
+            .background(C.card, in: Capsule())
             .cardShadow()
         }
         .buttonStyle(PressScale())
+        .accessibilityHint("Edit baby details")
       } content: {
         if let data = data.value {
           content(data)
@@ -36,7 +40,7 @@ struct BabyHomeView: View {
         }
       }
 
-      CircleIconButton(systemImage: "bubble.left.and.text.bubble.right.fill", label: "Ask") {
+      CircleIconButton(systemImage: "bubble.left.and.text.bubble.right.fill", label: "Ask", spokenNames: ["Chat", "Question"]) {
         router.push(babyId, .ask(question: nil))
       }
       .padding(.trailing, 16)
@@ -49,7 +53,7 @@ struct BabyHomeView: View {
     }
     .sheet(item: $sheet) { choice in
       choiceSheet(choice)
-        .presentationDetents([.height(choice == .tummy ? 190 : 260)])
+        .adaptiveDetents([.height(choice == .tummy ? 190 : 260)])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(32)
         .presentationBackground(C.bg)
@@ -76,22 +80,23 @@ struct BabyHomeView: View {
     let baby = data.baby
     let now = Date().epochMs
 
-    HStack(alignment: .firstTextBaseline, spacing: 12) {
-      ScreenTitle(baby.name).lineLimit(2)
+    AdaptiveStack(alignment: .firstTextBaseline, spacing: 12) {
+      ScreenTitle(baby.name).lineLimit(typeSize.isAccessibilitySize ? nil : 2)
       Spacer(minLength: 0)
       Text(Format.age(dateOfBirth: baby.dateOfBirth, now: now).uppercased())
         .font(.app(.bold, 15))
         .tracking(0.7)
         .foregroundStyle(C.tealDark)
-        .fixedSize()
+        .fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: true)
+        .accessibilityLabel("Age \(Format.age(dateOfBirth: baby.dateOfBirth, now: now))")
     }
 
-    HStack(spacing: 12) {
+    AdaptiveStack(spacing: 12) {
       statusTile("Weight", Format.weight(baby.weightGrams), tint: C.tealSoft) { router.push(babyId, .weight) }
       statusTile("Height", baby.heightCm.map { Format.height($0) } ?? "—", tint: C.skySoft) { router.push(babyId, .height) }
     }
 
-    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 12) {
       actionTile("Feed", "drop.fill", C.teal, last(data.lastFeed, now)) { sheet = .feed }
       actionTile("Sleep", "moon.fill", C.purple, last(data.lastSleep, now)) { sheet = .sleep }
       actionTile("Tummy", "figure.arms.open", C.sky, last(data.lastTummy, now)) { sheet = .tummy }
@@ -128,7 +133,7 @@ struct BabyHomeView: View {
         Text(last ?? " ")
           .font(.app(.body, 13))
           .foregroundStyle(C.muted)
-          .lineLimit(2, reservesSpace: true)
+          .lineLimit(typeSize.isAccessibilitySize ? 8 : 2, reservesSpace: !typeSize.isAccessibilitySize)
           .multilineTextAlignment(.leading)
       }
       .padding(18)
@@ -139,6 +144,7 @@ struct BabyHomeView: View {
     .buttonStyle(PressScale())
     .accessibilityElement(children: .combine)
     .accessibilityAddTraits(.isButton)
+    .accessibilityInputLabels([label])
   }
 
   private func choiceSheet(_ choice: LogChoice) -> some View {

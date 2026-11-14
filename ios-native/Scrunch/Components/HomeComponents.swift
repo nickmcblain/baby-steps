@@ -28,10 +28,22 @@ struct WeekStrip: View {
   let selectedDayStart: EpochMs
   let onSelect: (EpochMs) -> Void
 
+  @Environment(\.dynamicTypeSize) private var typeSize
+
   var body: some View {
+    if typeSize.isAccessibilitySize {
+      ScrollView(.horizontal, showsIndicators: false) { days }
+        .scrollClipDisabled()
+    } else {
+      days
+    }
+  }
+
+  private var days: some View {
     let weekStart = WeekGrid.startOfWeekMonday(selectedDayStart)
     let todayStart = WeekGrid.startOfLocalDay(Date().epochMs)
-    HStack(spacing: 4) {
+    let wide = typeSize.isAccessibilitySize
+    return HStack(spacing: 4) {
       ForEach(WeekGrid.weekDayLabels(weekStart), id: \.dayStartMs) { day in
         let selected = day.dayStartMs == selectedDayStart
         let isToday = day.dayStartMs == todayStart
@@ -42,7 +54,7 @@ struct WeekStrip: View {
             Text("\(day.dateNum)").font(.app(.bold, 16))
           }
           .foregroundStyle(ink)
-          .frame(maxWidth: .infinity)
+          .frame(minWidth: wide ? 96 : nil, maxWidth: .infinity)
           .padding(.vertical, 10)
           .background {
             if selected {
@@ -54,6 +66,9 @@ struct WeekStrip: View {
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.selection, trigger: selected)
+        .accessibilityLabel(Text(Date(epochMs: day.dayStartMs), format: .dateTime.weekday(.wide).day().month(.wide)))
+        .accessibilityValue(isToday ? "Today" : "")
+        .accessibilityInputLabels([day.label, "\(day.label) \(day.dateNum)"])
         .accessibilityAddTraits(selected ? .isSelected : [])
       }
     }
@@ -97,13 +112,21 @@ struct DayRhythmBar: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
       }
       .buttonStyle(.plain)
-      .accessibilityLabel(rhythm.caption)
+      .accessibilityLabel(rhythm.source == .logs ? "Usual day" : "Typical day")
+      .accessibilityValue(rhythm.caption)
+      .accessibilityHint("Opens sleep patterns")
+      .accessibilityInputLabels(["Day rhythm", "Usual day", "Typical day"])
       HStack {
         ForEach(ticks, id: \.self) { tick in
-          Text(tick).font(.app(.medium, 11, relativeTo: .caption2)).foregroundStyle(C.muted)
-          if tick != ticks.last { Spacer() }
+          Text(tick)
+            .font(.app(.medium, 11, relativeTo: .caption2))
+            .foregroundStyle(C.muted)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+          if tick != ticks.last { Spacer(minLength: 4) }
         }
       }
+      .accessibilityHidden(true)
     }
     .padding(embedded ? 0 : 16)
     .background {
@@ -127,11 +150,14 @@ struct LastStrip: View {
   let text: String
   var inset: CGFloat = 12
 
+  @Environment(\.dynamicTypeSize) private var typeSize
+
   var body: some View {
     Text(text)
       .font(.app(.medium, 11, relativeTo: .caption2))
       .foregroundStyle(C.muted)
-      .lineLimit(1)
+      .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+      .fixedSize(horizontal: false, vertical: typeSize.isAccessibilitySize)
       .padding(.horizontal, inset)
       .padding(.vertical, 8)
       .frame(maxWidth: .infinity, alignment: .leading)

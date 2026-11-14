@@ -8,14 +8,15 @@ struct KidsView: View {
   @Environment(ActiveBabyStore.self) private var activeBaby
   @State private var babies = Live<[Baby]>()
   @State private var joinOpen = false
+  @Environment(\.dynamicTypeSize) private var typeSize
 
   var body: some View {
     ScreenScaffold(showsBack: false, clearDock: true) {
       HStack {
         ScreenTitle("Kids")
         Spacer()
-        CircleIconButton(systemImage: "figure.and.child.holdinghands", label: "Join a partner") { joinOpen = true }
-        CircleIconButton(systemImage: "plus", label: "Add baby") { router.path.append(.newBaby) }
+        CircleIconButton(systemImage: "figure.and.child.holdinghands", label: "Join a partner", spokenNames: ["Join", "Partner"]) { joinOpen = true }
+        CircleIconButton(systemImage: "plus", label: "Add baby", spokenNames: ["Add", "Plus", "New baby"]) { router.path.append(.newBaby) }
           .padding(.leading, 8)
       }
 
@@ -23,7 +24,8 @@ struct KidsView: View {
         LoadingView(label: "Connecting…").frame(minHeight: 240)
       } else {
         let now = Date().epochMs
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+        let columns = typeSize.isAccessibilitySize ? 1 : 2
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: columns), spacing: 12) {
           ForEach(babies.value ?? []) { baby in
             Button { open(baby.id) } label: {
               VStack(alignment: .leading, spacing: 8) {
@@ -32,7 +34,8 @@ struct KidsView: View {
                   .foregroundStyle(C.purple)
                   .frame(width: 44, height: 44)
                   .background(C.purpleSoft, in: Circle())
-                Text(baby.name).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(1)
+                  .accessibilityHidden(true)
+                Text(baby.name).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(2)
                 Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
                   .font(.app(.body, 13)).foregroundStyle(C.muted)
                 Text("Code \(baby.inviteCode)")
@@ -44,6 +47,12 @@ struct KidsView: View {
               .cardShadow()
             }
             .buttonStyle(PressScale())
+            .accessibilityLabel(
+              Text("\(baby.name), \(Format.age(dateOfBirth: baby.dateOfBirth, now: now)), \(Format.kg(baby.weightGrams)). Invite code ")
+                + Text(baby.inviteCode).speechSpellsOutCharacters()
+            )
+            .accessibilityHint("Makes \(baby.name) the active kid and opens Home")
+            .accessibilityInputLabels([baby.name])
           }
         }
       }
@@ -54,7 +63,7 @@ struct KidsView: View {
         joinOpen = false
         open(id)
       }
-      .presentationDetents([.height(260)])
+      .adaptiveDetents([.height(260)])
       .presentationDragIndicator(.visible)
       .presentationCornerRadius(32)
       .presentationBackground(C.bg)
@@ -77,7 +86,7 @@ struct JoinPartnerSheet: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text("Join a partner").font(.app(.bold, 22)).foregroundStyle(C.ink)
+      Text("Join a partner").font(.app(.bold, 22)).foregroundStyle(C.ink).accessibilityAddTraits(.isHeader)
       Text("Enter their 6-character invite code.").font(.app(.body, 15)).foregroundStyle(C.muted).padding(.bottom, 8)
       InviteCodeField(code: $code, editable: !busy)
         .onChange(of: code) { _, next in

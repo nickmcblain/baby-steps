@@ -15,7 +15,7 @@ struct ClothingView: View {
     ScreenScaffold {
       ScreenTitle("Clothing")
 
-      HStack(spacing: 8) {
+      WrapLayout(centered: true) {
         Pill(label: "°C", selected: !fahrenheit) { fahrenheit = false }
         Pill(label: "°F", selected: fahrenheit, tint: C.peachSoft, ink: C.peach) { fahrenheit = true }
       }
@@ -27,8 +27,20 @@ struct ClothingView: View {
           .foregroundStyle(C.ink)
           + Text(fahrenheit ? " °F" : " °C").font(.app(.bold, 22)).foregroundStyle(C.muted))
           .tracking(-1)
-          .contentTransition(.numericText(value: tempC))
-          .animation(.snappy, value: tempC)
+          .lineLimit(1)
+          .minimumScaleFactor(0.5)
+          .numericTextTransition(value: tempC)
+          .motionSafeAnimation(.snappy, value: tempC)
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel("Room temperature")
+          .accessibilityValue("\(Clothing.formatTemp(tempC, fahrenheit: fahrenheit)) degrees \(fahrenheit ? "Fahrenheit" : "Celsius")")
+          .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: tempC = Clothing.nudge(tempC, by: Clothing.stepC)
+            case .decrement: tempC = Clothing.nudge(tempC, by: -Clothing.stepC)
+            @unknown default: break
+            }
+          }
         HStack(spacing: 20) {
           arrow("chevron.left", "Decrease temperature") { tempC = Clothing.nudge(tempC, by: -Clothing.stepC) }
           Text("±0.5°C").font(.app(.medium, 13)).foregroundStyle(C.muted).frame(minWidth: 56)
@@ -40,14 +52,6 @@ struct ClothingView: View {
       .padding(.horizontal, 20)
       .background(C.card, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
       .cardShadow()
-      .accessibilityElement(children: .contain)
-      .accessibilityAdjustableAction { direction in
-        switch direction {
-        case .increment: tempC = Clothing.nudge(tempC, by: Clothing.stepC)
-        case .decrement: tempC = Clothing.nudge(tempC, by: -Clothing.stepC)
-        @unknown default: break
-        }
-      }
 
       if let baby = baby.value {
         let advice = Clothing.advice(tempC: tempC, dateOfBirth: baby.dateOfBirth, weightGrams: baby.weightGrams, now: Date().epochMs)
@@ -55,7 +59,7 @@ struct ClothingView: View {
           Text(advice.tog).font(.app(.displayBold, 28)).foregroundStyle(C.tealDark)
           ForEach(advice.layers, id: \.self) { layer in
             HStack(spacing: 10) {
-              Circle().fill(C.teal).frame(width: 10, height: 10)
+              Circle().fill(C.teal).frame(width: 10, height: 10).accessibilityHidden(true)
               Text(layer).font(.app(.medium, 16)).foregroundStyle(C.ink)
             }
           }
@@ -97,5 +101,6 @@ struct ClothingView: View {
     }
     .buttonStyle(PressScale())
     .accessibilityLabel(label)
+    .accessibilityInputLabels([label, label.hasPrefix("Increase") ? "Warmer" : "Cooler"])
   }
 }

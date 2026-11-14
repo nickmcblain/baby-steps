@@ -9,6 +9,7 @@ struct AddLogSheet: View {
   @Environment(ConvexService.self) private var convex
   @State private var voice = VoiceLogRecorder()
   @State private var loggedMessage: String?
+  @Environment(\.dynamicTypeSize) private var typeSize
 
   private struct Tile: Identifiable {
     let screen: BabyScreen
@@ -38,12 +39,13 @@ struct AddLogSheet: View {
   var body: some View {
     ScrollView {
       VStack(spacing: 12) {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 10) {
           ForEach(tiles) { tile in
             Button { go(tile.screen) } label: {
               tileLabel(tile.label) { IconWell(systemImage: tile.symbol, tint: tile.tint) }
             }
             .buttonStyle(PressScale())
+            .accessibilityLabel(tile.label)
           }
           Button { Task { await speak() } } label: {
             tileLabel(voice.recording ? "Listening" : "Speak") {
@@ -60,12 +62,14 @@ struct AddLogSheet: View {
           .buttonStyle(PressScale())
           .disabled(voice.busy)
           .accessibilityLabel(voice.recording ? "Stop and send" : "Speak a log or question")
+          .accessibilityInputLabels(voice.recording ? ["Listening", "Stop", "Send"] : ["Speak", "Voice", "Microphone"])
         }
         if let status = voice.status {
           Text(status)
             .font(.app(.medium, 14))
             .foregroundStyle(C.muted)
             .multilineTextAlignment(.center)
+            .accessibilityAddTraits(.updatesFrequently)
         }
       }
       .padding(.horizontal, 20)
@@ -73,6 +77,9 @@ struct AddLogSheet: View {
       .padding(.bottom, 16)
     }
     .onDisappear { voice.cancel() }
+    .onChange(of: voice.status) { _, status in
+      if let status { AccessibilityNotification.Announcement(status).post() }
+    }
     .alert(item: $voice.alert) { alert in
       Alert(title: Text(alert.title), message: Text(alert.message))
     }

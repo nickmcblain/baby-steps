@@ -1,3 +1,4 @@
+import Accessibility
 import Charts
 import ScrunchCore
 import SwiftUI
@@ -27,8 +28,9 @@ struct GrowthLogView: View {
         GrowthChart(metric: metric, sex: series.baby.sex, dateOfBirth: series.baby.dateOfBirth, points: series.points)
         if series.baby.sex == nil {
           Button { router.push(babyId, .edit) } label: {
-            Text("Add boy / girl on Edit →").font(.app(.medium, 14)).foregroundStyle(C.tealDark)
+            Text("Add boy / girl on Edit →").font(.app(.medium, 14)).foregroundStyle(C.tealDark).frame(minHeight: 44)
           }
+          .accessibilityLabel("Add boy or girl on Edit")
         }
       } else {
         Text("Loading chart…").font(.app(.body, 15)).foregroundStyle(C.muted)
@@ -102,6 +104,7 @@ struct GrowthChart: View {
     VStack(alignment: .leading, spacing: 6) {
       Text(metric == .weight ? "Weight for age" : "Length / height for age")
         .font(.app(.display, 18)).foregroundStyle(C.ink)
+        .accessibilityAddTraits(.isHeader)
       Text("UK Red Book centiles (WHO / UK-WHO standards)")
         .font(.app(.body, 12)).foregroundStyle(C.muted).padding(.bottom, 4)
 
@@ -193,7 +196,49 @@ struct GrowthChart: View {
         }
       }
     }
+    .dynamicTypeSize(...DynamicTypeSize.xxLarge)
     .frame(height: 220)
     .accessibilityLabel(metric == .weight ? "Weight for age chart" : "Length for age chart")
+    .accessibilityChartDescriptor(GrowthChartDescriptor(
+      metric: metric,
+      logs: logs.map { (month: $0.month, value: $0.value) },
+      maxMonth: maxMonth,
+      range: low...high,
+      summary: points.max { $0.at < $1.at }.flatMap { GrowthLMS.latestStatus(metric, sex: sex, dateOfBirth: dateOfBirth, latest: $0) }?.text
+    ))
+  }
+}
+
+/// Audio graph of the logged growth points against age in months.
+private struct GrowthChartDescriptor: AXChartDescriptorRepresentable {
+  let metric: GrowthMetric
+  let logs: [(month: Double, value: Double)]
+  let maxMonth: Double
+  let range: ClosedRange<Double>
+  let summary: String?
+
+  private var unit: String { metric == .weight ? "kg" : "cm" }
+
+  func makeChartDescriptor() -> AXChartDescriptor {
+    let xAxis = AXNumericDataAxisDescriptor(title: "Age", range: 0...max(1, maxMonth), gridlinePositions: []) {
+      "\(jsToFixed($0, 1)) months"
+    }
+    let yAxis = AXNumericDataAxisDescriptor(title: metric == .weight ? "Weight" : "Length", range: range, gridlinePositions: []) {
+      "\(jsToFixed($0, 1)) \(unit)"
+    }
+    let series = AXDataSeriesDescriptor(
+      name: "Your logs",
+      isContinuous: true,
+      dataPoints: logs.map { AXDataPoint(x: $0.month, y: $0.value) }
+    )
+    let count = logs.count == 1 ? "1 log" : "\(logs.count) logs"
+    return AXChartDescriptor(
+      title: metric == .weight ? "Weight for age" : "Length for age",
+      summary: [count + " plotted against UK-WHO centiles.", summary].compactMap { $0 }.joined(separator: " "),
+      xAxis: xAxis,
+      yAxis: yAxis,
+      additionalAxes: [],
+      series: [series]
+    )
   }
 }

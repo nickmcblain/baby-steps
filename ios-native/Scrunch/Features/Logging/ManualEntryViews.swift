@@ -24,6 +24,8 @@ struct SectionLabel: View {
       .font(.app(.bold, 13))
       .tracking(0.6)
       .foregroundStyle(C.muted)
+      .accessibilityLabel(text)
+      .accessibilityAddTraits(.isHeader)
   }
 }
 
@@ -67,21 +69,23 @@ struct FeedManualView: View {
       ScreenTitle(handoff != nil ? "Finish feed" : "Log feed")
       if handoff != nil { Hint("Minutes filled from your timer — tweak anything before saving.") }
       LoggedAtField(value: $loggedAt)
-      HStack(spacing: 8) {
+      WrapLayout {
         Pill(label: "Breast", selected: kind == .breast) { kind = .breast }
         Pill(label: "Bottle", selected: kind == .bottle) { kind = .bottle }
       }
       if kind == .breast {
         FieldLabel("Side")
-        HStack(spacing: 8) {
+        WrapLayout {
           Pill(label: "Left", selected: side == .left) { side = .left }
           Pill(label: "Right", selected: side == .right) { side = .right }
           Pill(label: "Both", selected: side == .both) { side = .both }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Side")
         FormField(label: "Minutes", text: $minutes, placeholder: "12", keyboard: .numberPad)
       } else {
         FormField(label: "Amount (ml)", text: $ml, placeholder: "90", keyboard: .numberPad)
-        HStack(spacing: 8) {
+        WrapLayout {
           Pill(label: "Formula", selected: milk == .formula) { milk = .formula }
           Pill(label: "Expressed", selected: milk == .expressed) { milk = .expressed }
         }
@@ -145,11 +149,13 @@ struct PumpManualView: View {
       if handoff != nil { Hint("Minutes filled from your timer — add ml if you measured.") }
       LoggedAtField(value: $loggedAt)
       SectionLabel("Side")
-      HStack(spacing: 8) {
+      WrapLayout {
         Pill(label: "Left", selected: side == .left) { side = .left }
         Pill(label: "Right", selected: side == .right) { side = .right }
         Pill(label: "Both", selected: side == .both) { side = .both }
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel("Side")
       FormField(label: "Minutes", text: $minutes, placeholder: "15", keyboard: .numberPad)
       FormField(label: "Amount (ml)", text: $ml, placeholder: "Optional", keyboard: .numberPad)
       FormField(label: "Note", text: $note, placeholder: "Let-down slow")

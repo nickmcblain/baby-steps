@@ -19,6 +19,8 @@ struct ProfileView: View {
         ScreenTitle("Profile")
         Spacer()
         UserButton()
+          .accessibilityLabel("Account")
+          .accessibilityInputLabels(["Account", "Sign out", "Manage account"])
       }
       Card {
         row("Email", email)

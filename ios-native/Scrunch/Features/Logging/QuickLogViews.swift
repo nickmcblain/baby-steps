@@ -19,18 +19,20 @@ struct NappyView: View {
     ScreenScaffold {
       ScreenTitle(potty ? "Potty" : "Nappy")
       LoggedAtField(value: $loggedAt)
-      HStack(spacing: 8) {
+      WrapLayout {
         Pill(label: "Wee", selected: kind == .wee, tint: C.amberSoft, ink: C.ink) { kind = .wee }
         Pill(label: "Poo", selected: kind == .poo, tint: C.peachSoft, ink: C.peach) { kind = .poo }
         Pill(label: "Both", selected: kind == .both) { kind = .both }
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel(potty ? "Potty type" : "Nappy type")
       if kind != .poo {
         FieldLabel("Wee size")
-        sizeRow($wee)
+        sizeRow($wee, "Wee size")
       }
       if kind != .wee {
         FieldLabel("Poo size")
-        sizeRow($poo)
+        sizeRow($poo, "Poo size")
       }
       FormField(label: "Note", text: $note, placeholder: potty ? "Sat on their own" : "Seedy mustard")
       PrimaryButton(label: potty ? "Save potty" : "Save nappy") { await save() }
@@ -38,12 +40,14 @@ struct NappyView: View {
     .formAlert($alert)
   }
 
-  private func sizeRow(_ value: Binding<NappySize>) -> some View {
-    HStack(spacing: 8) {
+  private func sizeRow(_ value: Binding<NappySize>, _ label: String) -> some View {
+    WrapLayout {
       Pill(label: "Small", selected: value.wrappedValue == .small) { value.wrappedValue = .small }
       Pill(label: "Medium", selected: value.wrappedValue == .medium) { value.wrappedValue = .medium }
       Pill(label: "Large", selected: value.wrappedValue == .large) { value.wrappedValue = .large }
     }
+    .accessibilityElement(children: .contain)
+    .accessibilityLabel(label)
   }
 
   private func save() async {
@@ -84,7 +88,7 @@ struct MedicineView: View {
       FormField(label: "Name", text: $name, placeholder: "Calpol")
       FormField(label: "Dose", text: $dose, placeholder: "2.5 ml")
       FieldLabel("Remind me")
-      HStack(spacing: 8) {
+      WrapLayout {
         ForEach(ReminderPlans.medicineReminderHours.compactMap { $0 }, id: \.self) { hours in
           Pill(label: "\(hours)h", selected: remindHours == hours, tint: C.amberSoft, ink: C.ink) { remindHours = hours }
         }

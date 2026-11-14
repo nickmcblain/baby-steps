@@ -6,15 +6,18 @@ struct SignInView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       VStack(alignment: .leading, spacing: 8) {
-        Circle().fill(C.teal).frame(width: 56, height: 56).padding(.bottom, 8)
+        Circle().fill(C.teal).frame(width: 56, height: 56).padding(.bottom, 8).accessibilityHidden(true)
         Text("SCRUNCH")
           .font(.app(.bold, 14))
           .tracking(0.6)
           .foregroundStyle(C.tealDark)
+          .accessibilityLabel("Scrunch")
         Text("Keep the little hours in one place.")
           .font(.app(.displayBold, 32, relativeTo: .largeTitle))
           .foregroundStyle(C.ink)
           .lineSpacing(2)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityAddTraits(.isHeader)
       }
       .padding(.horizontal, 24)
       .padding(.top, 28)

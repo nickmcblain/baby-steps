@@ -36,7 +36,25 @@ private struct ClockText: View {
       .font(font)
       .monospacedDigit()
       .foregroundStyle(color)
-      .contentTransition(.numericText())
+      .lineLimit(1)
+      .minimumScaleFactor(0.4)
+      .numericTextTransition()
+      .accessibilityLabel(Spoken.clock(ms))
+  }
+}
+
+/// The timer's next action with a shape cue, so running vs paused isn't carried by colour alone.
+private struct TimerVerb: View {
+  let running: Bool
+  let hasTime: Bool
+  let color: Color
+
+  var text: String { running ? "Pause" : hasTime ? "Resume" : "Start" }
+
+  var body: some View {
+    Label(text, systemImage: running ? "pause.fill" : "play.fill")
+      .font(.app(.medium, 15))
+      .foregroundStyle(color)
   }
 }
 
@@ -52,13 +70,14 @@ private struct TimerFooter: View {
     VStack(spacing: 12) {
       PrimaryButton(label: doneLabel, disabled: !canFinish) { await onDone() }
       Button { Task { await onSkip() } } label: {
-        Text("Skip to manual entry").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8)
+        Text("Skip to manual entry").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8).frame(minHeight: 44)
       }
-      .accessibilityAddTraits(.isLink)
+      .accessibilityInputLabels(["Skip to manual entry", "Skip", "Manual entry"])
       if showReset {
         Button { Task { await onReset() } } label: {
-          Text("Reset").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8)
+          Text("Reset").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8).frame(minHeight: 44)
         }
+        .accessibilityHint("Clears the timer")
       }
     }
     .padding(.top, 8)
@@ -94,12 +113,11 @@ struct DurationTimerView: View {
         : "Start when they go on their tummy. Keeps timing on the Lock Screen / Dynamic Island while the app is away.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
+      let verb = TimerVerb(running: running, hasTime: elapsed > 0, color: running ? .white.opacity(0.9) : accent)
       Button { Task { await toggle() } } label: {
         VStack(spacing: 10) {
           ClockText(session: session, value: { $0.elapsed(now: $1) }, font: .app(.displayBold, 48), color: running ? .white : C.ink)
-          Text(running ? "Pause" : elapsed > 0 ? "Resume" : "Start")
-            .font(.app(.medium, 15))
-            .foregroundStyle(running ? .white.opacity(0.9) : accent)
+          verb
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -109,6 +127,9 @@ struct DurationTimerView: View {
       }
       .buttonStyle(PressScale())
       .sensoryFeedback(.impact(weight: .light), trigger: running)
+      .accessibilityElement(children: .combine)
+      .accessibilityAddTraits(.updatesFrequently)
+      .accessibilityInputLabels([verb.text, "\(verb.text) timer"])
 
       TimerFooter(
         doneLabel: "Done — confirm details",
@@ -204,7 +225,7 @@ struct FeedTimerView: View {
       Text("Time one side at a time. Island keeps the active side running if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
-      HStack(spacing: 12) {
+      AdaptiveStack(spacing: 12) {
         sideCard("Left", .left, session: session, ms: leftMs)
         sideCard("Right", .right, session: session, ms: rightMs)
       }
@@ -231,18 +252,16 @@ struct FeedTimerView: View {
 
   private func sideCard(_ label: String, _ side: TimerSide, session: TimerSession?, ms: Double) -> some View {
     let running = session?.activeSide == side && session?.isRunning == true
+    let verb = TimerVerb(running: running, hasTime: ms > 0, color: running ? .white.opacity(0.9) : C.tealDark)
     return Button { Task { await tap(side) } } label: {
       VStack(spacing: 8) {
         Text(label.uppercased())
           .font(.app(.bold, 13))
           .tracking(0.6)
           .foregroundStyle(running ? .white.opacity(0.85) : C.muted)
+          .accessibilityLabel("\(label) side")
         ClockText(session: session, value: { $0.sideElapsed(side, now: $1) }, font: .app(.displayBold, 36), color: running ? .white : C.ink)
-          .lineLimit(1)
-          .minimumScaleFactor(0.6)
-        Text(running ? "Pause" : ms > 0 ? "Resume" : "Start")
-          .font(.app(.medium, 14))
-          .foregroundStyle(running ? .white.opacity(0.9) : C.tealDark)
+        verb
       }
       .frame(maxWidth: .infinity)
       .padding(.vertical, 28)
@@ -252,7 +271,9 @@ struct FeedTimerView: View {
     }
     .buttonStyle(PressScale())
     .sensoryFeedback(.impact(weight: .light), trigger: running)
-    .accessibilityLabel("\(label) side")
+    .accessibilityElement(children: .combine)
+    .accessibilityAddTraits(running ? [.isSelected, .updatesFrequently] : [])
+    .accessibilityInputLabels([label, "\(label) side", "\(verb.text) \(label.lowercased())"])
   }
 
   private func push(_ session: TimerSession) async {

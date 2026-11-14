@@ -1,3 +1,4 @@
+import Accessibility
 import Charts
 import ScrunchCore
 import SwiftUI
@@ -114,10 +115,10 @@ struct PatternsView: View {
 
   var body: some View {
     ScreenScaffold {
-      CircleIconButton(systemImage: "plus", label: addLabel) { add() }
+      CircleIconButton(systemImage: "plus", label: addLabel, spokenNames: ["Add", "Plus"]) { add() }
     } content: {
       ScreenTitle(title)
-      HStack(spacing: 8) {
+      WrapLayout {
         ForEach(Patterns.ranges, id: \.self) { range in
           Button { days = range } label: {
             Text("\(range) days")
@@ -126,6 +127,8 @@ struct PatternsView: View {
               .padding(.horizontal, 16)
               .padding(.vertical, 8)
               .background(days == range ? accent : C.card, in: Capsule())
+              .frame(minHeight: 44)
+              .contentShape(Rectangle())
           }
           .buttonStyle(PressScale())
           .accessibilityAddTraits(days == range ? .isSelected : [])
@@ -133,10 +136,10 @@ struct PatternsView: View {
       }
 
       if let summary {
-        HStack(spacing: 10) {
+        AdaptiveStack(spacing: 10) {
           ForEach(summary.stats, id: \.0) { label, value in
             VStack(alignment: .leading, spacing: 4) {
-              Text(label.uppercased()).font(.app(.medium, 12)).tracking(0.5).foregroundStyle(statInk)
+              Text(label.uppercased()).font(.app(.medium, 12)).tracking(0.5).foregroundStyle(statInk).accessibilityLabel(label)
               Text(value).font(.app(.bold, 20)).foregroundStyle(C.ink)
             }
             .padding(14)
@@ -145,7 +148,7 @@ struct PatternsView: View {
             .accessibilityElement(children: .combine)
           }
         }
-        PatternChart(items: summary.items, days: days, rangeEndMs: rangeEndMs, barColor: accent, emptyText: emptyText)
+        PatternChart(title: title, items: summary.items, days: days, rangeEndMs: rangeEndMs, barColor: accent, emptyText: emptyText)
       } else {
         Text("Loading…").font(.app(.body, 15)).foregroundStyle(C.muted)
       }
@@ -177,6 +180,7 @@ struct PatternsView: View {
 
 /// Port of components/SleepPatternChart.tsx: per-day bars, or a day × time-of-day chart.
 struct PatternChart: View {
+  let title: String
   let items: [PatternItem]
   let days: Int
   let rangeEndMs: EpochMs
@@ -184,6 +188,10 @@ struct PatternChart: View {
   let emptyText: String
 
   @State private var showChart = false
+  @Environment(\.dynamicTypeSize) private var typeSize
+
+  /// Nappies are instants; everything else has a duration worth reading out.
+  private var timed: Bool { items.contains { $0.durationMinutes > 0 } }
 
   private struct Bar: Identifiable {
     let id: String
@@ -205,11 +213,18 @@ struct PatternChart: View {
         .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
     } else {
       VStack(alignment: .leading, spacing: 10) {
-        HStack(spacing: 8) {
+        WrapLayout {
           switchPill("Bars", selected: !showChart) { showChart = false }
           switchPill("Chart", selected: showChart) { showChart = true }
         }
-        if showChart { chart(rows) } else { bars(rows) }
+        Group {
+          if showChart { chart(rows) } else { bars(rows) }
+        }
+        .accessibilityChartDescriptor(PatternChartDescriptor(title: title, rows: rows, timed: timed))
+        Text(Spoken.patternSummary(rows))
+          .font(.app(.body, 13))
+          .foregroundStyle(C.muted)
+          .fixedSize(horizontal: false, vertical: true)
       }
     }
   }
@@ -222,16 +237,20 @@ struct PatternChart: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .background(selected ? C.ink : C.card, in: Capsule())
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
     }
     .buttonStyle(PressScale())
     .accessibilityAddTraits(selected ? .isSelected : [])
+    .accessibilityHint(label == "Bars" ? "Shows a bar per day" : "Shows a day by time-of-day chart")
   }
 
   private func bars(_ rows: [PatternDay]) -> some View {
-    VStack(spacing: 8) {
+    let stacked = typeSize.isAccessibilitySize
+    return VStack(spacing: 8) {
       ForEach(rows) { row in
-        HStack(spacing: 8) {
-          Text(row.label).font(.app(.bold, 12)).foregroundStyle(C.ink).frame(width: 58, alignment: .leading)
+        AdaptiveStack(spacing: stacked ? 4 : 8) {
+          Text(row.label).font(.app(.bold, 12)).foregroundStyle(C.ink).frame(width: stacked ? nil : 58, alignment: .leading)
           GeometryReader { geo in
             ZStack(alignment: .leading) {
               RoundedRectangle(cornerRadius: 6).fill(C.line)
@@ -250,17 +269,19 @@ struct PatternChart: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(row.label)
-        .accessibilityValue(row.slices.isEmpty ? "Nothing logged" : "\(row.slices.count) logged")
+        .accessibilityValue(Spoken.patternDay(row, timed: timed))
       }
       HStack(spacing: 0) {
-        Color.clear.frame(width: 66)
+        Color.clear.frame(width: stacked ? 0 : 66)
         GeometryReader { geo in
           ForEach([("12am", 0.0), ("6am", 0.25), ("12pm", 0.5), ("6pm", 0.75)], id: \.0) { label, at in
             Text(label).font(.app(.medium, 10)).foregroundStyle(C.muted).offset(x: geo.size.width * at)
           }
         }
         .frame(height: 16)
+        .dynamicTypeSize(...DynamicTypeSize.large)
       }
+      .accessibilityHidden(true)
     }
     .padding(.horizontal, 14)
     .padding(.vertical, 12)
@@ -285,6 +306,8 @@ struct PatternChart: View {
       )
       .foregroundStyle(barColor.opacity(0.85))
       .clipShape(RoundedRectangle(cornerRadius: 5))
+      .accessibilityLabel(bar.day)
+      .accessibilityValue("\(Spoken.timeOfDay(minutes: bar.startMin)) to \(Spoken.timeOfDay(minutes: bar.endMin))")
     }
     .chartXScale(domain: labels)
     // Minutes are negated so midnight sits at the top, like the RN chart.
@@ -308,8 +331,42 @@ struct PatternChart: View {
         }
       }
     }
+    // Axis ticks stay readable-sized; the descriptor and the Bars view carry the detail at larger sizes.
+    .dynamicTypeSize(...DynamicTypeSize.xxLarge)
     .frame(height: 320)
     .padding(8)
     .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+  }
+}
+
+/// Audio graph and VoiceOver chart summary for the pattern bars / chart.
+struct PatternChartDescriptor: AXChartDescriptorRepresentable {
+  let title: String
+  let rows: [PatternDay]
+  let timed: Bool
+
+  func makeChartDescriptor() -> AXChartDescriptor {
+    let counts = rows.map { Double($0.slices.count) }
+    let xAxis = AXCategoricalDataAxisDescriptor(title: "Day", categoryOrder: rows.map(\.label))
+    let yAxis = AXNumericDataAxisDescriptor(
+      title: "Logged",
+      range: 0...max(1, counts.max() ?? 1),
+      gridlinePositions: []
+    ) { "\(Int($0)) logged" }
+    let series = AXDataSeriesDescriptor(
+      name: "Logged per day",
+      isContinuous: false,
+      dataPoints: rows.map { row in
+        AXDataPoint(x: row.label, y: Double(row.slices.count), additionalValues: [], label: Spoken.patternDay(row, timed: timed))
+      }
+    )
+    return AXChartDescriptor(
+      title: title,
+      summary: Spoken.patternSummary(rows),
+      xAxis: xAxis,
+      yAxis: yAxis,
+      additionalAxes: [],
+      series: [series]
+    )
   }
 }

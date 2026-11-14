@@ -14,7 +14,7 @@ struct PickerTrigger: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      FieldLabel(label)
+      FieldLabel(label).accessibilityHidden(true)
       Button(action: action) {
         HStack {
           Text(value)
@@ -33,6 +33,7 @@ struct PickerTrigger: View {
       .buttonStyle(PressScale())
       .accessibilityLabel(label)
       .accessibilityValue(value)
+      .accessibilityHint("Opens a picker")
     }
   }
 }
@@ -58,7 +59,7 @@ struct PickerSheet<Content: View>: View {
     .padding(.horizontal, 20)
     .padding(.top, 28)
     .padding(.bottom, 12)
-    .presentationDetents([.height(420)])
+    .adaptiveDetents([.height(420)])
     .presentationDragIndicator(.visible)
     .presentationCornerRadius(32)
     .presentationBackground(C.bg)
@@ -167,7 +168,7 @@ struct WeightField: View {
     }
     .sheet(isPresented: $open, onDismiss: apply) {
       PickerSheet(confirm: "Use this weight", onConfirm: { open = false }) {
-        HStack(spacing: 8) {
+        WrapLayout {
           Pill(label: "Kilograms", selected: unit == .kg) { switchUnit(.kg) }
           Pill(label: "Pounds & oz", selected: unit == .lb, tint: C.peachSoft, ink: C.peach) { switchUnit(.lb) }
         }
@@ -238,7 +239,7 @@ struct HeightField: View {
     }
     .sheet(isPresented: $open, onDismiss: apply) {
       PickerSheet(confirm: "Use this height", onConfirm: { open = false }) {
-        HStack(spacing: 8) {
+        WrapLayout {
           Pill(label: "Centimetres", selected: unit == .cm) { switchUnit(.cm) }
           Pill(label: "Feet & in", selected: unit == .inches, tint: C.skySoft, ink: C.sky) { switchUnit(.inches) }
         }
@@ -316,13 +317,15 @@ struct ToggleRow<Value: Hashable>: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       FieldLabel(label)
-      HStack(spacing: 8) {
+      WrapLayout {
         ForEach(options, id: \.0) { option in
           Pill(label: option.1, selected: selection == option.0) {
             selection = selection == option.0 ? nil : option.0
           }
         }
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel(label)
     }
   }
 }

@@ -69,8 +69,8 @@ struct NewBabyView: View {
         .padding(.vertical, 4)
       }
       .buttonStyle(.plain)
-      .accessibilityAddTraits(careConsent ? [.isSelected] : [])
-      .accessibilityHint("Checkbox")
+      .accessibilityAddTraits(careConsent ? [.isToggle, .isSelected] : .isToggle)
+      .accessibilityInputLabels(["Consent", "I consent", "Checkbox"])
 
       PrimaryButton(label: "Save baby", disabled: !careConsent) { await save() }
     }
