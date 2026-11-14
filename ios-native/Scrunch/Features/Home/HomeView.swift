@@ -195,6 +195,10 @@ struct HomeView: View {
     if let caughtUp {
       CaughtUpCard(state: caughtUp)
     }
+
+    if let baby {
+      MilestonesCard(baby: baby)
+    }
   }
 
   private var caughtUp: CaughtUp? {

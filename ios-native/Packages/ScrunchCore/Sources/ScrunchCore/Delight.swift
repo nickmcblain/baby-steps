@@ -70,8 +70,10 @@ public struct CaughtUp: Equatable, Sendable {
 
 /// Little firsts a parent can tick off whenever they happen. No target ages on purpose:
 /// every baby has their own pace, and the app never prompts for these.
-public enum Milestone: String, CaseIterable, Sendable, ConvexRepresentable {
+public enum Milestone: String, CaseIterable, Identifiable, Sendable, ConvexRepresentable {
   case firstSmile, firstLaugh, rolledOver, satUp, firstTooth, firstFood, crawled, firstSteps
+
+  public var id: String { rawValue }
 
   public var title: String {
     switch self {
