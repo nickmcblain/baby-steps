@@ -115,17 +115,7 @@ public enum Insights {
       )
     }
 
-    let window = FeedWindows.window(for: input.baby, now: input.now)
-    let source: String
-    let gapMs: Double
-    if let personal = personalGapMs(all, now: input.now) {
-      gapMs = personal.gapMs
-      source = "based on the last \(personal.count) feeds"
-    } else {
-      gapMs = window.intervalMs
-      source = "typical at this age is \(window.label)"
-    }
-    let due = roundTo5Min(last.loggedAt + gapMs)
+    let (due, source) = nextFeedDue(after: last, feeds: all, input: input)
     if due <= input.now {
       return Insight(
         kind: .nextFeed,
@@ -138,6 +128,15 @@ public enum Insights {
       headline: "Next feed likely around \(Clock.h12(due, calendar: calendar))",
       detail: "\(sinceText) · \(source)"
     )
+  }
+
+  /// The likely next feed time and where the gap comes from.
+  static func nextFeedDue(after last: Event, feeds all: [Event], input: InsightInput) -> (at: EpochMs, source: String) {
+    if let personal = personalGapMs(all, now: input.now) {
+      return (roundTo5Min(last.loggedAt + personal.gapMs), "based on the last \(personal.count) feeds")
+    }
+    let window = FeedWindows.window(for: input.baby, now: input.now)
+    return (roundTo5Min(last.loggedAt + window.intervalMs), "typical at this age is \(window.label)")
   }
 
   public static func breastSide(_ input: InsightInput) -> Insight? {

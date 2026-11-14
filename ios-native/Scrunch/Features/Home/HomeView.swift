@@ -192,24 +192,9 @@ struct HomeView: View {
       )
     }
 
-    if let caughtUp {
-      CaughtUpCard(state: caughtUp)
-    }
-
     if let baby {
       MilestonesCard(baby: baby)
     }
-  }
-
-  private var caughtUp: CaughtUp? {
-    guard let baby, dayStart == WeekGrid.startOfLocalDay(now) else { return nil }
-    return CaughtUp.state(
-      lastFeedEndedAt: dash.value?.lastFeed.map(FeedWindows.feedEndedAt),
-      window: FeedWindows.window(for: baby, now: now),
-      napAt: asleep ? nil : napAt,
-      timerRunning: !asleep && timers.session.map { $0.babyId == baby.id && $0.isRunning } ?? false,
-      now: now
-    )
   }
 
   private func insightCard(_ baby: Baby) -> some View {
@@ -225,7 +210,9 @@ struct HomeView: View {
       asleep: asleep
     )
     // The quick-log panel already shows the last and next breast side.
-    return InsightCard(insights: Insights.all(input).filter { $0.kind != .breastSide }) { kind in
+    let timerRunning = !asleep && timers.session.map { $0.babyId == baby.id && $0.isRunning } ?? false
+    let caughtUp = isToday && !timerRunning && Insights.allCaughtUp(input)
+    return InsightCard(insights: Insights.all(input).filter { $0.kind != .breastSide }, caughtUp: caughtUp) { kind in
       switch kind {
       case .nextFeed, .breastSide: router.push(baby.id, .feedPatterns)
       case .lastNappy: router.push(baby.id, .nappyPatterns)

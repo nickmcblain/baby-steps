@@ -41,30 +41,22 @@ public enum SaveCopy {
   static func possessive(_ name: String) -> String { "\(name)'s" }
 }
 
-/// Home's quiet "all caught up" moment: fed recently, no nap due, no timer to stop.
-public struct CaughtUp: Equatable, Sendable {
-  public let nextFeedAt: EpochMs
+public extension Insights {
+  /// Leave a margin so "all caught up" never sits next to a feed that's nearly due.
+  internal static let caughtUpFeedMarginMs = 30 * minuteMs
 
-  /// Leave a margin so the card never sits next to a feed that's nearly due.
-  static let feedMarginMs = 30 * minuteMs
-  static let napMarginMs = 15 * minuteMs
-
-  public static func state(
-    lastFeedEndedAt: EpochMs?,
-    window: FeedWindow?,
-    napAt: EpochMs?,
-    timerRunning: Bool,
-    now: EpochMs
-  ) -> CaughtUp? {
-    guard !timerRunning, let lastFeedEndedAt, let window, lastFeedEndedAt <= now else { return nil }
-    let nextFeedAt = FeedWindows.nextFeedDueAt(lastFeedAt: lastFeedEndedAt, window: window)
-    guard nextFeedAt - now > feedMarginMs else { return nil }
-    if let napAt, napAt - now <= napMarginMs { return nil }
-    return CaughtUp(nextFeedAt: nextFeedAt)
-  }
-
-  public func detail(calendar: Calendar = .current) -> String {
-    "Next feed around \(Clock.h12(nextFeedAt, calendar: calendar)). Rest if you can."
+  /// Nothing needs doing right now: a recent feed with the next one well off, and not
+  /// awake longer than usual. Running timers are the caller's to check.
+  static func allCaughtUp(_ input: InsightInput) -> Bool {
+    let all = feeds(input.recentFeeds)
+    guard let last = all.last, last.loggedAt <= input.now, input.now - last.loggedAt < staleFeedMs else { return false }
+    let due = nextFeedDue(after: last, feeds: all, input: input).at
+    guard due - input.now > caughtUpFeedMarginMs else { return false }
+    if !input.asleep, let end = input.lastSleepEndMs, end <= input.now {
+      let range = typicalAwake(dateOfBirth: input.baby.dateOfBirth, now: input.now)
+      if input.now - end > range.highMin * minuteMs { return false }
+    }
+    return true
   }
 }
 

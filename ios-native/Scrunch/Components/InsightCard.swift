@@ -4,18 +4,31 @@ import SwiftUI
 /// "Right now" card: plain-words insights, each tappable, with Ask underneath.
 struct InsightCard: View {
   let insights: [Insight]
+  var caughtUp = false
   let onOpen: (Insight.Kind) -> Void
   let onAsk: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      Text("Right now")
-        .font(.app(.bold, 13))
-        .foregroundStyle(C.muted)
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 4)
-        .accessibilityAddTraits(.isHeader)
+      HStack(spacing: 6) {
+        Text("Right now")
+          .font(.app(.bold, 13))
+          .foregroundStyle(C.muted)
+        Spacer(minLength: 8)
+        if caughtUp {
+          Image(systemName: "checkmark.heart.fill")
+            .font(.system(size: 12, weight: .bold))
+            .accessibilityHidden(true)
+          Text("All caught up. Rest if you can.")
+            .font(.app(.bold, 13))
+        }
+      }
+      .foregroundStyle(C.tealDark)
+      .padding(.horizontal, 16)
+      .padding(.top, 14)
+      .padding(.bottom, 4)
+      .accessibilityElement(children: .combine)
+      .accessibilityAddTraits(.isHeader)
       ForEach(insights, id: \.kind) { insight in
         Button { onOpen(insight.kind) } label: { row(insight) }
           .buttonStyle(.plain)

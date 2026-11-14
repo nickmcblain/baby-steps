@@ -33,35 +33,46 @@ final class SaveCopyTests: XCTestCase {
   }
 }
 
-final class CaughtUpTests: XCTestCase {
-  private let window = FeedWindow(intervalMs: 3 * hourMs, label: "about 3 hours", shouldWakeForFeeds: true, reason: "")
-  private let now = at(2026, 10, 14, 14, 0)
+final class AllCaughtUpTests: XCTestCase {
+  let now = at(2026, 10, 14, 14, 0)
+
+  // 20 days old, breastfed: typical gap about 2.5 hours; awake range 35–60 min.
+  let baby = Baby(id: "b1", name: "Ada", dateOfBirth: at(2026, 10, 14, 14, 0) - 20 * DAY, weightGrams: 4200, feedingMode: .breast)
+
+  func feed(_ hour: Int, _ minute: Int = 0) -> Event {
+    Event(loggedAt: at(2026, 10, 14, hour, minute), kind: .feed, feedKind: .breast, side: .left)
+  }
+
+  func caughtUp(_ feeds: [Event], sleepEnd: EpochMs? = nil, asleep: Bool = false) -> Bool {
+    Insights.allCaughtUp(InsightInput(baby: baby, now: now, recentFeeds: feeds, lastNappy: nil, lastSleepEndMs: sleepEnd, asleep: asleep))
+  }
 
   func testCaughtUpAfterARecentFeed() {
-    let state = CaughtUp.state(lastFeedEndedAt: now - hourMs, window: window, napAt: nil, timerRunning: false, now: now)
-    XCTAssertEqual(state?.nextFeedAt, now + 2 * hourMs)
-    XCTAssertEqual(state?.detail(calendar: london), "Next feed around 4:00 pm. Rest if you can.")
+    // Fed at 1pm, next likely 3:30 pm.
+    XCTAssertTrue(caughtUp([feed(13)]))
   }
 
-  func testNotCaughtUpWhenFeedIsNearlyDue() {
-    XCTAssertNil(CaughtUp.state(lastFeedEndedAt: now - 2.6 * hourMs, window: window, napAt: nil, timerRunning: false, now: now))
-    XCTAssertNil(CaughtUp.state(lastFeedEndedAt: now - 4 * hourMs, window: window, napAt: nil, timerRunning: false, now: now))
+  func testAgreesWithTheNextFeedInsight() {
+    let input = InsightInput(baby: baby, now: now, recentFeeds: [feed(13)], lastNappy: nil, lastSleepEndMs: nil, asleep: false)
+    XCTAssertEqual(Insights.nextFeed(input, calendar: london)?.headline, "Next feed likely around 3:30 pm")
   }
 
-  func testNotCaughtUpWithoutAFeedOrWindow() {
-    XCTAssertNil(CaughtUp.state(lastFeedEndedAt: nil, window: window, napAt: nil, timerRunning: false, now: now))
-    XCTAssertNil(CaughtUp.state(lastFeedEndedAt: now - hourMs, window: nil, napAt: nil, timerRunning: false, now: now))
+  func testNotCaughtUpWhenAFeedIsNearOrDue() {
+    // Fed 11:45, next likely 2:15 pm: inside the 30 minute margin.
+    XCTAssertFalse(caughtUp([feed(11, 45)]))
+    XCTAssertFalse(caughtUp([feed(10)]))
   }
 
-  func testNotCaughtUpWhenANapIsDueOrATimerRuns() {
-    XCTAssertNil(CaughtUp.state(lastFeedEndedAt: now - hourMs, window: window, napAt: now + 10 * minuteMs, timerRunning: false, now: now))
-    XCTAssertNil(CaughtUp.state(lastFeedEndedAt: now - hourMs, window: window, napAt: now - minuteMs, timerRunning: false, now: now))
-    XCTAssertNil(CaughtUp.state(lastFeedEndedAt: now - hourMs, window: window, napAt: nil, timerRunning: true, now: now))
-    XCTAssertNotNil(CaughtUp.state(lastFeedEndedAt: now - hourMs, window: window, napAt: now + hourMs, timerRunning: false, now: now))
+  func testNotCaughtUpWithoutARecentFeed() {
+    XCTAssertFalse(caughtUp([]))
+    XCTAssertFalse(caughtUp([Event(loggedAt: now - 9 * hourMs, kind: .feed, feedKind: .breast)]))
+    XCTAssertFalse(caughtUp([Event(loggedAt: now + hourMs, kind: .feed, feedKind: .breast)]))
   }
 
-  func testFutureFeedDoesNotCount() {
-    XCTAssertNil(CaughtUp.state(lastFeedEndedAt: now + hourMs, window: window, napAt: nil, timerRunning: false, now: now))
+  func testNotCaughtUpWhenAwakeLongerThanUsual() {
+    XCTAssertFalse(caughtUp([feed(13)], sleepEnd: now - 90 * minuteMs))
+    XCTAssertTrue(caughtUp([feed(13)], sleepEnd: now - 30 * minuteMs))
+    XCTAssertTrue(caughtUp([feed(13)], sleepEnd: now - 90 * minuteMs, asleep: true))
   }
 }
 

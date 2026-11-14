@@ -12,6 +12,7 @@ struct QuickLogPanel: View {
   @Environment(AppRouter.self) private var router
   @Environment(TimerStore.self) private var timers
   @Environment(UndoCenter.self) private var undo
+  @Environment(SaveFeedback.self) private var saveFeedback
   @State private var savingNappy: QuickLog.Nappy?
   @ScaledMetric(relativeTo: .body) private var nappyIconSize: CGFloat = 20
 
@@ -161,6 +162,7 @@ struct QuickLogPanel: View {
     let loggedAt = LoggedAt.nowSnapped()
     do {
       let id = try await convex.mutation(nappyCall(nappy, at: loggedAt))
+      saveFeedback.haptic()
       showSaved(nappy, saved: SavedLog(id: id, loggedAt: loggedAt))
     } catch {
       undo.show(UndoCenter.Toast(message: "Couldn’t log that nappy. Try again."))
