@@ -82,6 +82,7 @@ export const babyValidator = v.object({
   createdBy: v.id("users"),
   careDataConsentAt: v.optional(v.number()),
   careDataConsentVersion: v.optional(v.string()),
+  photoId: v.optional(v.id("_storage")),
 });
 
 export const citationValidator = v.object({
