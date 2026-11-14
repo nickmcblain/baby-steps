@@ -76,6 +76,34 @@ public enum API {
     public static func joinByCode(_ code: String) -> ConvexCall<BabyID> {
       .init("babies:joinByCode", convexArgs(["code": code]))
     }
+
+    public static func photoUrl(_ babyId: BabyID) -> ConvexCall<String?> {
+      .init("babies:photoUrl", convexArgs(["babyId": babyId]))
+    }
+
+    public static func generatePhotoUploadUrl(_ babyId: BabyID) -> ConvexCall<String> {
+      .init("babies:generatePhotoUploadUrl", convexArgs(["babyId": babyId]))
+    }
+
+    public static func setPhoto(babyId: BabyID, storageId: String) -> ConvexCall<ConvexNull> {
+      .init("babies:setPhoto", convexArgs(["babyId": babyId, "storageId": storageId]))
+    }
+
+    public static func removePhoto(_ babyId: BabyID) -> ConvexCall<ConvexNull> {
+      .init("babies:removePhoto", convexArgs(["babyId": babyId]))
+    }
+
+    public static func milestones(_ babyId: BabyID) -> ConvexCall<[MilestoneMark]> {
+      .init("babies:milestones", convexArgs(["babyId": babyId]))
+    }
+
+    public static func setMilestone(babyId: BabyID, milestone: Milestone, reachedAt: Double) -> ConvexCall<ConvexNull> {
+      .init("babies:setMilestone", convexArgs(["babyId": babyId, "key": milestone, "reachedAt": reachedAt]))
+    }
+
+    public static func clearMilestone(babyId: BabyID, milestone: Milestone) -> ConvexCall<ConvexNull> {
+      .init("babies:clearMilestone", convexArgs(["babyId": babyId, "key": milestone]))
+    }
   }
 
   public enum events {
