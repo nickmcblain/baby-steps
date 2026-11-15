@@ -89,6 +89,8 @@ final class FreeAllowanceTests: XCTestCase {
   func testReadsConvexRefusals() {
     XCTAssertEqual(ServerRefusal(errorData: #"{"code":"FREE_LIMIT_REACHED","type":"pump","limit":5}"#), .freeLimit(.pump))
     XCTAssertEqual(ServerRefusal(errorData: #"{"code":"SUBSCRIPTION_REQUIRED"}"#), .subscriptionRequired)
+    XCTAssertEqual(ServerRefusal(errorData: #"{"code":"SUBSCRIPTION_REQUIRED","feature":"sharing"}"#), .sharingNeedsSubscription)
+    XCTAssertEqual(ServerRefusal.sharingNeedsSubscription.message, "Each carer needs their own Scrunch subscription to share a baby.")
     XCTAssertNil(ServerRefusal(errorData: #""No baby matches that code""#))
     XCTAssertEqual(ServerRefusal.freeLimit(.pump).message, "You've used your 5 free pumping sessions. Subscribe to keep logging them; sleep is always free.")
   }
@@ -142,7 +144,5 @@ final class SubscriptionTests: XCTestCase {
     XCTAssertEqual(status.summary(calendar: london), "Ends on Thursday 3 December. It won't renew")
     status.familyShared = true
     XCTAssertEqual(status.summary(calendar: london), "Shared with you through Family Sharing")
-    status.productID = Subscription.yearlyProductID
-    XCTAssertEqual(status.planName, "Yearly subscription")
   }
 }

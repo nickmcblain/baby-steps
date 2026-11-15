@@ -93,10 +93,21 @@ final class FreeAllowanceAppTests: XCTestCase {
     XCTAssertEqual(otherType, "pump")
   }
 
-  func testAPartnersSubscriptionUnlocksTheBaby() async throws {
+  func testYourOwnSubscriptionConfirmedByConvexUnlocks() async throws {
     let gate = await gate([.nappy: 9], unlocked: true)
     let id = try await gate.save(.nappy, babyId: "b1") { "e1" }
     XCTAssertEqual(id, "e1")
+  }
+
+  func testDecodedAllowanceIsThisCarersOwn() throws {
+    // Convex sends this carer's counts and their own subscription, so a partner who has
+    // subscribed or used free entries changes nothing here.
+    let json = #"{"limit":5,"babies":[{"babyId":"b1","unlocked":false,"used":[{"type":"nappy","used":2}]}]}"#
+    let response = try JSONDecoder().decode(AllowanceResponse.self, from: Data(json.utf8))
+    let gate = LogGate(entitlements: Entitlements())
+    gate.apply(response.babies)
+    XCTAssertFalse(gate.unlocked("b1"))
+    XCTAssertEqual(gate.allowances["b1"]?.used(.nappy), 2)
   }
 
   func testAskAndPatternsLockOnlyOnceAFreeAllowanceRunsOut() async throws {

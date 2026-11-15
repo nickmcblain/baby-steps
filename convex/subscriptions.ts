@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import { internalMutation, type MutationCtx } from "./_generated/server";
 import { getUserByToken } from "./lib/auth";
-import { subscriptionStateValidator, type SubscriptionState } from "./lib/appStore";
+import { mayClaim, subscriptionStateValidator, type SubscriptionState } from "./lib/appStore";
 import { authedMutation } from "./lib/functions";
 
 async function rowForUser(ctx: MutationCtx, userId: Id<"users">) {
@@ -44,29 +44,38 @@ export const accountToken = authedMutation({
   handler: async (ctx) => (await ensureRow(ctx, ctx.user._id)).appAccountToken,
 });
 
-export const tokenForUser = internalQuery({
-  args: { tokenIdentifier: v.string() },
-  returns: v.union(v.string(), v.null()),
-  handler: async (ctx, args) => {
-    const user = await getUserByToken(ctx, args.tokenIdentifier);
-    if (!user) return null;
-    const row = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .unique();
-    return row?.appAccountToken ?? null;
-  },
-});
-
-/** A verified transaction the signed-in user's app sent us. */
+/** A verified transaction the signed-in user's app sent us. False if it belongs to someone else. */
 export const applyForUser = internalMutation({
-  args: { tokenIdentifier: v.string(), state: subscriptionStateValidator },
-  returns: v.null(),
+  args: {
+    tokenIdentifier: v.string(),
+    transactionToken: v.optional(v.string()),
+    state: subscriptionStateValidator,
+  },
+  returns: v.boolean(),
   handler: async (ctx, args) => {
     const user = await getUserByToken(ctx, args.tokenIdentifier);
-    if (!user) return null;
-    await applyState(ctx, await ensureRow(ctx, user._id), args.state);
-    return null;
+    if (!user) return false;
+    const row = await ensureRow(ctx, user._id);
+    const claimed = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_original_transaction_id", (q) =>
+        q.eq("originalTransactionId", args.state.originalTransactionId),
+      )
+      .take(10);
+    const claimedBy = claimed.find((other) => other.userId !== user._id)?.userId ?? null;
+    const allowed = mayClaim({
+      familyShared: args.state.familyShared,
+      transactionToken: args.transactionToken,
+      myToken: row.appAccountToken,
+      claimedBy,
+      userId: user._id,
+    });
+    if (!allowed) {
+      console.warn("Transaction belongs to a different Scrunch account");
+      return false;
+    }
+    await applyState(ctx, row, args.state);
+    return true;
   },
 });
 

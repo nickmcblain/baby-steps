@@ -5,7 +5,6 @@ export const BUNDLE_ID = "com.nickmcblain.babysteps";
 /** One subscription group. Keep in sync with `Subscription.productIDs` in ScrunchCore. */
 export const SUBSCRIPTION_PRODUCT_IDS: readonly string[] = [
   "com.nickmcblain.babysteps.monthly",
-  "com.nickmcblain.babysteps.yearly",
 ];
 
 export const subscriptionStatusValidator = v.union(
@@ -122,4 +121,22 @@ export function claimedEnvironment(jws: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Entitlement is per carer, so a transaction unlocks only the Scrunch account it was bought for:
+ * never a Family Sharing copy, never one carrying another account's appAccountToken, and never one
+ * another account has already claimed.
+ */
+export function mayClaim(args: {
+  familyShared: boolean;
+  transactionToken?: string;
+  myToken: string | null;
+  claimedBy: string | null;
+  userId: string;
+}): boolean {
+  if (args.familyShared) return false;
+  const { transactionToken, myToken } = args;
+  if (transactionToken && myToken && transactionToken.toLowerCase() !== myToken.toLowerCase()) return false;
+  return args.claimedBy === null || args.claimedBy === args.userId;
 }

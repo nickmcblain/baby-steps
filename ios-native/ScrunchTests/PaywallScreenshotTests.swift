@@ -43,6 +43,12 @@ final class PaywallScreenshotTests: XCTestCase {
     try await snapshot("Paywall, entry waiting from a widget", PaywallView(type: .nappy, heldCount: 1).environment(entitlements), settle: 10)
   }
 
+  func testPaywallWhenJoiningASharedBaby() async throws {
+    let (entitlements, _) = await services([:])
+    try await warmUpStoreKit(entitlements)
+    try await snapshot("Paywall, joining a shared baby", PaywallView(sharing: .join).environment(entitlements), settle: 10)
+  }
+
   func testLockedPatterns() async throws {
     let (entitlements, gate) = await services([.feed: 5])
     let view = NavigationStack {

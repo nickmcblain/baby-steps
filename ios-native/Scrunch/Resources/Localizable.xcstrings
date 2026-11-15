@@ -1,0 +1,66 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "sharing.eachCarer" : {
+      "comment" : "Shown wherever a baby can be shared, and on the paywall",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each carer needs their own Scrunch subscription to share a baby."
+          }
+        }
+      }
+    },
+    "sharing.join.subscribe" : {
+      "comment" : "Button in the join sheet after closing the paywall",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subscribe and join"
+          }
+        }
+      }
+    },
+    "sharing.paywall.invite" : {
+      "comment" : "Paywall subtitle when creating a share code",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subscribe and you'll get a code to send to your partner or carer."
+          }
+        }
+      }
+    },
+    "sharing.paywall.join" : {
+      "comment" : "Paywall subtitle when joining a shared baby with a code",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subscribe and you'll join straight away with the code you entered."
+          }
+        }
+      }
+    },
+    "sharing.paywall.title" : {
+      "comment" : "Paywall title when sharing needs a subscription",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sharing comes with a subscription"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

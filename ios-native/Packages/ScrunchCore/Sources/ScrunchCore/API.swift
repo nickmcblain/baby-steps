@@ -73,6 +73,10 @@ public enum API {
       .init("babies:saveRoomTemp", convexArgs(["babyId": babyId, "tempC": tempC]))
     }
 
+    public static func createInvite(_ babyId: BabyID) -> ConvexCall<String> {
+      .init("babies:createInvite", convexArgs(["babyId": babyId]))
+    }
+
     public static func joinByCode(_ code: String) -> ConvexCall<BabyID> {
       .init("babies:joinByCode", convexArgs(["code": code]))
     }

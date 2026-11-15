@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { authedMutation, authedQuery } from "./lib/functions";
-import { getMembership, requireBabyMember, uniqueInviteCode } from "./lib/access";
+import { requireBabyMember } from "./lib/access";
+import { createInvite as createInviteCode, redeemInvite, visibleBaby } from "./lib/sharing";
 import { patchRoomTemp } from "./lib/logEvents";
 import {
   babyValidator,
@@ -21,7 +22,7 @@ export const list = authedQuery({
     for (const membership of memberships) {
       const baby = await ctx.db.get(membership.babyId);
       if (baby) {
-        babies.push(baby);
+        babies.push(await visibleBaby(ctx, baby, ctx.user._id));
       }
     }
     babies.sort((a, b) => a.name.localeCompare(b.name));
@@ -33,7 +34,8 @@ export const get = authedQuery({
   args: { babyId: v.id("babies") },
   returns: babyValidator,
   handler: async (ctx, args) => {
-    return await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return await visibleBaby(ctx, baby, ctx.user._id);
   },
 });
 
@@ -74,7 +76,6 @@ export const create = authedMutation({
     }
     const heightCm = normalizeHeightCm(args.heightCm);
 
-    const inviteCode = await uniqueInviteCode(ctx);
     const weightGrams = Math.round(args.weightGrams);
     const babyId = await ctx.db.insert("babies", {
       name,
@@ -83,7 +84,6 @@ export const create = authedMutation({
       heightCm,
       sex: args.sex,
       notes: args.notes?.trim() || undefined,
-      inviteCode,
       createdBy: ctx.user._id,
       careDataConsentAt: Date.now(),
       careDataConsentVersion: CARE_DATA_CONSENT_VERSION,
@@ -199,28 +199,16 @@ export const saveRoomTemp = authedMutation({
   },
 });
 
+/** A share code for this baby. Each carer needs their own subscription to share. */
+export const createInvite = authedMutation({
+  args: { babyId: v.id("babies") },
+  returns: v.string(),
+  handler: async (ctx, args) => await createInviteCode(ctx, ctx.user._id, args.babyId),
+});
+
+/** Redeems a share code. The joining carer needs their own subscription. */
 export const joinByCode = authedMutation({
   args: { code: v.string() },
   returns: v.id("babies"),
-  handler: async (ctx, args) => {
-    const inviteCode = args.code.trim().toUpperCase();
-    if (inviteCode.length < 4) {
-      throw new ConvexError("Invite code looks too short");
-    }
-    const baby = await ctx.db
-      .query("babies")
-      .withIndex("by_invite_code", (q) => q.eq("inviteCode", inviteCode))
-      .unique();
-    if (!baby) {
-      throw new ConvexError("No baby matches that code");
-    }
-    const existing = await getMembership(ctx, baby._id, ctx.user._id);
-    if (!existing) {
-      await ctx.db.insert("babyMembers", {
-        babyId: baby._id,
-        userId: ctx.user._id,
-      });
-    }
-    return baby._id;
-  },
+  handler: async (ctx, args) => await redeemInvite(ctx, ctx.user._id, args.code),
 });

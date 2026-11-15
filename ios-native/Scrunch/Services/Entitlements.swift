@@ -16,7 +16,7 @@ final class Entitlements {
 
   var subscribed: Bool { status != nil }
 
-  @ObservationIgnored private(set) var appAccountToken: UUID?
+  @ObservationIgnored var appAccountToken: UUID?
   @ObservationIgnored private var sync: ((String) async -> Void)?
   @ObservationIgnored private var synced: Set<String> = []
   @ObservationIgnored private var updates: Task<Void, Never>?
@@ -49,7 +49,9 @@ final class Entitlements {
     for await result in Transaction.currentEntitlements {
       guard case .verified(let transaction) = result,
             Subscription.productIDs.contains(transaction.productID),
-            transaction.revocationDate == nil
+            transaction.revocationDate == nil,
+            transaction.ownershipType != .familyShared,
+            belongsToThisAccount(transaction)
       else { continue }
       let status = PlanStatus(
         productID: transaction.productID,
@@ -66,6 +68,13 @@ final class Entitlements {
     }
     status = best
     loaded = true
+  }
+
+  /// Entitlement is per carer: another Scrunch account signed in with the same Apple ID doesn't
+  /// inherit this account's subscription.
+  private func belongsToThisAccount(_ transaction: Transaction) -> Bool {
+    guard let mine = appAccountToken, let theirs = transaction.appAccountToken else { return true }
+    return mine == theirs
   }
 
   /// Sends every current transaction to Convex again, for when it refuses a log StoreKit says is paid for.

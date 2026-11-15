@@ -4,8 +4,7 @@ import Foundation
 public enum Subscription {
   /// One subscription group. Keep in sync with `SUBSCRIPTION_PRODUCT_IDS` in convex/lib/appStore.ts.
   public static let monthlyProductID = "com.nickmcblain.babysteps.monthly"
-  public static let yearlyProductID = "com.nickmcblain.babysteps.yearly"
-  public static let productIDs = [monthlyProductID, yearlyProductID]
+  public static let productIDs = [monthlyProductID]
 
   /// Apple's standard EULA. App Review also needs a privacy policy link before release.
   public static let termsOfUseURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
@@ -14,7 +13,7 @@ public enum Subscription {
     "Unlimited feeds, nappies, pumping, growth and every other log",
     "Ask: answers grounded in NHS guidance, using your logs",
     "Feed, tummy time and nappy patterns over 7, 14 and 30 days",
-    "One subscription covers everyone you share your baby with",
+    "Share your baby with a partner or carer",
   ]
 
   public static let alwaysFree =
@@ -89,7 +88,7 @@ public struct PlanStatus: Equatable, Sendable {
   }
 
   public var planName: String {
-    productID == Subscription.yearlyProductID ? "Yearly subscription" : "Monthly subscription"
+    "Monthly subscription"
   }
 
   public func summary(calendar: Calendar = .current) -> String {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { claimedEnvironment, isSubscribed, stateFromTransaction, type TransactionInfo } from "./appStore.ts";
+import { claimedEnvironment, isSubscribed, mayClaim, stateFromTransaction, type TransactionInfo } from "./appStore.ts";
 
 const NOW = 1_800_000_000_000;
 const DAY = 86_400_000;
@@ -79,4 +79,14 @@ test("claimedEnvironment reads transactions and notifications", () => {
   assert.equal(claimedEnvironment(fakeJws({ summary: { environment: "Sandbox" } })), "Sandbox");
   assert.equal(claimedEnvironment(fakeJws({})), undefined);
   assert.equal(claimedEnvironment("not-a-jws"), undefined);
+});
+
+test("a transaction unlocks only the carer it was bought for", () => {
+  const base = { familyShared: false, transactionToken: "ABC", myToken: "abc", claimedBy: null, userId: "users:mum" };
+  assert.equal(mayClaim(base), true);
+  assert.equal(mayClaim({ ...base, claimedBy: "users:mum" }), true);
+  assert.equal(mayClaim({ ...base, claimedBy: "users:dad" }), false, "already another carer's");
+  assert.equal(mayClaim({ ...base, myToken: "other" }), false, "bought for another account");
+  assert.equal(mayClaim({ ...base, familyShared: true }), false, "Family Sharing is off");
+  assert.equal(mayClaim({ ...base, transactionToken: undefined }), true);
 });

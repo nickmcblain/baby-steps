@@ -83,7 +83,7 @@ export const ask = action({
       userId,
       now,
     });
-    if (!(await ctx.runQuery(internal.allowance.askAllowed, { babyId: args.babyId }))) {
+    if (!(await ctx.runQuery(internal.allowance.askAllowed, { babyId: args.babyId, userId }))) {
       throw new ConvexError({ code: SUBSCRIPTION_REQUIRED });
     }
 

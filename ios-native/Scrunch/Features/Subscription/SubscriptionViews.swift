@@ -2,11 +2,13 @@ import ScrunchCore
 import StoreKit
 import SwiftUI
 
-/// Apple's subscription view: StoreKit shows the prices and renewal periods. It appears when a
-/// log goes past the free allowance, from a locked Ask or patterns screen, or from Profile.
+/// Apple's subscription view: StoreKit shows the price and renewal period. It appears when a
+/// log goes past the free allowance, from a locked Ask or patterns screen, when sharing a baby,
+/// or from Profile.
 struct PaywallView: View {
   var type: LogType?
   var feature: Subscription.Feature?
+  var sharing: SharingGate.Reason?
   var heldCount = 0
 
   @Environment(Entitlements.self) private var entitlements
@@ -15,7 +17,7 @@ struct PaywallView: View {
   var body: some View {
     let token = entitlements.appAccountToken
     SubscriptionStoreView(productIDs: Subscription.productIDs) {
-      PaywallMarketing(type: type, feature: feature, heldCount: heldCount)
+      PaywallMarketing(type: type, feature: feature, sharing: sharing, heldCount: heldCount)
     }
     .subscriptionStoreControlStyle(.buttons)
     .subscriptionStoreButtonLabel(.multiline)
@@ -33,14 +35,21 @@ struct PaywallView: View {
 private struct PaywallMarketing: View {
   let type: LogType?
   let feature: Subscription.Feature?
+  let sharing: SharingGate.Reason?
   let heldCount: Int
 
   private var title: String {
+    if sharing != nil { return SharingCopy.paywallTitle }
     if let feature { return feature.title }
     return FreeAllowance.paywallTitle(type)
   }
 
   private var subtitle: String {
+    switch sharing {
+    case .join: return SharingCopy.joinSubtitle
+    case .invite: return SharingCopy.inviteSubtitle
+    case nil: break
+    }
     if heldCount > 0 {
       let entries = heldCount == 1 ? "1 entry from Siri or a widget is" : "\(heldCount) entries from Siri or a widget are"
       return "\(entries) waiting. Subscribe and they'll be saved straight away."
@@ -69,6 +78,10 @@ private struct PaywallMarketing: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(C.tealSoft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+      Text(SharingCopy.eachCarer)
+        .font(.app(.medium, 14))
+        .foregroundStyle(C.ink)
+        .fixedSize(horizontal: false, vertical: true)
       Text(Subscription.renewalTerms)
         .font(.app(.body, 12, relativeTo: .caption))
         .foregroundStyle(C.muted)

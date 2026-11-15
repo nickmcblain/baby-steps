@@ -77,7 +77,7 @@ export async function insertFeed(
       throw new ConvexError("Bottle amount is required");
     }
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("feed"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("feed"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -110,7 +110,7 @@ export async function insertNappy(
   if ((args.nappy === "poo" || args.nappy === "both") && !args.pooSize) {
     throw new ConvexError("Poo size is required");
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("nappy"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("nappy"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -139,7 +139,7 @@ export async function insertWeight(
     throw new ConvexError("Weight must be greater than 0");
   }
   const weightGrams = Math.round(args.weightGrams);
-  await chargeAllowance(ctx, args.babyId, logTypeFor("weight"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("weight"));
   const eventId = await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -196,7 +196,7 @@ export async function insertTummy(
   ) {
     throw new ConvexError("Tummy time must be between 1 minute and 3 hours");
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("tummy"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("tummy"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -224,7 +224,7 @@ export async function insertHeight(
     throw new ConvexError("Height looks out of range");
   }
   const heightCm = Math.round(args.heightCm * 10) / 10;
-  await chargeAllowance(ctx, args.babyId, logTypeFor("height"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("height"));
   const eventId = await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -259,7 +259,7 @@ export async function insertPump(
   if (args.amountMl != null && (!Number.isFinite(args.amountMl) || args.amountMl <= 0)) {
     throw new ConvexError("Amount must be greater than 0");
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("pump"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("pump"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -286,7 +286,7 @@ export async function insertMedicine(
   if (title.length < 1 || title.length > 80) {
     throw new ConvexError("Give the medicine a name");
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("medicine"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("medicine"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -315,7 +315,7 @@ export async function insertPotty(
   if ((args.nappy === "poo" || args.nappy === "both") && !args.pooSize) {
     throw new ConvexError("Poo size is required");
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("potty"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("potty"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -353,7 +353,7 @@ export async function insertActivity(
   ) {
     throw new ConvexError("Duration must be between 1 minute and 6 hours");
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("activity"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("activity"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,
@@ -380,7 +380,7 @@ export async function insertCustom(
   if (title.length < 1 || title.length > 80) {
     throw new ConvexError("Give the event a short title");
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("custom"));
+  await chargeAllowance(ctx, args.babyId, userId, logTypeFor("custom"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,

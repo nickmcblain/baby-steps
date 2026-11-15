@@ -26,6 +26,7 @@ import type * as lib_babyContext from "../lib/babyContext.js";
 import type * as lib_clothingAdvice from "../lib/clothingAdvice.js";
 import type * as lib_functions from "../lib/functions.js";
 import type * as lib_logEvents from "../lib/logEvents.js";
+import type * as lib_sharing from "../lib/sharing.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
@@ -57,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   "lib/clothingAdvice": typeof lib_clothingAdvice;
   "lib/functions": typeof lib_functions;
   "lib/logEvents": typeof lib_logEvents;
+  "lib/sharing": typeof lib_sharing;
   "lib/validators": typeof lib_validators;
   subscriptions: typeof subscriptions;
   users: typeof users;

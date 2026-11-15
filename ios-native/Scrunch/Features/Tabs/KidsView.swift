@@ -6,8 +6,12 @@ struct KidsView: View {
   @Environment(ConvexService.self) private var convex
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
+  @Environment(Entitlements.self) private var entitlements
   @State private var babies = Live<[Baby]>()
   @State private var joinOpen = false
+  @State private var sharing = SharingGate()
+  @State private var inviting: BabyID?
+  @State private var shareError: String?
 
   var body: some View {
     ScreenScaffold(showsBack: false, clearDock: true) {
@@ -45,41 +49,57 @@ struct KidsView: View {
                   Text(baby.name).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(1)
                   Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
                     .font(.app(.body, 13)).foregroundStyle(C.muted)
-                  Text("Share code \(baby.inviteCode)")
-                    .font(.app(.medium, 12)).foregroundStyle(C.purple)
+                  if let code = baby.inviteCode {
+                    Text("Share code \(code)")
+                      .font(.app(.medium, 12)).foregroundStyle(C.purple)
+                  }
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .contentShape(Rectangle())
               }
               .buttonStyle(PressScale())
-              ShareLink(item: PartnerInvite.message(babyName: baby.name, code: baby.inviteCode)) {
-                Label("Invite partner", systemImage: "person.badge.plus")
-                  .font(.app(.bold, 13))
-                  .foregroundStyle(C.purple)
-                  .frame(maxWidth: .infinity, minHeight: 44)
-                  .background(C.purpleSoft, in: Capsule())
+              Group {
+                if let code = baby.inviteCode {
+                  ShareLink(item: PartnerInvite.message(babyName: baby.name, code: code)) {
+                    InviteLabel()
+                  }
+                  .accessibilityHint("Shares code \(code) with a friendly message")
+                } else {
+                  Button { Task { await invite(baby) } } label: {
+                    if inviting == baby.id { ProgressView().tint(C.purple).frame(maxWidth: .infinity, minHeight: 44) } else { InviteLabel() }
+                  }
+                  .disabled(inviting != nil)
+                  .accessibilityHint(SharingCopy.eachCarer)
+                }
               }
               .padding([.horizontal, .bottom], 12)
-              .accessibilityHint("Shares code \(baby.inviteCode) with a friendly message")
             }
             .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
             .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
             .cardShadow()
           }
         }
+        if let shareError {
+          Text(shareError).font(.app(.medium, 14)).foregroundStyle(C.danger)
+        }
         if !(babies.value ?? []).isEmpty {
           Text(PartnerInvite.howTo).font(.app(.body, 13)).foregroundStyle(C.muted)
+          Text(SharingCopy.eachCarer).font(.app(.body, 13)).foregroundStyle(C.muted)
         }
       }
     }
     .task { await babies.bind(API.babies.list(), convex) }
+    .onAppear { sharing.entitlements = entitlements }
+    .sheet(item: Bindable(sharing).paywall, onDismiss: sharing.paywallClosed) { reason in
+      PaywallView(sharing: reason)
+    }
     .sheet(isPresented: $joinOpen) {
       JoinPartnerSheet { id in
         joinOpen = false
         open(id)
       }
-      .presentationDetents([.height(300)])
+      .presentationDetents([.height(360)])
       .presentationDragIndicator(.visible)
       .presentationCornerRadius(32)
       .presentationBackground(C.bg)
@@ -90,29 +110,62 @@ struct KidsView: View {
     activeBaby.select(id)
     router.popToRoot(tab: .home)
   }
+
+  /// The code appears on the card once Convex has made it; the list query is live.
+  private func invite(_ baby: Baby) async {
+    inviting = baby.id
+    shareError = nil
+    sharing.entitlements = entitlements
+    do {
+      _ = try await sharing.perform(.invite) { try await convex.mutation(API.babies.createInvite(baby.id)) }
+    } catch {
+      shareError = UserMessage.from(error, fallback: "Couldn't make a share code. Try again.")
+    }
+    inviting = nil
+  }
+}
+
+private struct InviteLabel: View {
+  var body: some View {
+    Label("Invite partner", systemImage: "person.badge.plus")
+      .font(.app(.bold, 13))
+      .foregroundStyle(C.purple)
+      .frame(maxWidth: .infinity, minHeight: 44)
+      .background(C.purpleSoft, in: Capsule())
+  }
 }
 
 struct JoinPartnerSheet: View {
   let onJoined: (BabyID) -> Void
 
   @Environment(ConvexService.self) private var convex
+  @Environment(Entitlements.self) private var entitlements
   @State private var code = ""
   @State private var error: String?
   @State private var busy = false
+  @State private var sharing = SharingGate()
+  @State private var needsSubscription = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       Text("Join with a code").font(.app(.bold, 22)).foregroundStyle(C.ink)
       Text("Enter the 6-character code your partner sent. You'll both see the same feeds, sleeps and nappies.")
-        .font(.app(.body, 15)).foregroundStyle(C.muted).padding(.bottom, 8)
+        .font(.app(.body, 15)).foregroundStyle(C.muted)
+        .fixedSize(horizontal: false, vertical: true)
+      Text(SharingCopy.eachCarer)
+        .font(.app(.medium, 14)).foregroundStyle(C.ink).padding(.bottom, 8)
         .fixedSize(horizontal: false, vertical: true)
       InviteCodeField(code: $code, editable: !busy)
         .onChange(of: code) { _, next in
           error = nil
+          needsSubscription = false
           if next.count == InviteCode.length { Task { await join(next) } }
         }
       if busy {
         ProgressView().tint(C.teal).padding(.top, 12).frame(maxWidth: .infinity)
+      } else if needsSubscription {
+        PrimaryButton(label: SharingCopy.subscribeAndJoin) { await join(code) }
+          .padding(.top, 12)
       } else if let error {
         Text(error).font(.app(.medium, 14)).foregroundStyle(C.danger).padding(.top, 12)
       }
@@ -120,18 +173,29 @@ struct JoinPartnerSheet: View {
     }
     .padding(.horizontal, 20)
     .padding(.top, 28)
+    .onAppear { sharing.entitlements = entitlements }
+    .sheet(item: Bindable(sharing).paywall, onDismiss: sharing.paywallClosed) { reason in
+      PaywallView(sharing: reason)
+    }
   }
 
+  /// Without a subscription the paywall opens over this sheet; the code they typed stays, and
+  /// the join finishes by itself after a purchase.
   private func join(_ next: String) async {
     guard !busy else { return }
     busy = true
+    needsSubscription = false
+    sharing.entitlements = entitlements
     do {
-      let id = try await convex.mutation(API.babies.joinByCode(next))
-      onJoined(id)
+      if let id = try await sharing.perform(.join, { try await convex.mutation(API.babies.joinByCode(next)) }) {
+        onJoined(id)
+        return
+      }
+      needsSubscription = true
     } catch {
       self.error = UserMessage.from(error, fallback: "Check the code.")
-      busy = false
     }
+    busy = false
   }
 }
 

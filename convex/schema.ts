@@ -30,7 +30,8 @@ export default defineSchema({
     heightCm: v.optional(v.number()),
     sex: v.optional(sexValidator),
     notes: v.optional(v.string()),
-    inviteCode: v.string(),
+    /** Created on first share by a subscriber (`babies:createInvite`). */
+    inviteCode: v.optional(v.string()),
     lastRoomTempC: v.optional(v.number()),
     deliveryType: v.optional(deliveryTypeValidator),
     gestationWeeks: v.optional(v.number()),
@@ -122,10 +123,11 @@ export default defineSchema({
     .index("by_app_account_token", ["appAccountToken"])
     .index("by_original_transaction_id", ["originalTransactionId"]),
 
-  /** Entries ever created per baby and log type. Deleting a log doesn't give one back. */
+  /** Entries ever created per carer, baby and log type. Deleting a log doesn't give one back. */
   logAllowances: defineTable({
     babyId: v.id("babies"),
+    userId: v.id("users"),
     type: logTypeValidator,
     used: v.number(),
-  }).index("by_baby_and_type", ["babyId", "type"]),
+  }).index("by_baby_and_user_and_type", ["babyId", "userId", "type"]),
 });

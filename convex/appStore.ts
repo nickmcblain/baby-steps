@@ -37,7 +37,7 @@ function verifierFor(jws: string): SignedDataVerifier | null {
 export const syncTransaction = action({
   args: { signedTransaction: v.string() },
   returns: v.boolean(),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<boolean> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new ConvexError("Not authenticated");
     const verifier = verifierFor(args.signedTransaction);
@@ -51,20 +51,11 @@ export const syncTransaction = action({
     }
     const state = stateFromTransaction(tx, undefined, undefined, Date.now());
     if (!state) return false;
-    if (tx.appAccountToken && !state.familyShared) {
-      const mine = await ctx.runQuery(internal.subscriptions.tokenForUser, {
-        tokenIdentifier: identity.tokenIdentifier,
-      });
-      if (mine !== null && mine.toLowerCase() !== tx.appAccountToken.toLowerCase()) {
-        console.warn("Transaction belongs to a different Scrunch account");
-        return false;
-      }
-    }
-    await ctx.runMutation(internal.subscriptions.applyForUser, {
+    return await ctx.runMutation(internal.subscriptions.applyForUser, {
       tokenIdentifier: identity.tokenIdentifier,
+      transactionToken: tx.appAccountToken,
       state,
     });
-    return true;
   },
 });
 

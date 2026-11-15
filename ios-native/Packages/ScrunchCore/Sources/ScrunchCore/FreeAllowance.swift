@@ -20,8 +20,8 @@ public enum LogType: String, Codable, CaseIterable, Sendable {
   }
 }
 
-/// The usage-based trial: every baby gets `limit` entries of each log type except sleep, shared
-/// by everyone the baby is shared with, then logging that type needs a subscription.
+/// The usage-based trial: each carer gets `limit` entries of each log type except sleep on each
+/// baby, then logging that type needs their own subscription.
 /// Convex enforces the same rule in convex/lib/allowance.ts.
 public enum FreeAllowance {
   public static let limit = 5
@@ -65,7 +65,8 @@ public enum FreeAllowance {
   }
 }
 
-/// One baby's allowance as Convex reports it.
+/// This carer's allowance on one baby, as Convex reports it. `unlocked` is the carer's own
+/// subscription: a partner's doesn't count.
 public struct BabyAllowance: Codable, Equatable, Sendable {
   public var babyId: BabyID
   public var unlocked: Bool
@@ -154,16 +155,17 @@ public struct SharedAllowance: Codable, Equatable, Sendable {
 }
 
 /// Convex's structured refusals, from the JSON in `ClientError.ConvexError(data:)`.
-public enum ServerRefusal: Equatable, Sendable {
+public enum ServerRefusal: Error, Equatable, Sendable {
   case freeLimit(LogType?)
   case subscriptionRequired
+  case sharingNeedsSubscription
 
   public init?(errorData: String) {
-    struct Payload: Decodable { let code: String; let type: String? }
+    struct Payload: Decodable { let code: String; let type: String?; let feature: String? }
     guard let payload = try? JSONDecoder().decode(Payload.self, from: Data(errorData.utf8)) else { return nil }
     switch payload.code {
     case "FREE_LIMIT_REACHED": self = .freeLimit(payload.type.flatMap(LogType.init(rawValue:)))
-    case "SUBSCRIPTION_REQUIRED": self = .subscriptionRequired
+    case "SUBSCRIPTION_REQUIRED": self = payload.feature == "sharing" ? .sharingNeedsSubscription : .subscriptionRequired
     default: return nil
     }
   }
@@ -172,6 +174,7 @@ public enum ServerRefusal: Equatable, Sendable {
     switch self {
     case .freeLimit(let type): "\(FreeAllowance.paywallTitle(type)). Subscribe to keep logging them; sleep is always free."
     case .subscriptionRequired: "You've used your free entries. Subscribe to keep using Ask."
+    case .sharingNeedsSubscription: "Each carer needs their own Scrunch subscription to share a baby."
     }
   }
 }
