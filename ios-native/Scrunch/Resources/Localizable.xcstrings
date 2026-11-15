@@ -1,6 +1,30 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "allowance.hint" : {
+      "comment" : "Toast once a few free entries of a type are left: entries left, the free limit, the log type (\"feeds\")",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld free %3$@ left. Sleep is always free."
+          }
+        }
+      }
+    },
+    "allowance.paywall.title" : {
+      "comment" : "Paywall title after the free entries of a type are used: the free limit, the log type (\"nappies\")",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've used your %1$lld free %2$@"
+          }
+        }
+      }
+    },
     "sharing.eachCarer" : {
       "comment" : "Shown wherever a baby can be shared, and on the paywall",
       "extractionState" : "manual",

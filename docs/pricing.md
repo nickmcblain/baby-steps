@@ -14,7 +14,7 @@ StoreKit file uses a placeholder for testing only. The product sits in one subsc
 
 ## The rule
 
-Each carer gets **5 free entries of each log type on each baby**. Sleep has no limit.
+Each carer gets **10 free entries of each log type on each baby**. Sleep has no limit.
 
 | Allowance | What counts |
 | --- | --- |
@@ -28,7 +28,7 @@ Each carer gets **5 free entries of each log type on each baby**. Sleep has no l
 | activities | activities |
 | notes | custom events and appointments |
 
-- **Saving the 6th entry of a type shows the paywall.** The entry is not saved unless they subscribe.
+- **Saving the 11th entry of a type shows the paywall.** The entry is not saved unless they subscribe.
   What they typed is kept: after a successful purchase the same save runs straight away; if they close
   the paywall, the form is still there as they left it.
 - **Sleep is free for good**: sleep logs, sleep timers, the sleep Live Activity and the sleep
@@ -51,6 +51,12 @@ The rule lives in one place on each side, and both have tests for the same cases
 - `FreeAllowance` in `ios-native/Packages/ScrunchCore/Sources/ScrunchCore/FreeAllowance.swift`
 - `convex/lib/allowance.ts`
 
+The numbers live in one file that both read:
+`ios-native/Packages/ScrunchCore/Sources/ScrunchCore/Resources/free-allowance.json`
+(`freeLimit: 10`, `hintWhenRemaining: 3`). ScrunchCore loads it as a package resource, and
+`convex/lib/allowance.ts` imports it, so changing the limit is a one-line edit followed by a Convex
+deploy and an app release.
+
 ## Sharing needs a subscription
 
 Each carer needs their own Scrunch subscription to share a baby. Convex enforces it
@@ -69,12 +75,14 @@ Each carer needs their own Scrunch subscription to share a baby. Convex enforces
 
 The sharing copy ("Each carer needs their own Scrunch subscription to share a baby.") is in the app's
 String Catalog (`ios-native/Scrunch/Resources/Localizable.xcstrings`) and appears on the Kids screen,
-the join sheet and the paywall.
+the join sheet and the paywall. The allowance hint and the paywall title are in the catalog too
+(`allowance.hint`, `allowance.paywall.title`), with the numbers passed in rather than written into
+the text.
 
 ## Gentle hint, no nagging
 
-Once three or fewer free entries of a type are left, the app shows one quiet toast, for example
-"3 of 5 free feeds left. Sleep is always free.", **at most once per type**, after the "Saved" toast
+Once three or fewer free entries of a type are left (after the 7th entry), the app shows one quiet
+toast, for example "3 of 10 free feeds left. Sleep is always free.", **at most once per type**, after the "Saved" toast
 has gone. Nothing else counts down, flashes or interrupts. The paywall is never shown at sign-up,
 onboarding or on launch.
 
@@ -83,7 +91,7 @@ onboarding or on launch.
 Convex is the source of truth. Every log goes through the insert helpers in `convex/lib/logEvents.ts`,
 which call `chargeAllowance` before inserting: it counts the entry in the `logAllowances` table
 (per carer, baby and type), or throws `ConvexError({ code: "FREE_LIMIT_REACHED", type })` once that
-carer's 5 are used and they don't subscribe.
+carer's 10 are used and they don't subscribe.
 That covers every `events:log*` mutation and voice and text logging (`voiceLog:*`, through
 `voiceTools`).
 
@@ -113,7 +121,7 @@ the paywall shows. Logs typed in the app's forms need a connection, as before.
 
 Apple's `SubscriptionStoreView`, so StoreKit shows the prices, billing periods and renewal terms. It
 has a close button, Restore purchases, a Terms of Use link and StoreKit's Privacy Policy link. Our
-copy says what they hit ("You've used your 5 free nappies"), that subscribing saves this entry straight
+copy says what they hit ("You've used your 10 free nappies"), that subscribing saves this entry straight
 away, what the subscription includes, that sleep (including sleep patterns) stays free and past logs stay readable, and that it
 renews automatically unless cancelled at least 24 hours before the end of the period. Closing it
 leaves sleep logging working and every existing log viewable.
@@ -156,7 +164,7 @@ Convex never applies a family-shared transaction, and the app ignores them.
   against a **development** Convex deployment, set `APPSTORE_ACCEPT_XCODE=true` there. Never set it in
   production.
 - `bun run test:convex`: Convex typecheck, the shared rule, the per-carer counter (limit, sleep,
-  each carer's own five, a subscription covering only its owner, expiry), sharing (creating and
+  each carer's own ten, a subscription covering only its owner, expiry), sharing (creating and
   redeeming codes with and without a subscription, a lapsed carer), transaction ownership and the
   App Store status mapping.
 - ScrunchCore: `FreeAllowanceTests` (the rule, hint, mirrored allowance, refusals) and
@@ -173,7 +181,7 @@ Convex never applies a family-shared transaction, and the app ignores them.
 2. Create one subscription group, **Scrunch**, with one product, `com.nickmcblain.babysteps.monthly`
    (1 month, about £2.99), **no introductory offer**,
    **Family Sharing off**, United Kingdom only, en-GB names and descriptions, and a review screenshot
-   (`-debugPaywall YES`). Review notes should explain the 5 free entries per type for each carer, that sleep is free,
+   (`-debugPaywall YES`). Review notes should explain the 10 free entries per type for each carer, that sleep is free,
    and that each carer needs their own subscription to share a baby.
 3. App Information > **App Store Server Notifications**: Production and Sandbox URLs
    `https://<deployment>.convex.site/appstore/notifications`, Version 2. Send a test notification.

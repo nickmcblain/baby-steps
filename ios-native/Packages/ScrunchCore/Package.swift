@@ -12,7 +12,7 @@ let package = Package(
     .library(name: "ScrunchCore", targets: ["ScrunchCore"]),
   ],
   targets: [
-    .target(name: "ScrunchCore"),
+    .target(name: "ScrunchCore", resources: [.copy("Resources/free-allowance.json")]),
     .testTarget(name: "ScrunchCoreTests", dependencies: ["ScrunchCore"]),
   ]
 )

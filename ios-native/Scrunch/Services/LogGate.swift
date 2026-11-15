@@ -148,7 +148,7 @@ final class LogGate {
 
   // MARK: Hint
 
-  /// "3 of 5 free feeds left", at most once per type, after the saved toast has gone.
+  /// "3 of 10 free feeds left", at most once per type, after the saved toast has gone.
   private func hintIfNeeded(previous: [BabyID: BabyAllowance]) {
     guard !entitlements.subscribed else { return }
     var hinted = Set(defaults.stringArray(forKey: Self.hintedKey) ?? [])

@@ -31,14 +31,14 @@ final class PaywallScreenshotTests: XCTestCase {
     return (entitlements, gate)
   }
 
-  func testPaywallOnTheSixthNappy() async throws {
-    let (entitlements, _) = await services([.nappy: 5])
+  func testPaywallOnTheEleventhNappy() async throws {
+    let (entitlements, _) = await services([.nappy: FreeAllowance.limit])
     try await warmUpStoreKit(entitlements)
-    try await snapshot("Paywall, sixth nappy", PaywallView(type: .nappy).environment(entitlements), settle: 10)
+    try await snapshot("Paywall, eleventh nappy", PaywallView(type: .nappy).environment(entitlements), settle: 10)
   }
 
   func testPaywallForAWidgetLog() async throws {
-    let (entitlements, _) = await services([.nappy: 5])
+    let (entitlements, _) = await services([.nappy: FreeAllowance.limit])
     try await warmUpStoreKit(entitlements)
     try await snapshot("Paywall, entry waiting from a widget", PaywallView(type: .nappy, heldCount: 1).environment(entitlements), settle: 10)
   }
@@ -50,7 +50,7 @@ final class PaywallScreenshotTests: XCTestCase {
   }
 
   func testLockedPatterns() async throws {
-    let (entitlements, gate) = await services([.feed: 5])
+    let (entitlements, gate) = await services([.feed: FreeAllowance.limit])
     let view = NavigationStack {
       SubscriptionGate(babyId: "b1", feature: .patterns) { Text("Patterns") }
     }
@@ -58,7 +58,7 @@ final class PaywallScreenshotTests: XCTestCase {
   }
 
   func testSubscriptionRow() async throws {
-    let (entitlements, gate) = await services([.feed: 2, .nappy: 5, .pump: 1])
+    let (entitlements, gate) = await services([.feed: 3, .nappy: FreeAllowance.limit, .pump: 1])
     try await snapshot("Profile, free entries left", row(entitlements, gate))
 
     _ = try await session.buyProduct(identifier: Subscription.monthlyProductID)

@@ -1,10 +1,11 @@
 import { ConvexError, v, type Infer, type Value } from "convex/values";
+import config from "../../ios-native/Packages/ScrunchCore/Sources/ScrunchCore/Resources/free-allowance.json" with { type: "json" };
 
 /**
- * The usage-based trial. Each baby gets FREE_LIMIT entries of every log type except sleep,
- * shared by everyone the baby is shared with. Mirrors `FreeAllowance` in ScrunchCore.
+ * The usage-based trial. Each carer gets FREE_LIMIT entries of every log type except sleep on
+ * each baby. Mirrors `FreeAllowance` in ScrunchCore, and reads the limit from the same file.
  */
-export const FREE_LIMIT = 5;
+export const FREE_LIMIT: number = config.freeLimit;
 
 export const FREE_LIMIT_REACHED = "FREE_LIMIT_REACHED";
 export const SUBSCRIPTION_REQUIRED = "SUBSCRIPTION_REQUIRED";

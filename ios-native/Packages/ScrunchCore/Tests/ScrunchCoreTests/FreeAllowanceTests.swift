@@ -23,16 +23,17 @@ final class FreeAllowanceTests: XCTestCase {
     }
   }
 
-  func testFiveFreeThenTheSixthNeedsASubscription() {
-    XCTAssertEqual(FreeAllowance.limit, 5)
-    for used in 0..<5 { XCTAssertTrue(FreeAllowance.canLog(.nappy, used: used, unlocked: false)) }
-    XCTAssertFalse(FreeAllowance.canLog(.nappy, used: 5, unlocked: false))
-    XCTAssertTrue(FreeAllowance.canLog(.nappy, used: 5, unlocked: true))
+  func testTenFreeThenTheEleventhNeedsASubscription() {
+    let limit = FreeAllowance.limit
+    XCTAssertEqual(limit, 10, "Read from Resources/free-allowance.json, which Convex imports too")
+    for used in 0..<limit { XCTAssertTrue(FreeAllowance.canLog(.nappy, used: used, unlocked: false)) }
+    XCTAssertFalse(FreeAllowance.canLog(.nappy, used: limit, unlocked: false))
+    XCTAssertTrue(FreeAllowance.canLog(.nappy, used: limit, unlocked: true))
   }
 
   func testSleepIsAlwaysFree() {
     XCTAssertTrue(FreeAllowance.canLog(nil, used: 1000, unlocked: false))
-    let baby = BabyAllowance(babyId: "b1", unlocked: false, used: [.nappy: 5, .feed: 5])
+    let baby = BabyAllowance(babyId: "b1", unlocked: false, used: [.nappy: FreeAllowance.limit, .feed: FreeAllowance.limit])
     XCTAssertTrue(baby.canLog(.sleep(minutes: 30), subscribed: false))
     XCTAssertFalse(baby.canLog(.nappy(.wet), subscribed: false))
     XCTAssertTrue(baby.canLog(.nappy(.wet), subscribed: true))
@@ -41,13 +42,11 @@ final class FreeAllowanceTests: XCTestCase {
 
   func testBreastAndBottleShareOneFeedsAllowance() {
     var used: [LogType: Int] = [:]
-    let feeds: [LogEntry] = [
-      .feed(.breast, side: .left, minutes: 10, amountMl: nil, milk: nil),
-      .feed(.bottle, side: nil, minutes: nil, amountMl: 90, milk: .formula),
-      .feed(.breast, side: .right, minutes: 12, amountMl: nil, milk: nil),
-      .feed(.bottle, side: nil, minutes: nil, amountMl: 100, milk: .expressed),
-      .feed(.breast, side: .both, minutes: 15, amountMl: nil, milk: nil),
-    ]
+    let feeds: [LogEntry] = (0..<FreeAllowance.limit).map { index in
+      index.isMultiple(of: 2)
+        ? .feed(.breast, side: .left, minutes: 10, amountMl: nil, milk: nil)
+        : .feed(.bottle, side: nil, minutes: nil, amountMl: 90, milk: .formula)
+    }
     for feed in feeds {
       let baby = BabyAllowance(babyId: "b1", unlocked: false, used: used)
       XCTAssertTrue(baby.canLog(feed, subscribed: false))
@@ -60,27 +59,29 @@ final class FreeAllowanceTests: XCTestCase {
   }
 
   func testHintIsCalmAndOnlyNearTheLimit() {
+    XCTAssertEqual(FreeAllowance.hintWhenRemaining, 3)
     XCTAssertNil(FreeAllowance.hint(.feed, used: 0))
-    XCTAssertNil(FreeAllowance.hint(.feed, used: 1))
-    XCTAssertEqual(FreeAllowance.hint(.feed, used: 2), "3 of 5 free feeds left. Sleep is always free.")
-    XCTAssertEqual(FreeAllowance.hint(.nappy, used: 4), "1 of 5 free nappies left. Sleep is always free.")
-    XCTAssertNil(FreeAllowance.hint(.nappy, used: 5))
+    XCTAssertNil(FreeAllowance.hint(.feed, used: 6))
+    XCTAssertEqual(FreeAllowance.hint(.feed, used: 7), "3 of 10 free feeds left. Sleep is always free.")
+    XCTAssertEqual(FreeAllowance.hint(.nappy, used: 9), "1 of 10 free nappies left. Sleep is always free.")
+    XCTAssertNil(FreeAllowance.hint(.nappy, used: 10))
   }
 
   func testTrialIsUsedOnceAnyAllowanceRunsOut() {
     XCTAssertFalse(FreeAllowance.trialUsed([:]))
-    XCTAssertFalse(FreeAllowance.trialUsed([.feed: 4, .nappy: 4]))
-    XCTAssertTrue(FreeAllowance.trialUsed([.feed: 4, .nappy: 5]))
+    let limit = FreeAllowance.limit
+    XCTAssertFalse(FreeAllowance.trialUsed([.feed: limit - 1, .nappy: limit - 1]))
+    XCTAssertTrue(FreeAllowance.trialUsed([.feed: limit - 1, .nappy: limit]))
   }
 
   func testPaywallTitle() {
-    XCTAssertEqual(FreeAllowance.paywallTitle(.feed), "You've used your 5 free feeds")
+    XCTAssertEqual(FreeAllowance.paywallTitle(.feed), "You've used your 10 free feeds")
     XCTAssertEqual(FreeAllowance.paywallTitle(nil), "Keep logging with Scrunch")
   }
 
   func testDecodesConvexAllowanceAndSkipsUnknownTypes() throws {
     let json = """
-    {"limit":5,"babies":[{"babyId":"b1","unlocked":false,"used":[{"type":"nappy","used":5},{"type":"future","used":2}]}]}
+    {"limit":10,"babies":[{"babyId":"b1","unlocked":false,"used":[{"type":"nappy","used":5},{"type":"future","used":2}]}]}
     """
     let response = try JSONDecoder().decode(AllowanceResponse.self, from: Data(json.utf8))
     XCTAssertEqual(response.babies, [BabyAllowance(babyId: "b1", unlocked: false, used: [.nappy: 5])])
@@ -92,12 +93,12 @@ final class FreeAllowanceTests: XCTestCase {
     XCTAssertEqual(ServerRefusal(errorData: #"{"code":"SUBSCRIPTION_REQUIRED","feature":"sharing"}"#), .sharingNeedsSubscription)
     XCTAssertEqual(ServerRefusal.sharingNeedsSubscription.message, "Each carer needs their own Scrunch subscription to share a baby.")
     XCTAssertNil(ServerRefusal(errorData: #""No baby matches that code""#))
-    XCTAssertEqual(ServerRefusal.freeLimit(.pump).message, "You've used your 5 free pumping sessions. Subscribe to keep logging them; sleep is always free.")
+    XCTAssertEqual(ServerRefusal.freeLimit(.pump).message, "You've used your 10 free pumping sessions. Subscribe to keep logging them; sleep is always free.")
   }
 
   func testSharedAllowanceForWidgetsAndSiri() {
     let defaults = UserDefaults(suiteName: "FreeAllowanceTests-\(UUID().uuidString)")!
-    var shared = SharedAllowance(babies: ["b1": BabyAllowance(babyId: "b1", unlocked: false, used: [.nappy: 4])])
+    var shared = SharedAllowance(babies: ["b1": BabyAllowance(babyId: "b1", unlocked: false, used: [.nappy: FreeAllowance.limit - 1])])
     shared.save(to: defaults)
     shared = SharedAllowance.load(from: defaults)
     XCTAssertTrue(shared.canLog(.nappy(.wet), babyId: "b1"))

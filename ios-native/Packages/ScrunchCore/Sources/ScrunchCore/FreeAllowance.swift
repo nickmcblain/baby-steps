@@ -4,7 +4,7 @@ import Foundation
 public enum LogType: String, Codable, CaseIterable, Sendable {
   case feed, nappy, pump, growth, tummy, potty, medicine, activity, note
 
-  /// "feeds", as in "3 of 5 free feeds left".
+  /// "feeds", as in "3 of 10 free feeds left".
   public var plural: String {
     switch self {
     case .feed: "feeds"
@@ -24,7 +24,24 @@ public enum LogType: String, Codable, CaseIterable, Sendable {
 /// baby, then logging that type needs their own subscription.
 /// Convex enforces the same rule in convex/lib/allowance.ts.
 public enum FreeAllowance {
-  public static let limit = 5
+  /// Resources/free-allowance.json is the one place the numbers live; convex/lib/allowance.ts
+  /// imports the same file.
+  private struct Config: Decodable {
+    let freeLimit: Int
+    let hintWhenRemaining: Int
+  }
+
+  private static let config: Config = {
+    guard let url = Bundle.module.url(forResource: "free-allowance", withExtension: "json"),
+          let data = try? Data(contentsOf: url),
+          let config = try? JSONDecoder().decode(Config.self, from: data)
+    else { fatalError("ScrunchCore is missing Resources/free-allowance.json") }
+    return config
+  }()
+
+  public static let limit = config.freeLimit
+  /// The hint shows once this many or fewer free entries of a type are left.
+  public static let hintWhenRemaining = config.hintWhenRemaining
 
   public static func type(for entry: LogEntry) -> LogType? {
     switch entry {
@@ -52,16 +69,24 @@ public enum FreeAllowance {
     used.values.contains { $0 >= limit }
   }
 
-  /// The one gentle heads-up per type, once three or fewer free entries are left.
+  /// The one gentle heads-up per type, once `hintWhenRemaining` or fewer free entries are left.
   public static func hint(_ type: LogType, used: Int) -> String? {
     let left = remaining(used: used)
-    guard (1...3).contains(left) else { return nil }
-    return "\(left) of \(limit) free \(type.plural) left. Sleep is always free."
+    guard (1...hintWhenRemaining).contains(left) else { return nil }
+    return String(
+      localized: "allowance.hint",
+      defaultValue: "\(left) of \(limit) free \(type.plural) left. Sleep is always free.",
+      comment: "Toast once a few free entries of a type are left"
+    )
   }
 
   public static func paywallTitle(_ type: LogType?) -> String {
     guard let type else { return "Keep logging with Scrunch" }
-    return "You've used your \(limit) free \(type.plural)"
+    return String(
+      localized: "allowance.paywall.title",
+      defaultValue: "You've used your \(limit) free \(type.plural)",
+      comment: "Paywall title after the free entries of a type are used"
+    )
   }
 }
 

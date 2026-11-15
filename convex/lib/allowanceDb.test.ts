@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { logTypeFor, type LogType } from "./allowance.ts";
+import { FREE_LIMIT, logTypeFor, type LogType } from "./allowance.ts";
 import { chargeAllowance, usedFor, userSubscribed } from "./allowanceDb.ts";
 import { createInvite, redeemInvite, visibleBaby } from "./sharing.ts";
 
@@ -77,13 +77,13 @@ function isSubscriptionRequired(error: unknown) {
 
 // MARK: Free allowance
 
-test("five free entries per type, then the sixth is refused", async () => {
+test("the free entries per type, then the next one is refused", async () => {
   const { ctx, db } = fakeCtx();
   const baby = await newBaby(db, mum);
-  for (let i = 0; i < 5; i++) await log(ctx, baby, mum, "nappy");
+  for (let i = 0; i < FREE_LIMIT; i++) await log(ctx, baby, mum, "nappy");
   await assert.rejects(log(ctx, baby, mum, "nappy"), isFreeLimitFor("nappy"));
   await log(ctx, baby, mum, "feed");
-  assert.deepEqual(await usedFor(ctx, baby, mum), { nappy: 5, feed: 1 });
+  assert.deepEqual(await usedFor(ctx, baby, mum), { nappy: FREE_LIMIT, feed: 1 });
 });
 
 test("sleep is never counted or refused", async () => {
@@ -93,25 +93,25 @@ test("sleep is never counted or refused", async () => {
   assert.deepEqual(await usedFor(ctx, baby, mum), {});
 });
 
-test("each carer gets their own five of each type on a shared baby, and each baby has its own", async () => {
+test("each carer gets their own free entries of each type on a shared baby, and each baby has its own", async () => {
   const { ctx, db } = fakeCtx();
   const baby = await newBaby(db, mum);
   const otherBaby = await newBaby(db, mum);
   await db.insert("babyMembers", { babyId: baby, userId: dad });
-  for (let i = 0; i < 5; i++) await log(ctx, baby, mum, "feed");
+  for (let i = 0; i < FREE_LIMIT; i++) await log(ctx, baby, mum, "feed");
   await assert.rejects(log(ctx, baby, mum, "feed"), isFreeLimitFor("feed"));
-  for (let i = 0; i < 5; i++) await log(ctx, baby, dad, "feed");
+  for (let i = 0; i < FREE_LIMIT; i++) await log(ctx, baby, dad, "feed");
   await assert.rejects(log(ctx, baby, dad, "feed"), isFreeLimitFor("feed"));
   await log(ctx, otherBaby, mum, "feed");
-  assert.deepEqual(await usedFor(ctx, baby, mum), { feed: 5 });
-  assert.deepEqual(await usedFor(ctx, baby, dad), { feed: 5 });
+  assert.deepEqual(await usedFor(ctx, baby, mum), { feed: FREE_LIMIT });
+  assert.deepEqual(await usedFor(ctx, baby, dad), { feed: FREE_LIMIT });
 });
 
 test("a subscription unlocks only the carer who has it, and expiry locks it again", async () => {
   const { ctx, db } = fakeCtx();
   const baby = await newBaby(db, mum);
   await db.insert("babyMembers", { babyId: baby, userId: dad });
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < FREE_LIMIT; i++) {
     await log(ctx, baby, mum, "pump");
     await log(ctx, baby, dad, "pump");
   }
@@ -183,7 +183,7 @@ test("a lapsed carer stays on the baby, keeps sleep, and hits the paywall for ev
   const code = await createInvite(ctx, mum, baby);
   const dadSub = await subscribe(db, dad);
   await redeemInvite(ctx, dad, code);
-  for (let i = 0; i < 8; i++) await log(ctx, baby, dad, "nappy");
+  for (let i = 0; i < FREE_LIMIT + 3; i++) await log(ctx, baby, dad, "nappy");
 
   await db.patch(dadSub, { status: "expired" });
   assert.deepEqual(await members(db, baby), [mum, dad]);
