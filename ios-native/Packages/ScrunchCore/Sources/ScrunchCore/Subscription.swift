@@ -75,7 +75,7 @@ public enum Subscription {
 }
 
 /// The user's active subscription, as StoreKit reports it.
-public struct SubscriptionStatus: Equatable, Sendable {
+public struct PlanStatus: Equatable, Sendable {
   public var productID: String
   public var expiresAt: Date?
   public var willAutoRenew: Bool

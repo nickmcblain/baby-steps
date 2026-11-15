@@ -112,7 +112,7 @@ final class SubscriptionTests: XCTestCase {
 
   func testStatusSummary() {
     let end = london.date(from: DateComponents(year: 2026, month: 12, day: 3, hour: 9))!
-    var status = SubscriptionStatus(productID: Subscription.monthlyProductID, expiresAt: end, willAutoRenew: true, familyShared: false)
+    var status = PlanStatus(productID: Subscription.monthlyProductID, expiresAt: end, willAutoRenew: true, familyShared: false)
     XCTAssertEqual(status.summary(calendar: london), "Renews on Thursday 3 December")
     XCTAssertEqual(status.planName, "Monthly subscription")
     status.willAutoRenew = false

@@ -9,7 +9,7 @@ import StoreKit
 @MainActor
 @Observable
 final class Entitlements {
-  private(set) var status: SubscriptionStatus?
+  private(set) var status: PlanStatus?
   private(set) var products: [Product] = []
   /// False until the first StoreKit read finishes, so gated screens don't flash the upsell.
   private(set) var loaded = false
@@ -45,13 +45,13 @@ final class Entitlements {
     if products.isEmpty {
       products = (try? await Product.products(for: Subscription.productIDs)) ?? []
     }
-    var best: SubscriptionStatus?
+    var best: PlanStatus?
     for await result in Transaction.currentEntitlements {
       guard case .verified(let transaction) = result,
             Subscription.productIDs.contains(transaction.productID),
             transaction.revocationDate == nil
       else { continue }
-      let status = SubscriptionStatus(
+      let status = PlanStatus(
         productID: transaction.productID,
         expiresAt: transaction.expirationDate,
         willAutoRenew: await transaction.willAutoRenew,
@@ -88,7 +88,7 @@ final class Entitlements {
     return true
   }
 
-  func renewalPrice(for status: SubscriptionStatus?) -> String? {
+  func renewalPrice(for status: PlanStatus?) -> String? {
     guard let status, let product = products.first(where: { $0.id == status.productID }),
           let period = product.subscription?.subscriptionPeriod
     else { return nil }
