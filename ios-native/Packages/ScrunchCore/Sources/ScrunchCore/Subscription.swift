@@ -3,9 +3,9 @@ import Foundation
 /// The Scrunch subscription and the copy around it. Prices always come from StoreKit, never from here.
 public enum Subscription {
   /// One subscription group. Keep in sync with `SUBSCRIPTION_PRODUCT_IDS` in convex/lib/appStore.ts.
-  public static let monthlyProductID = "com.nickmcblain.babysteps.plus.monthly"
-  public static let annualProductID = "com.nickmcblain.babysteps.plus.annual"
-  public static let productIDs = [monthlyProductID, annualProductID]
+  public static let monthlyProductID = "com.nickmcblain.babysteps.monthly"
+  public static let yearlyProductID = "com.nickmcblain.babysteps.yearly"
+  public static let productIDs = [monthlyProductID, yearlyProductID]
 
   /// Apple's standard EULA. App Review also needs a privacy policy link before release.
   public static let termsOfUseURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
@@ -13,12 +13,12 @@ public enum Subscription {
   public static let includes = [
     "Unlimited feeds, nappies, pumping, growth and every other log",
     "Ask: answers grounded in NHS guidance, using your logs",
-    "Feed, sleep, tummy time and nappy patterns over 7, 14 and 30 days",
+    "Feed, tummy time and nappy patterns over 7, 14 and 30 days",
     "One subscription covers everyone you share your baby with",
   ]
 
   public static let alwaysFree =
-    "Sleep logs, sleep timers and the sleep Live Activity stay free for good. Everything you've logged stays yours to see and export."
+    "Sleep logs, sleep timers, the sleep Live Activity and sleep patterns stay free for good. Everything you've already logged stays readable."
 
   public static let renewalTerms =
     "Your subscription renews automatically at the price shown unless you cancel at least 24 hours before the end of the current period. Cancel any time in Settings, or from Manage subscription in Scrunch. Payment is taken by Apple."
@@ -38,14 +38,14 @@ public enum Subscription {
       case .ask:
         "You've used your free entries. Subscribe to keep asking about feeds, sleep and nappies, with answers grounded in NHS guidance."
       case .patterns:
-        "You've used your free entries. Subscribe to keep seeing how feeds, sleep, tummy time and nappies change over 7, 14 and 30 days."
+        "You've used your free entries. Subscribe to keep seeing how feeds, tummy time and nappies change over 7, 14 and 30 days. Sleep patterns stay free."
       }
     }
   }
 
   public enum PeriodUnit: Sendable { case day, week, month, year }
 
-  /// "£2.99 a month", "£24.99 a year", "£7.99 every 3 months".
+  /// "£2.99 a month", "£9.99 a year", "£7.99 every 3 months".
   public static func renewalPrice(_ price: String, value: Int, unit: PeriodUnit) -> String {
     if value == 1 {
       switch unit {
@@ -89,7 +89,7 @@ public struct PlanStatus: Equatable, Sendable {
   }
 
   public var planName: String {
-    productID == Subscription.annualProductID ? "Yearly subscription" : "Monthly subscription"
+    productID == Subscription.yearlyProductID ? "Yearly subscription" : "Monthly subscription"
   }
 
   public func summary(calendar: Calendar = .current) -> String {

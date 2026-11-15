@@ -4,8 +4,8 @@ export const BUNDLE_ID = "com.nickmcblain.babysteps";
 
 /** One subscription group. Keep in sync with `Subscription.productIDs` in ScrunchCore. */
 export const SUBSCRIPTION_PRODUCT_IDS: readonly string[] = [
-  "com.nickmcblain.babysteps.plus.monthly",
-  "com.nickmcblain.babysteps.plus.annual",
+  "com.nickmcblain.babysteps.monthly",
+  "com.nickmcblain.babysteps.yearly",
 ];
 
 export const subscriptionStatusValidator = v.union(

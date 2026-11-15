@@ -94,6 +94,23 @@ private struct PaywallBullet: View {
 }
 
 /// Ask and patterns: open during the free entries, then a calm explanation and a way in.
+/// Sleep patterns stay free with the rest of sleep; the others need the subscription once the
+/// free entries run out.
+struct GatedPatterns: View {
+  let babyId: BabyID
+  let kind: PatternsView.Kind
+
+  static func isFree(_ kind: PatternsView.Kind) -> Bool { kind == .sleep }
+
+  var body: some View {
+    if Self.isFree(kind) {
+      PatternsView(babyId: babyId, kind: kind)
+    } else {
+      SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: kind) }
+    }
+  }
+}
+
 struct SubscriptionGate<Content: View>: View {
   let babyId: BabyID
   let feature: Subscription.Feature

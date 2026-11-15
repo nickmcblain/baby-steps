@@ -134,10 +134,10 @@ struct BabyDestination: View {
     case .tummyTimer: DurationTimerView(babyId: babyId, kind: .tummy)
     case .sleepManual(let handoff): DurationManualView(babyId: babyId, kind: .sleep, handoff: handoff)
     case .tummyManual(let handoff): DurationManualView(babyId: babyId, kind: .tummy, handoff: handoff)
-    case .feedPatterns: SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: .feed) }
-    case .sleepPatterns: SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: .sleep) }
-    case .tummyPatterns: SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: .tummy) }
-    case .nappyPatterns: SubscriptionGate(babyId: babyId, feature: .patterns) { PatternsView(babyId: babyId, kind: .nappy) }
+    case .feedPatterns: GatedPatterns(babyId: babyId, kind: .feed)
+    case .sleepPatterns: GatedPatterns(babyId: babyId, kind: .sleep)
+    case .tummyPatterns: GatedPatterns(babyId: babyId, kind: .tummy)
+    case .nappyPatterns: GatedPatterns(babyId: babyId, kind: .nappy)
     case .nappy: NappyView(babyId: babyId, potty: false)
     case .potty: NappyView(babyId: babyId, potty: true)
     case .medicine: MedicineView(babyId: babyId)

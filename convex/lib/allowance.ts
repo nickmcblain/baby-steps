@@ -11,7 +11,6 @@ export const SUBSCRIPTION_REQUIRED = "SUBSCRIPTION_REQUIRED";
 
 export const logTypeValidator = v.union(
   v.literal("feed"),
-  v.literal("bottle"),
   v.literal("nappy"),
   v.literal("pump"),
   v.literal("growth"),
@@ -25,15 +24,14 @@ export const logTypeValidator = v.union(
 export type LogType = Infer<typeof logTypeValidator>;
 
 /** Which allowance an event counts against; null for sleep, which is always free. */
-export function logTypeFor(kind: string, feedKind?: string): LogType | null {
+export function logTypeFor(kind: string): LogType | null {
   switch (kind) {
-    case "feed":
-      return feedKind === "bottle" ? "bottle" : "feed";
     case "weight":
     case "height":
       return "growth";
     case "custom":
       return "note";
+    case "feed":
     case "nappy":
     case "pump":
     case "tummy":

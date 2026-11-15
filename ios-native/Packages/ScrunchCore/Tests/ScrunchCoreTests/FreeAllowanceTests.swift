@@ -4,7 +4,7 @@ import XCTest
 final class FreeAllowanceTests: XCTestCase {
   private let everyEntry: [(LogEntry, LogType?)] = [
     (.feed(.breast, side: .left, minutes: 10, amountMl: nil, milk: nil), .feed),
-    (.feed(.bottle, side: nil, minutes: nil, amountMl: 120, milk: .formula), .bottle),
+    (.feed(.bottle, side: nil, minutes: nil, amountMl: 120, milk: .formula), .feed),
     (.nappy(.wet), .nappy),
     (.potty(.dirty), .potty),
     (.sleep(minutes: 45), nil),
@@ -36,7 +36,27 @@ final class FreeAllowanceTests: XCTestCase {
     XCTAssertTrue(baby.canLog(.sleep(minutes: 30), subscribed: false))
     XCTAssertFalse(baby.canLog(.nappy(.wet), subscribed: false))
     XCTAssertTrue(baby.canLog(.nappy(.wet), subscribed: true))
-    XCTAssertTrue(baby.canLog(.feed(.bottle, side: nil, minutes: nil, amountMl: 90, milk: .formula), subscribed: false))
+    XCTAssertTrue(baby.canLog(.pump(.left, minutes: 10, amountMl: 60), subscribed: false))
+  }
+
+  func testBreastAndBottleShareOneFeedsAllowance() {
+    var used: [LogType: Int] = [:]
+    let feeds: [LogEntry] = [
+      .feed(.breast, side: .left, minutes: 10, amountMl: nil, milk: nil),
+      .feed(.bottle, side: nil, minutes: nil, amountMl: 90, milk: .formula),
+      .feed(.breast, side: .right, minutes: 12, amountMl: nil, milk: nil),
+      .feed(.bottle, side: nil, minutes: nil, amountMl: 100, milk: .expressed),
+      .feed(.breast, side: .both, minutes: 15, amountMl: nil, milk: nil),
+    ]
+    for feed in feeds {
+      let baby = BabyAllowance(babyId: "b1", unlocked: false, used: used)
+      XCTAssertTrue(baby.canLog(feed, subscribed: false))
+      used[FreeAllowance.type(for: feed)!, default: 0] += 1
+    }
+    let baby = BabyAllowance(babyId: "b1", unlocked: false, used: used)
+    XCTAssertFalse(baby.canLog(.feed(.bottle, side: nil, minutes: nil, amountMl: 90, milk: .formula), subscribed: false))
+    XCTAssertFalse(baby.canLog(.feed(.breast, side: .left, minutes: 5, amountMl: nil, milk: nil), subscribed: false))
+    XCTAssertTrue(baby.canLog(.pump(.left, minutes: 10, amountMl: 60), subscribed: false), "Pumping is separate")
   }
 
   func testHintIsCalmAndOnlyNearTheLimit() {
@@ -54,7 +74,7 @@ final class FreeAllowanceTests: XCTestCase {
   }
 
   func testPaywallTitle() {
-    XCTAssertEqual(FreeAllowance.paywallTitle(.bottle), "You've used your 5 free bottles")
+    XCTAssertEqual(FreeAllowance.paywallTitle(.feed), "You've used your 5 free feeds")
     XCTAssertEqual(FreeAllowance.paywallTitle(nil), "Keep logging with Scrunch")
   }
 
@@ -99,14 +119,17 @@ final class FreeAllowanceTests: XCTestCase {
 final class SubscriptionTests: XCTestCase {
   func testRenewalPriceUsesStoreKitPrice() {
     XCTAssertEqual(Subscription.renewalPrice("£2.99", value: 1, unit: .month), "£2.99 a month")
-    XCTAssertEqual(Subscription.renewalPrice("£24.99", value: 1, unit: .year), "£24.99 a year")
+    XCTAssertEqual(Subscription.renewalPrice("£9.99", value: 1, unit: .year), "£9.99 a year")
     XCTAssertEqual(Subscription.renewalPrice("£7.99", value: 3, unit: .month), "£7.99 every 3 months")
   }
 
   func testCopyNamesWhatStaysFree() {
-    for word in ["Sleep logs", "sleep timers", "Live Activity", "export"] {
+    for word in ["Sleep logs", "sleep timers", "Live Activity", "sleep patterns", "readable"] {
       XCTAssertTrue(Subscription.alwaysFree.contains(word), word)
     }
+    let allCopy = [Subscription.alwaysFree, Subscription.Feature.patterns.pitch, Subscription.Feature.ask.pitch] + Subscription.includes
+    XCTAssertFalse(allCopy.contains { $0.localizedCaseInsensitiveContains("export") }, "Export isn't built yet")
+    XCTAssertFalse(Subscription.includes.contains { $0.contains("sleep") }, "Sleep patterns are free")
     XCTAssertFalse(Subscription.renewalTerms.contains("trial"))
   }
 
@@ -119,7 +142,7 @@ final class SubscriptionTests: XCTestCase {
     XCTAssertEqual(status.summary(calendar: london), "Ends on Thursday 3 December. It won't renew")
     status.familyShared = true
     XCTAssertEqual(status.summary(calendar: london), "Shared with you through Family Sharing")
-    status.productID = Subscription.annualProductID
+    status.productID = Subscription.yearlyProductID
     XCTAssertEqual(status.planName, "Yearly subscription")
   }
 }

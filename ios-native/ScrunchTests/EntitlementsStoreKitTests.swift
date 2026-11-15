@@ -49,10 +49,10 @@ final class EntitlementsStoreKitTests: XCTestCase {
     XCTAssertEqual(entitlements.renewalPrice(for: status), "£2.99 a month")
   }
 
-  func testAnnualPurchase() async throws {
-    _ = try await session.buyProduct(identifier: Subscription.annualProductID)
+  func testYearlyPurchase() async throws {
+    _ = try await session.buyProduct(identifier: Subscription.yearlyProductID)
     let entitlements = await freshEntitlements()
-    XCTAssertEqual(entitlements.status?.productID, Subscription.annualProductID)
+    XCTAssertEqual(entitlements.status?.productID, Subscription.yearlyProductID)
     XCTAssertEqual(entitlements.status?.planName, "Yearly subscription")
   }
 

@@ -67,9 +67,9 @@ final class FreeAllowanceAppTests: XCTestCase {
   }
 
   func testSubscribingFromThePaywallSavesWhatWasTyped() async throws {
-    let gate = await gate([.bottle: 5])
+    let gate = await gate([.feed: 5])
     let saves = Counter()
-    let pending = Task { try await gate.save(.bottle, babyId: "b1") { saves.count += 1; return "e1" } }
+    let pending = Task { try await gate.save(FreeAllowance.type(for: .feed(.bottle, side: nil, minutes: nil, amountMl: 120, milk: .formula)), babyId: "b1") { saves.count += 1; return "e1" } }
     _ = try await waitForPaywall(gate)
     _ = try await session.buyProduct(identifier: Subscription.monthlyProductID)
     for _ in 0..<50 where !gate.entitlements.subscribed {
@@ -84,7 +84,7 @@ final class FreeAllowanceAppTests: XCTestCase {
   }
 
   func testSleepAndVoiceNeverHitThePaywallUpFront() async throws {
-    let gate = await gate([.feed: 5, .nappy: 5, .bottle: 5])
+    let gate = await gate([.feed: 5, .nappy: 5])
     let sleep = try await gate.save(FreeAllowance.type(for: .sleep(minutes: 40)), babyId: "b1") { "sleep" }
     XCTAssertEqual(sleep, "sleep")
     let voice = try await gate.save(nil, babyId: "b1") { "voice" }
@@ -106,6 +106,13 @@ final class FreeAllowanceAppTests: XCTestCase {
     XCTAssertTrue(early.featureOpen("b1"))
     XCTAssertFalse(used.featureOpen("b1"))
     XCTAssertTrue(shared.featureOpen("b1"))
+  }
+
+  func testSleepPatternsStayFreeAfterTheFreeEntries() {
+    XCTAssertTrue(GatedPatterns.isFree(.sleep))
+    for kind in [PatternsView.Kind.feed, .tummy, .nappy] {
+      XCTAssertFalse(GatedPatterns.isFree(kind))
+    }
   }
 
   func testHintShowsOncePerType() async throws {

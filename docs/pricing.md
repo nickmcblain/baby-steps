@@ -6,8 +6,11 @@ Prices are set in App Store Connect and read from StoreKit at runtime; the app n
 
 | Plan | Product id | Price |
 | --- | --- | --- |
-| Monthly | `com.nickmcblain.babysteps.plus.monthly` | about £2.99 |
-| Yearly | `com.nickmcblain.babysteps.plus.annual` | £19.99 or £24.99 (Nick to choose) |
+| Monthly | `com.nickmcblain.babysteps.monthly` | about £2.99 |
+| Yearly | `com.nickmcblain.babysteps.yearly` | to be decided by Nick |
+
+Nothing in the code depends on either price. The local StoreKit file uses placeholder prices for
+testing only.
 
 Both sit at the same level in one subscription group, so switching is a crossgrade. There is no
 introductory free trial: the free entries are the trial.
@@ -18,8 +21,7 @@ Every baby gets **5 free entries of each log type**. Sleep has no limit.
 
 | Allowance | What counts |
 | --- | --- |
-| feeds | breast feeds |
-| bottles | bottle feeds (formula or expressed) |
+| feeds | breast and bottle feeds (formula or expressed) together |
 | nappies | nappies |
 | pumping sessions | pumps |
 | growth entries | weights and heights |
@@ -32,17 +34,19 @@ Every baby gets **5 free entries of each log type**. Sleep has no limit.
 - **Saving the 6th entry of a type shows the paywall.** The entry is not saved unless they subscribe.
   What they typed is kept: after a successful purchase the same save runs straight away; if they close
   the paywall, the form is still there as they left it.
-- **Sleep is free for good**: sleep logs, sleep timers and the sleep Live Activity.
+- **Sleep is free for good**: sleep logs, sleep timers, the sleep Live Activity and the sleep
+  patterns chart.
 - **Per baby, shared with carers.** The count belongs to the baby, so partners share one allowance,
   and a subscription from anyone the baby is shared with unlocks logging for all of them.
 - **Entries ever created.** Deleting a log doesn't give it back. Moving a fresh log's time with the
   "−5 min" chip edits it in place and doesn't count again. The birth weight and height saved when a
   baby is added don't count.
-- **Ask and the pattern charts** are open during the free entries. Once any free allowance has run out,
-  they need the subscription. Ask is also checked on the server (`chatAgent:ask`).
+- **Ask and the feed, tummy time and nappy pattern charts** are open during the free entries. Once
+  any free allowance has run out, they need the subscription. Ask is also checked on the server
+  (`chatAgent:ask`). The sleep patterns chart and the Home insight cards are never locked.
 - **Your data is never held hostage.** Everything already logged stays visible on the timeline, home,
-  growth charts and baby pages whether or not they subscribe, and nothing here blocks reading or
-  exporting it.
+  growth charts and baby pages whether or not they subscribe. The paywall promises only that past
+  logs stay readable; export will come in its own change.
 
 The rule lives in one place on each side, and both have tests for the same cases:
 
@@ -91,7 +95,7 @@ the paywall shows. Logs typed in the app's forms need a connection, as before.
 Apple's `SubscriptionStoreView`, so StoreKit shows the prices, billing periods and renewal terms. It
 has a close button, Restore purchases, a Terms of Use link and StoreKit's Privacy Policy link. Our
 copy says what they hit ("You've used your 5 free nappies"), that subscribing saves this entry straight
-away, what the subscription includes, that sleep stays free and their logs stay theirs, and that it
+away, what the subscription includes, that sleep (including sleep patterns) stays free and past logs stay readable, and that it
 renews automatically unless cancelled at least 24 hours before the end of the period. Closing it
 leaves sleep logging working and every existing log viewable.
 
@@ -141,8 +145,8 @@ products in App Store Connect; it can't be turned off later.
 ## Checklist for App Store Connect (Nick)
 
 1. Accept the **Paid Apps agreement** and add banking and tax details.
-2. Create one subscription group, **Scrunch**, with `…plus.monthly` (1 month, about £2.99) and
-   `…plus.annual` (1 year, £19.99 or £24.99), both at the same level, **no introductory offer**,
+2. Create one subscription group, **Scrunch**, with `com.nickmcblain.babysteps.monthly` (1 month,
+   about £2.99) and `com.nickmcblain.babysteps.yearly` (1 year, price to be decided), both at the same level, **no introductory offer**,
    Family Sharing on, United Kingdom only, en-GB names and descriptions, and a review screenshot
    (`-debugPaywall YES`). Review notes should explain the 5 free entries per type and that sleep is free.
 3. App Information > **App Store Server Notifications**: Production and Sandbox URLs

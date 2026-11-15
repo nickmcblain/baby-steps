@@ -33,12 +33,14 @@ final class PaywallScreenshotTests: XCTestCase {
 
   func testPaywallOnTheSixthNappy() async throws {
     let (entitlements, _) = await services([.nappy: 5])
-    try await snapshot("Paywall, sixth nappy", PaywallView(type: .nappy).environment(entitlements), settle: 15)
+    try await warmUpStoreKit(entitlements)
+    try await snapshot("Paywall, sixth nappy", PaywallView(type: .nappy).environment(entitlements), settle: 10)
   }
 
   func testPaywallForAWidgetLog() async throws {
     let (entitlements, _) = await services([.nappy: 5])
-    try await snapshot("Paywall, entry waiting from a widget", PaywallView(type: .nappy, heldCount: 1).environment(entitlements), settle: 15)
+    try await warmUpStoreKit(entitlements)
+    try await snapshot("Paywall, entry waiting from a widget", PaywallView(type: .nappy, heldCount: 1).environment(entitlements), settle: 10)
   }
 
   func testLockedPatterns() async throws {
@@ -50,7 +52,7 @@ final class PaywallScreenshotTests: XCTestCase {
   }
 
   func testSubscriptionRow() async throws {
-    let (entitlements, gate) = await services([.feed: 2, .nappy: 5, .bottle: 1])
+    let (entitlements, gate) = await services([.feed: 2, .nappy: 5, .pump: 1])
     try await snapshot("Profile, free entries left", row(entitlements, gate))
 
     _ = try await session.buyProduct(identifier: Subscription.monthlyProductID)
@@ -67,11 +69,24 @@ final class PaywallScreenshotTests: XCTestCase {
     .environment(gate)
   }
 
-  /// SubscriptionStoreView loads its products after appearing, so the paywall needs longer.
+  private var window: UIWindow {
+    get throws {
+      try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first)
+    }
+  }
+
+  /// SubscriptionStoreView loads its products after appearing and sometimes takes longer than
+  /// the screenshot wait on a cold simulator, so show it once off camera first.
+  private func warmUpStoreKit(_ entitlements: Entitlements) async throws {
+    let window = try window
+    let previous = window.rootViewController
+    defer { window.rootViewController = previous }
+    window.rootViewController = UIHostingController(rootView: PaywallView(type: nil).environment(entitlements))
+    try await Task.sleep(for: .seconds(10))
+  }
+
   private func snapshot(_ name: String, _ view: some View, settle: Int = 4) async throws {
-    let window = try XCTUnwrap(
-      UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first
-    )
+    let window = try window
     let previous = window.rootViewController
     defer { window.rootViewController = previous }
     window.rootViewController = UIHostingController(rootView: view)

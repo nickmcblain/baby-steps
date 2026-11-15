@@ -77,9 +77,9 @@ test("partners share one allowance per baby, and each baby has its own", async (
   await share(db, baby, "users:mum");
   await share(db, baby, "users:dad");
   await share(db, otherBaby, "users:mum");
-  for (let i = 0; i < 5; i++) await log(ctx, baby, "bottle");
-  await assert.rejects(log(ctx, baby, "bottle"), isFreeLimitFor("bottle"));
-  await log(ctx, otherBaby, "bottle");
+  for (let i = 0; i < 5; i++) await log(ctx, baby, "feed");
+  await assert.rejects(log(ctx, baby, "feed"), isFreeLimitFor("feed"));
+  await log(ctx, otherBaby, "feed");
 });
 
 test("a subscription from any caregiver unlocks the baby, and expiry locks it again", async () => {

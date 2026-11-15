@@ -11,16 +11,15 @@ test("sleep never counts", () => {
   assert.equal(canLog(null, 500, false), true);
 });
 
-test("bottle and breast feeds are separate allowances", () => {
-  assert.equal(logTypeFor("feed", "breast"), "feed");
-  assert.equal(logTypeFor("feed", "bottle"), "bottle");
+test("breast and bottle feeds share one feeds allowance", () => {
+  assert.equal(logTypeFor("feed"), "feed");
 });
 
 test("weight and height share the growth allowance", () => {
   assert.equal(logTypeFor("weight"), "growth");
   assert.equal(logTypeFor("height"), "growth");
   assert.equal(logTypeFor("custom"), "note");
-  for (const kind of ["nappy", "pump", "tummy", "potty", "medicine", "activity"]) {
+  for (const kind of ["feed", "nappy", "pump", "tummy", "potty", "medicine", "activity"]) {
     assert.equal(logTypeFor(kind), kind);
   }
 });

@@ -6,7 +6,7 @@ const NOW = 1_800_000_000_000;
 const DAY = 86_400_000;
 
 const monthly: TransactionInfo = {
-  productId: "com.nickmcblain.babysteps.plus.monthly",
+  productId: "com.nickmcblain.babysteps.monthly",
   originalTransactionId: "2000000123",
   expiresDate: NOW + 30 * DAY,
   inAppOwnershipType: "PURCHASED",

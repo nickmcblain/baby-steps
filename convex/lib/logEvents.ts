@@ -77,7 +77,7 @@ export async function insertFeed(
       throw new ConvexError("Bottle amount is required");
     }
   }
-  await chargeAllowance(ctx, args.babyId, logTypeFor("feed", args.feedKind));
+  await chargeAllowance(ctx, args.babyId, logTypeFor("feed"));
   return await ctx.db.insert("events", {
     babyId: args.babyId,
     createdBy: userId,

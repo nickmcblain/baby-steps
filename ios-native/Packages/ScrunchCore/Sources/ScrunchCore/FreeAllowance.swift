@@ -2,13 +2,12 @@ import Foundation
 
 /// What each free allowance counts. Sleep has none: it is always free.
 public enum LogType: String, Codable, CaseIterable, Sendable {
-  case feed, bottle, nappy, pump, growth, tummy, potty, medicine, activity, note
+  case feed, nappy, pump, growth, tummy, potty, medicine, activity, note
 
   /// "feeds", as in "3 of 5 free feeds left".
   public var plural: String {
     switch self {
     case .feed: "feeds"
-    case .bottle: "bottles"
     case .nappy: "nappies"
     case .pump: "pumping sessions"
     case .growth: "growth entries"
@@ -29,7 +28,6 @@ public enum FreeAllowance {
 
   public static func type(for entry: LogEntry) -> LogType? {
     switch entry {
-    case .feed(.bottle, _, _, _, _): .bottle
     case .feed: .feed
     case .nappy: .nappy
     case .potty: .potty
