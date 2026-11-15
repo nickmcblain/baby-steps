@@ -79,15 +79,14 @@ public struct PatternDay: Equatable, Sendable, Identifiable {
 public enum Patterns {
   public static let ranges = [7, 14]
 
-  static let dayShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
   /// One row per local day, oldest first, with each item split across midnight.
   public static func days(_ items: [PatternItem], days: Int, rangeEndMs: EpochMs, calendar: Calendar = .current) -> [PatternDay] {
     let endDay = calendar.localMidnight(rangeEndMs - 1)
+    let format = DisplayFormat(calendar: calendar)
     var rows: [PatternDay] = (0..<days).reversed().map { offset in
       let dayStart = calendar.addingDays(-offset, to: endDay)
-      let parts = calendar.dateComponents([.weekday, .day], from: Date(epochMs: dayStart))
-      return PatternDay(dayStartMs: dayStart, label: "\(dayShort[parts.weekday! - 1]) \(parts.day!)", slices: [])
+      let day = calendar.component(.day, from: Date(epochMs: dayStart))
+      return PatternDay(dayStartMs: dayStart, label: "\(format.weekdayShort(dayStart)) \(day)", slices: [])
     }
     let index = Dictionary(uniqueKeysWithValues: rows.enumerated().map { ($1.dayStartMs, $0) })
     for item in items {
@@ -128,10 +127,11 @@ public enum Patterns {
   /// that have a feed, so a gap in logging doesn't read as a baby who stopped eating.
   public static func feedTotals(_ events: [Event], days: Int, rangeEndMs: EpochMs, calendar: Calendar = .current) -> FeedTotals {
     let endDay = calendar.localMidnight(rangeEndMs - 1)
+    let format = DisplayFormat(calendar: calendar)
     var rows: [FeedDayTotal] = (0..<days).reversed().map { offset in
       let dayStart = calendar.addingDays(-offset, to: endDay)
-      let parts = calendar.dateComponents([.weekday, .day], from: Date(epochMs: dayStart))
-      return FeedDayTotal(dayStartMs: dayStart, label: "\(dayShort[parts.weekday! - 1]) \(parts.day!)", feeds: 0, ml: 0)
+      let day = calendar.component(.day, from: Date(epochMs: dayStart))
+      return FeedDayTotal(dayStartMs: dayStart, label: "\(format.weekdayShort(dayStart)) \(day)", feeds: 0, ml: 0)
     }
     let index = Dictionary(uniqueKeysWithValues: rows.enumerated().map { ($1.dayStartMs, $0) })
     for event in events where event.kind == .feed {

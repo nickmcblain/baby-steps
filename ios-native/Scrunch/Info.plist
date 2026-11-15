@@ -7,7 +7,7 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>en-GB</string>
 	<key>CFBundleDisplayName</key>
 	<string>Scrunch</string>
 	<key>CFBundleExecutable</key>

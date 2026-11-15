@@ -16,10 +16,10 @@ struct AddLogSheet: View {
 
   private struct Tile: Identifiable {
     let screen: BabyScreen
-    let label: String
+    let label: LocalizedStringKey
     let tint: Color
     let symbol: String
-    var id: String { label }
+    var id: String { symbol }
   }
 
   /// Most-logged first; Speak sits in the second row.
@@ -106,7 +106,7 @@ struct AddLogSheet: View {
     .buttonStyle(PressScale())
   }
 
-  private func tileLabel<Icon: View>(_ label: String, @ViewBuilder icon: () -> Icon) -> some View {
+  private func tileLabel<Icon: View>(_ label: LocalizedStringKey, @ViewBuilder icon: () -> Icon) -> some View {
     VStack(spacing: 8) {
       icon()
       Text(label).font(.app(.bold, 14)).foregroundStyle(C.ink)

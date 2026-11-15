@@ -43,7 +43,7 @@ struct ExportCareLogView: View {
         FieldLabel("Format")
         HStack(spacing: 8) {
           ForEach(Format.allCases, id: \.self) { option in
-            Pill(label: option.rawValue, selected: format == option) { format = option }
+            Pill(label: LocalizedStringKey(option.rawValue), selected: format == option) { format = option }
           }
         }
         PrimaryButton(label: "Create \(format.rawValue)", disabled: selectedId == nil) { await export() }
@@ -109,7 +109,7 @@ private struct FlowPills: View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 8) {
         ForEach(items) { baby in
-          Pill(label: baby.name, selected: baby.id == selected) { onSelect(baby.id) }
+          Pill(label: "\(baby.name)", selected: baby.id == selected) { onSelect(baby.id) }
         }
       }
       .padding(.vertical, 4)

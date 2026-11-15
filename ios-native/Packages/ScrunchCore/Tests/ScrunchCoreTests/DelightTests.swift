@@ -48,13 +48,13 @@ final class AllCaughtUpTests: XCTestCase {
   }
 
   func testCaughtUpAfterARecentFeed() {
-    // Fed at 1pm, next likely 3:30 pm.
+    // Fed at 1pm, next likely 15:30.
     XCTAssertTrue(caughtUp([feed(13)]))
   }
 
   func testAgreesWithTheNextFeedInsight() {
     let input = InsightInput(baby: baby, now: now, recentFeeds: [feed(13)], lastNappy: nil, lastSleepEndMs: nil, asleep: false)
-    XCTAssertEqual(Insights.nextFeed(input, calendar: london)?.headline, "Next feed likely around 3:30 pm")
+    XCTAssertEqual(Insights.nextFeed(input, calendar: london)?.headline, "Next feed likely around 15:30")
   }
 
   func testNotCaughtUpWhenAFeedIsNearOrDue() {

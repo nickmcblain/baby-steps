@@ -40,20 +40,9 @@ extension Calendar {
 }
 
 public enum Clock {
-  static let monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
-  /// "2:05 pm"
-  public static func h12(_ ms: EpochMs, calendar: Calendar = .current) -> String {
-    let parts = calendar.dateComponents([.hour, .minute], from: Date(epochMs: ms))
-    let hours = parts.hour ?? 0
-    let h12 = hours % 12 == 0 ? 12 : hours % 12
-    return "\(h12):\(pad2(parts.minute ?? 0)) \(hours < 12 ? "am" : "pm")"
-  }
-
-  /// "14:05"
-  public static func h24(_ ms: EpochMs, calendar: Calendar = .current) -> String {
-    let parts = calendar.dateComponents([.hour, .minute], from: Date(epochMs: ms))
-    return "\(pad2(parts.hour ?? 0)):\(pad2(parts.minute ?? 0))"
+  /// "14:05", or "2:05 PM" on a 12-hour clock.
+  public static func time(_ ms: EpochMs, calendar: Calendar = .current) -> String {
+    DisplayFormat(calendar: calendar).time(ms)
   }
 
   static func pad2(_ value: Int) -> String {

@@ -39,12 +39,12 @@ struct BabyQuery: EntityQuery {
 
 enum ScrunchIntentError: Error, CustomLocalizedStringResourceConvertible {
   case noBaby
-  case otherTimerRunning(String)
+  case otherTimerRunning(TimerOption)
 
   var localizedStringResource: LocalizedStringResource {
     switch self {
     case .noBaby: "Open Scrunch and add a baby first, then try again."
-    case .otherTimerRunning(let timer): "A \(timer) timer is already running. Stop it first."
+    case .otherTimerRunning(let timer): timer.alreadyRunningElsewhere
     }
   }
 }
@@ -165,7 +165,33 @@ enum TimerOption: String, AppEnum {
     }
   }
 
-  var spoken: String { self == .tummy ? "tummy time" : rawValue }
+  // Whole sentences per timer, so translations never splice a timer name into a phrase.
+  func startedDialog(for name: String) -> LocalizedStringResource {
+    switch self {
+    case .feed: "Started a feed timer for \(name)."
+    case .nap: "Started a nap timer for \(name)."
+    case .tummy: "Started a tummy time timer for \(name)."
+    case .pump: "Started a pump timer for \(name)."
+    }
+  }
+
+  func alreadyRunningDialog(for name: String) -> LocalizedStringResource {
+    switch self {
+    case .feed: "The feed timer is already running for \(name)."
+    case .nap: "The nap timer is already running for \(name)."
+    case .tummy: "The tummy time timer is already running for \(name)."
+    case .pump: "The pump timer is already running for \(name)."
+    }
+  }
+
+  var alreadyRunningElsewhere: LocalizedStringResource {
+    switch self {
+    case .feed: "A feed timer is already running. Stop it first."
+    case .nap: "A nap timer is already running. Stop it first."
+    case .tummy: "A tummy time timer is already running. Stop it first."
+    case .pump: "A pump timer is already running. Stop it first."
+    }
+  }
 }
 
 // MARK: - Log intents
@@ -399,12 +425,12 @@ struct StartTimerIntent: LiveActivityIntent {
     let store = TimerStore.shared
     if let running = store.session {
       if running.kind == kind, running.babyId == ref.id, running.isRunning {
-        return .result(dialog: "The \(timer.spoken) timer is already running for \(ref.name).")
+        return .result(dialog: IntentDialog(timer.alreadyRunningDialog(for: ref.name)))
       }
-      throw ScrunchIntentError.otherTimerRunning(TimerOption(running.kind).spoken)
+      throw ScrunchIntentError.otherTimerRunning(TimerOption(running.kind))
     }
     await store.update(.started(kind: kind, babyId: ref.id, babyName: ref.name, now: Date().epochMs))
-    return .result(dialog: "Started a \(timer.spoken) timer for \(ref.name).")
+    return .result(dialog: IntentDialog(timer.startedDialog(for: ref.name)))
     #endif
   }
 }
@@ -421,7 +447,7 @@ struct StopTimerIntent: LiveActivityIntent {
     let store = TimerStore.shared
     guard var session = store.session else { return .result(dialog: "No timer is running.") }
     session.pause(now: Date().epochMs)
-    let name = session.babyName ?? "your baby"
+    let name = session.babyName ?? String(localized: "your baby")
     await store.stop()
     guard let log = session.finishedLog() else {
       return .result(dialog: "That was under five seconds, so nothing was saved.")

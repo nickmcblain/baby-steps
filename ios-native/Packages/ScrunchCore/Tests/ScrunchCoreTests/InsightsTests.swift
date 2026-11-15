@@ -29,7 +29,7 @@ final class InsightsTests: XCTestCase {
   func testThinDataFallsBackToAgeNorm() {
     // One feed at 1pm, 20 days old breastfed → about 2.5 hours → 3:30 pm.
     let insight = Insights.nextFeed(input(baby(), feeds: [feed(13)]), calendar: london)
-    XCTAssertEqual(insight?.headline, "Next feed likely around 3:30 pm")
+    XCTAssertEqual(insight?.headline, "Next feed likely around 15:30")
     XCTAssertEqual(insight?.detail, "Last feed 1h ago · typical at this age is about 2.5 hours")
   }
 
@@ -37,7 +37,7 @@ final class InsightsTests: XCTestCase {
     // Gaps 3h, 3h, 2h40m → median 3h. Last feed 12:40 → 3:40 pm.
     let feeds = [feed(4), feed(7), feed(10), feed(12, 40)]
     let insight = Insights.nextFeed(input(baby(), feeds: feeds.shuffled()), calendar: london)
-    XCTAssertEqual(insight?.headline, "Next feed likely around 3:40 pm")
+    XCTAssertEqual(insight?.headline, "Next feed likely around 15:40")
     XCTAssertEqual(insight?.detail, "Last feed 1h 20m ago · based on the last 4 feeds")
   }
 
@@ -63,7 +63,7 @@ final class InsightsTests: XCTestCase {
 
   func testBottleBiasLengthensTheNorm() {
     let insight = Insights.nextFeed(input(baby(mode: .bottle), feeds: [feed(13, kind: .bottle)]), calendar: london)
-    XCTAssertEqual(insight?.headline, "Next feed likely around 4:00 pm")
+    XCTAssertEqual(insight?.headline, "Next feed likely around 16:00")
   }
 
   // MARK: Breast side
@@ -88,7 +88,7 @@ final class InsightsTests: XCTestCase {
     let nappy = Event(loggedAt: at(2026, 10, 14, 11, 55), kind: .nappy, nappy: .both)
     let insight = Insights.lastNappy(input(baby(), nappy: nappy), calendar: london)
     XCTAssertEqual(insight?.headline, "Last nappy 2h 5m ago")
-    XCTAssertEqual(insight?.detail, "Wee + poo at 11:55 am")
+    XCTAssertEqual(insight?.detail, "Wee + poo at 11:55")
   }
 
   func testNappyEmptyAndStale() {
@@ -125,10 +125,10 @@ final class InsightsTests: XCTestCase {
   // MARK: TOG
 
   func testTonightTogFromSavedRoomTemp() {
-    let insight = Insights.tonightTog(input(baby(ageDays: 120, grams: 6500, roomTemp: 17)))
+    let insight = Insights.tonightTog(input(baby(ageDays: 120, grams: 6500, roomTemp: 17)), calendar: london)
     XCTAssertEqual(insight?.headline, "Tonight at 17°C: 2.5 TOG")
     XCTAssertEqual(insight?.detail, "Vest, sleepsuit, 2.5 TOG sleeping bag")
-    let newborn = Insights.tonightTog(input(baby(roomTemp: 21.5)))
+    let newborn = Insights.tonightTog(input(baby(roomTemp: 21.5)), calendar: london)
     XCTAssertEqual(newborn?.headline, "Tonight at 21.5°C: 1.0 TOG")
     XCTAssertEqual(newborn?.detail, "Extra vest (newborn / smaller baby), vest, 1.0 TOG bag or light sleepsuit")
   }

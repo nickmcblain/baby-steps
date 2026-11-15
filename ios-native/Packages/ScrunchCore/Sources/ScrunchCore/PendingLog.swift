@@ -21,47 +21,63 @@ public enum LogEntry: Codable, Equatable, Sendable {
   case custom(title: String)
 
   /// Sentence-case summary for Siri and Shortcuts, e.g. "Wet nappy", "Bottle · 120 ml".
-  public var summary: String {
+  public var summary: String { summary(format: .current) }
+
+  public func summary(format: DisplayFormat) -> String {
     switch self {
     case .feed(.bottle, _, _, let ml, _):
-      return ml.map { "Bottle · \(Self.number($0)) ml" } ?? "Bottle feed"
+      return ml.map { String(localized: "Bottle · \(format.volume($0))", bundle: .module) } ?? String(localized: "Bottle feed", bundle: .module)
     case .feed(.breast, let side, let minutes, _, _):
       let label = switch side {
-      case .left: "Feed · Left"
-      case .right: "Feed · Right"
-      case .both: "Feed · Both"
-      case nil: "Feed"
+      case .left: String(localized: "Feed · Left", bundle: .module)
+      case .right: String(localized: "Feed · Right", bundle: .module)
+      case .both: String(localized: "Feed · Both", bundle: .module)
+      case nil: String(localized: "Feed", bundle: .module)
       }
-      return minutes.map { "\(label) · \(Self.number($0)) min" } ?? label
-    case .nappy(let nappy): return Self.nappyLabel(nappy) + " nappy"
-    case .potty(let nappy): return "Potty · " + Self.pottyLabel(nappy)
-    case .sleep(let minutes): return "Sleep · \(Self.number(minutes)) min"
-    case .tummy(let minutes): return "Tummy time · \(Self.number(minutes)) min"
+      return minutes.map { "\(label) · \(Self.minutes($0))" } ?? label
+    case .nappy(let nappy): return Self.nappyLabel(nappy)
+    case .potty(let nappy): return String(localized: "Potty · \(Self.pottyLabel(nappy))", bundle: .module)
+    case .sleep(let minutes): return String(localized: "Sleep · \(Self.minutes(minutes))", bundle: .module)
+    case .tummy(let minutes): return String(localized: "Tummy time · \(Self.minutes(minutes))", bundle: .module)
     case .pump(let side, let minutes, let ml):
-      let base = "Pump · \(side.rawValue.capitalized) · \(Self.number(minutes)) min"
-      return ml.map { "\(base) · \(Self.number($0)) ml" } ?? base
-    case .weight(let grams): return "Weight · \(Self.number(grams / 1000, places: 2)) kg"
-    case .height(let cm): return "Height · \(Self.number(cm, places: 1)) cm"
-    case .medicine(let title): return "Medicine · \(title)"
-    case .activity(let title, _): return "Activity · \(title)"
+      let base = String(localized: "Pump · \(Self.sideLabel(side)) · \(Self.minutes(minutes))", bundle: .module)
+      return ml.map { "\(base) · \(format.volume($0))" } ?? base
+    case .weight(let grams):
+      let value = format.weightUnit == .lb ? format.weight(grams) : "\(Self.number(grams / 1000, places: 2)) kg"
+      return String(localized: "Weight · \(value)", bundle: .module)
+    case .height(let cm): return String(localized: "Height · \(format.length(cm))", bundle: .module)
+    case .medicine(let title): return String(localized: "Medicine · \(title)", bundle: .module)
+    case .activity(let title, _): return String(localized: "Activity · \(title)", bundle: .module)
     case .custom(let title): return title
     }
   }
 
   static func nappyLabel(_ nappy: QuickLog.Nappy) -> String {
     switch nappy {
-    case .wet: "Wet"
-    case .dirty: "Dirty"
-    case .both: "Wet and dirty"
+    case .wet: String(localized: "Wet nappy", bundle: .module)
+    case .dirty: String(localized: "Dirty nappy", bundle: .module)
+    case .both: String(localized: "Wet and dirty nappy", bundle: .module)
     }
   }
 
   static func pottyLabel(_ nappy: QuickLog.Nappy) -> String {
     switch nappy {
-    case .wet: "Wee"
-    case .dirty: "Poo"
-    case .both: "Wee + poo"
+    case .wet: String(localized: "Wee", bundle: .module)
+    case .dirty: String(localized: "Poo", bundle: .module)
+    case .both: String(localized: "Wee + poo", bundle: .module)
     }
+  }
+
+  static func sideLabel(_ side: Side) -> String {
+    switch side {
+    case .left: String(localized: "Left", bundle: .module)
+    case .right: String(localized: "Right", bundle: .module)
+    case .both: String(localized: "Both", bundle: .module)
+    }
+  }
+
+  static func minutes(_ value: Double) -> String {
+    String(localized: "\(number(value)) min", bundle: .module)
   }
 
   static func number(_ value: Double, places: Int = 0) -> String {
@@ -217,17 +233,12 @@ extension GlanceSnapshot {
   /// Shows a log on the widget straight away, before the app has synced it.
   public func applying(_ pending: PendingLog, calendar: Calendar = .current) -> GlanceSnapshot {
     var next = self
-    let time = Clock.h12(pending.loggedAt, calendar: calendar)
+    let time = Clock.time(pending.loggedAt, calendar: calendar)
     switch pending.log {
     case .feed(.bottle, _, _, _, _):
-      next.lastFeed = "Bottle · \(time)"
+      next.lastFeed = String(localized: "Bottle · \(time)", bundle: .module)
     case .feed(.breast, let side, _, _, _):
-      let label = switch side {
-      case .left: "Left"
-      case .right: "Right"
-      case .both: "Both"
-      case nil: "Feed"
-      }
+      let label = side.map(LogEntry.sideLabel) ?? String(localized: "Feed", bundle: .module)
       next.lastFeed = "\(label) · \(time)"
     case .nappy(let nappy):
       next.lastNappy = "\(LogEntry.pottyLabel(nappy)) · \(time)"

@@ -17,11 +17,12 @@ struct Card<Content: View>: View {
 }
 
 struct ScreenTitle: View {
-  let text: String
-  init(_ text: String) { self.text = text }
+  let text: Text
+  init(_ key: LocalizedStringKey) { text = Text(key) }
+  init(verbatim: String) { text = Text(verbatim: verbatim) }
 
   var body: some View {
-    Text(text)
+    text
       .font(.app(.displayBold, 34, relativeTo: .largeTitle))
       .tracking(-0.6)
       .foregroundStyle(C.ink)
@@ -30,8 +31,8 @@ struct ScreenTitle: View {
 }
 
 struct Subtitle: View {
-  let text: String
-  init(_ text: String) { self.text = text }
+  let text: LocalizedStringKey
+  init(_ text: LocalizedStringKey) { self.text = text }
 
   var body: some View {
     Text(text)
@@ -43,8 +44,8 @@ struct Subtitle: View {
 }
 
 struct FieldLabel: View {
-  let text: String
-  init(_ text: String) { self.text = text }
+  let text: LocalizedStringKey
+  init(_ text: LocalizedStringKey) { self.text = text }
 
   var body: some View {
     Text(text)
@@ -55,7 +56,7 @@ struct FieldLabel: View {
 }
 
 struct Pill: View {
-  let label: String
+  let label: LocalizedStringKey
   var selected = false
   var tint: Color = C.tealSoft
   var ink: Color = C.tealDark
@@ -79,7 +80,7 @@ struct Pill: View {
 
 /// Teal pill button. An async action shows a spinner and blocks double taps.
 struct PrimaryButton: View {
-  let label: String
+  let label: LocalizedStringKey
   var disabled = false
   var tint: Color = C.teal
   let action: () async -> Void
@@ -113,7 +114,7 @@ struct PrimaryButton: View {
 }
 
 struct SecondaryButton: View {
-  let label: String
+  let label: LocalizedStringKey
   var ink: Color = C.ink
   let action: () -> Void
 
@@ -133,7 +134,7 @@ struct SecondaryButton: View {
 /// 44pt white circle with a shadow (RN `IconButton`).
 struct CircleIconButton: View {
   let systemImage: String
-  let label: String
+  let label: LocalizedStringKey
   var ink: Color = C.ink
   let action: () -> Void
 
@@ -152,9 +153,9 @@ struct CircleIconButton: View {
 }
 
 struct FormField: View {
-  let label: String
+  let label: LocalizedStringKey
   @Binding var text: String
-  var placeholder = ""
+  var placeholder: LocalizedStringKey = ""
   var axis: Axis = .horizontal
   var keyboard: UIKeyboardType = .default
 
@@ -239,7 +240,7 @@ extension ScreenScaffold where Trailing == EmptyView {
 }
 
 struct LoadingView: View {
-  var label: String? = nil
+  var label: LocalizedStringKey? = nil
 
   var body: some View {
     VStack(spacing: 12) {
@@ -259,9 +260,9 @@ struct EmptyState: View {
   var tint: Color = C.teal
   let title: String
   let message: String
-  var actionLabel: String? = nil
+  var actionLabel: LocalizedStringKey? = nil
   var action: (() -> Void)? = nil
-  var secondaryLabel: String? = nil
+  var secondaryLabel: LocalizedStringKey? = nil
   var secondaryAction: (() -> Void)? = nil
 
   var body: some View {
@@ -297,7 +298,7 @@ struct EmptyState: View {
     .cardShadow()
   }
 
-  private func button(_ label: String, fill: Color, ink: Color, action: @escaping () -> Void) -> some View {
+  private func button(_ label: LocalizedStringKey, fill: Color, ink: Color, action: @escaping () -> Void) -> some View {
     Button(action: action) {
       Text(label)
         .font(.app(.bold, 15))

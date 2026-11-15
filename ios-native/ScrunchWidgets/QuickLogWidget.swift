@@ -73,7 +73,7 @@ struct QuickLogView: View {
       }
       GridRow {
         QuickLogButton(intent: LogNappyIntent(nappy: .both), symbol: "circle.grid.2x2.fill", label: QuickLog.Nappy.both.label, spoken: "Log a wet and dirty nappy")
-        QuickLogButton(intent: StartTimerIntent(timer: .feed), symbol: "timer", label: "Feed", spoken: "Start a feed timer")
+        QuickLogButton(intent: StartTimerIntent(timer: .feed), symbol: "timer", label: String(localized: "Feed"), spoken: "Start a feed timer")
       }
     }
   }
@@ -83,7 +83,7 @@ struct QuickLogButton<Intent: AppIntent>: View {
   let intent: Intent
   let symbol: String
   let label: String
-  let spoken: String
+  let spoken: LocalizedStringKey
 
   var body: some View {
     Button(intent: intent) {

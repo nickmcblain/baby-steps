@@ -71,7 +71,7 @@ struct FloatingDock: View {
     .padding(.bottom, 2)
   }
 
-  private func item(_ tab: Tab, _ label: String, _ symbol: String) -> some View {
+  private func item(_ tab: Tab, _ label: LocalizedStringKey, _ symbol: String) -> some View {
     let active = selected == tab
     return Button {
       selected = tab

@@ -19,6 +19,7 @@ struct ProfileView: View {
   @State private var sheet: Sheet?
   @State private var confirmSignOut = false
   @AppStorage(MilestonesCard.visibleKey) private var showMilestones = true
+  @AppStorage(WeightPreference.storageKey) private var weightPreference = WeightPreference.automatic
 
   private var email: String {
     user.value??.email ?? clerk.user?.primaryEmailAddress?.emailAddress ?? "—"
@@ -53,7 +54,18 @@ struct ProfileView: View {
         SettingsRow(title: "Join with a code", systemImage: "figure.and.child.holdinghands", tint: C.purple) { sheet = .joinPartner }
       }
 
-      SettingsSection(title: "Home") {
+      SettingsSection(title: "Preferences") {
+        VStack(alignment: .leading, spacing: 8) {
+          Text("Show weights in").font(.app(.bold, 16)).foregroundStyle(C.ink)
+          Picker("Show weights in", selection: weightUnit) {
+            Text("kg").tag(WeightUnit.kg)
+            Text("lb & oz").tag(WeightUnit.lb)
+          }
+          .pickerStyle(.segmented)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        SettingsDivider()
         Toggle(isOn: $showMilestones) {
           VStack(alignment: .leading, spacing: 4) {
             Text("Little firsts").font(.app(.bold, 16)).foregroundStyle(C.ink)
@@ -109,6 +121,14 @@ struct ProfileView: View {
         .presentationCornerRadius(32)
         .presentationBackground(C.bg)
     }
+  }
+
+  /// Starts on the region's unit; picking one pins it.
+  private var weightUnit: Binding<WeightUnit> {
+    Binding(
+      get: { DisplayFormat(weightPreference: weightPreference).weightUnit },
+      set: { weightPreference = $0 == .lb ? .lbOz : .kg }
+    )
   }
 
   private var header: some View {

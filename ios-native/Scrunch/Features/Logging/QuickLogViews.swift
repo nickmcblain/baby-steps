@@ -61,7 +61,7 @@ struct NappyView: View {
       saveFeedback.logged(potty ? .potty : .nappy, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -111,13 +111,13 @@ struct MedicineView: View {
         let scheduled = await Reminders.scheduleMedicine(babyId: baby.id, babyName: baby.name, name: title, dose: doseValue, hours: remindHours)
         if !scheduled {
           let close = dismiss
-          alert = FormAlert(title: "Saved, but no reminder", message: "Turn on notifications in Settings to get a nudge for the next dose.", onDismiss: { close() })
+          alert = FormAlert(title: "Saved, but no reminder", message: String(localized: "Turn on notifications in Settings to get a nudge for the next dose."), onDismiss: { close() })
           return
         }
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -150,7 +150,7 @@ struct ActivityLogView: View {
       FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
-          Pill(label: item, selected: preset == item, tint: C.purpleSoft, ink: C.purple) { preset = item }
+          Pill(label: LocalizedStringKey(item), selected: preset == item, tint: C.purpleSoft, ink: C.purple) { preset = item }
         }
       }
       if preset == "Other" {
@@ -183,7 +183,7 @@ struct ActivityLogView: View {
       saveFeedback.logged(.activity, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -214,7 +214,7 @@ struct CustomEventView: View {
       FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
-          Pill(label: item, selected: preset == item) { preset = item }
+          Pill(label: LocalizedStringKey(item), selected: preset == item) { preset = item }
         }
       }
       if preset == "Other" {
@@ -235,7 +235,7 @@ struct CustomEventView: View {
       saveFeedback.logged(.custom, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

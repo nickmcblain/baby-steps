@@ -57,7 +57,7 @@ struct PatternsView: View {
     }
   }
 
-  private var title: String {
+  private var title: LocalizedStringKey {
     switch kind {
     case .sleep: "Sleep patterns"
     case .feed: "Feed patterns"
@@ -75,7 +75,7 @@ struct PatternsView: View {
     }
   }
 
-  private var addLabel: String {
+  private var addLabel: LocalizedStringKey {
     switch kind {
     case .sleep: "Add sleep"
     case .feed: "Add feed"
@@ -247,7 +247,7 @@ struct PatternChart: View {
     }
   }
 
-  private func switchPill(_ label: String, selected: Bool, action: @escaping () -> Void) -> some View {
+  private func switchPill(_ label: LocalizedStringKey, selected: Bool, action: @escaping () -> Void) -> some View {
     Button(action: action) {
       Text(label)
         .font(.app(.bold, 14))
@@ -292,8 +292,8 @@ struct PatternChart: View {
       HStack(spacing: 0) {
         Color.clear.frame(width: 66)
         GeometryReader { geo in
-          ForEach([("12am", 0.0), ("6am", 0.25), ("12pm", 0.5), ("6pm", 0.75)], id: \.0) { label, at in
-            Text(label).font(.app(.medium, 10)).foregroundStyle(C.muted).offset(x: geo.size.width * at)
+          ForEach([(0, 0.0), (6, 0.25), (12, 0.5), (18, 0.75)], id: \.0) { hour, at in
+            Text(WeekGrid.formatHourLabel(hour)).font(.app(.medium, 10)).foregroundStyle(C.muted).offset(x: geo.size.width * at)
           }
         }
         .frame(height: 16)

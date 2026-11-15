@@ -77,7 +77,7 @@ struct KidsView: View {
               .font(.app(.bold, 18))
               .foregroundStyle(C.ink)
               .fixedSize(horizontal: false, vertical: true)
-            Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
+            Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.weight(baby.weightGrams))")
               .font(.app(.body, 14))
               .foregroundStyle(C.muted)
           }
@@ -168,7 +168,7 @@ struct JoinPartnerSheet: View {
       let id = try await convex.mutation(API.babies.joinByCode(next))
       onJoined(id)
     } catch {
-      self.error = UserMessage.from(error, fallback: "Check the code.")
+      self.error = UserMessage.from(error, fallback: String(localized: "Check the code."))
       busy = false
     }
   }
