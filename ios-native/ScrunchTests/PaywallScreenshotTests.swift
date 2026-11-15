@@ -33,12 +33,12 @@ final class PaywallScreenshotTests: XCTestCase {
 
   func testPaywallOnTheSixthNappy() async throws {
     let (entitlements, _) = await services([.nappy: 5])
-    try await snapshot("Paywall, sixth nappy", PaywallView(type: .nappy).environment(entitlements))
+    try await snapshot("Paywall, sixth nappy", PaywallView(type: .nappy).environment(entitlements), settle: 15)
   }
 
   func testPaywallForAWidgetLog() async throws {
     let (entitlements, _) = await services([.nappy: 5])
-    try await snapshot("Paywall, entry waiting from a widget", PaywallView(type: .nappy, heldCount: 1).environment(entitlements))
+    try await snapshot("Paywall, entry waiting from a widget", PaywallView(type: .nappy, heldCount: 1).environment(entitlements), settle: 15)
   }
 
   func testLockedPatterns() async throws {
@@ -67,14 +67,15 @@ final class PaywallScreenshotTests: XCTestCase {
     .environment(gate)
   }
 
-  private func snapshot(_ name: String, _ view: some View) async throws {
+  /// SubscriptionStoreView loads its products after appearing, so the paywall needs longer.
+  private func snapshot(_ name: String, _ view: some View, settle: Int = 4) async throws {
     let window = try XCTUnwrap(
       UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first
     )
     let previous = window.rootViewController
     defer { window.rootViewController = previous }
     window.rootViewController = UIHostingController(rootView: view)
-    try await Task.sleep(for: .seconds(4))
+    try await Task.sleep(for: .seconds(settle))
     let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
       window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
     }
