@@ -224,3 +224,140 @@ export const joinByCode = authedMutation({
     return baby._id;
   },
 });
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+export const photoUrl = authedQuery({
+  args: { babyId: v.id("babies") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return baby.photoId ? await ctx.storage.getUrl(baby.photoId) : null;
+  },
+});
+
+export const generatePhotoUploadUrl = authedMutation({
+  args: { babyId: v.id("babies") },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const setPhoto = authedMutation({
+  args: { babyId: v.id("babies"), storageId: v.id("_storage") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const file = await ctx.db.system.get(args.storageId);
+    if (!file) {
+      throw new ConvexError("Photo upload not found");
+    }
+    if (!file.contentType?.startsWith("image/") || file.size > MAX_PHOTO_BYTES) {
+      await ctx.storage.delete(args.storageId);
+      throw new ConvexError("Photo must be an image under 5 MB");
+    }
+    if (baby.photoId && baby.photoId !== args.storageId) {
+      await ctx.storage.delete(baby.photoId);
+    }
+    await ctx.db.patch(args.babyId, { photoId: args.storageId });
+    return null;
+  },
+});
+
+export const removePhoto = authedMutation({
+  args: { babyId: v.id("babies") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    if (baby.photoId) {
+      await ctx.storage.delete(baby.photoId);
+      await ctx.db.patch(args.babyId, { photoId: undefined });
+    }
+    return null;
+  },
+});
+
+/** Kept in step with `Milestone` in ios-native ScrunchCore/Delight.swift. */
+const MILESTONE_KEYS = new Set([
+  "firstSmile",
+  "firstLaugh",
+  "rolledOver",
+  "satUp",
+  "firstTooth",
+  "firstFood",
+  "crawled",
+  "firstSteps",
+]);
+
+const milestoneMarkValidator = v.object({
+  key: v.string(),
+  reachedAt: v.number(),
+});
+
+export const milestones = authedQuery({
+  args: { babyId: v.id("babies") },
+  returns: v.array(milestoneMarkValidator),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const rows = await ctx.db
+      .query("milestones")
+      .withIndex("by_baby_and_key", (q) => q.eq("babyId", args.babyId))
+      .take(MILESTONE_KEYS.size * 2);
+    return rows.map((row) => ({ key: row.key, reachedAt: row.reachedAt }));
+  },
+});
+
+export const setMilestone = authedMutation({
+  args: { babyId: v.id("babies"), key: v.string(), reachedAt: v.number() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    if (!MILESTONE_KEYS.has(args.key)) {
+      throw new ConvexError("Unknown milestone");
+    }
+    if (
+      !Number.isFinite(args.reachedAt) ||
+      args.reachedAt < baby.dateOfBirth - 86_400_000 ||
+      args.reachedAt > Date.now() + 60_000
+    ) {
+      throw new ConvexError("Pick a date between birth and today");
+    }
+    const existing = await ctx.db
+      .query("milestones")
+      .withIndex("by_baby_and_key", (q) =>
+        q.eq("babyId", args.babyId).eq("key", args.key),
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { reachedAt: args.reachedAt });
+    } else {
+      await ctx.db.insert("milestones", {
+        babyId: args.babyId,
+        key: args.key,
+        reachedAt: args.reachedAt,
+        createdBy: ctx.user._id,
+      });
+    }
+    return null;
+  },
+});
+
+export const clearMilestone = authedMutation({
+  args: { babyId: v.id("babies"), key: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const existing = await ctx.db
+      .query("milestones")
+      .withIndex("by_baby_and_key", (q) =>
+        q.eq("babyId", args.babyId).eq("key", args.key),
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+    return null;
+  },
+});

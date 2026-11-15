@@ -26,6 +26,7 @@ extension View {
 /// Port of app/(app)/babies/new.tsx.
 struct NewBabyView: View {
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
 
@@ -78,11 +79,11 @@ struct NewBabyView: View {
   }
 
   private func save() async {
-    guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return alert = FormAlert(title: "Name needed") }
+    guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return alert = FormAlert(title: "Add a name") }
     guard let dateOfBirth else { return alert = FormAlert(title: "Pick a date of birth") }
     guard let weightGrams else { return alert = FormAlert(title: "Pick a weight") }
     guard careConsent else {
-      return alert = FormAlert(title: "Consent needed", message: "Please confirm you agree to save this baby's details before continuing.")
+      return alert = FormAlert(title: "One more thing", message: "Tick the box so Scrunch can keep these details safe for you.")
     }
     let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
@@ -95,9 +96,10 @@ struct NewBabyView: View {
         notes: trimmedNotes.isEmpty ? nil : trimmedNotes
       ))
       activeBaby.select(id)
+      saveFeedback.show("Welcome, \(name.trimmingCharacters(in: .whitespaces))")
       router.popToRoot(tab: .home)
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
@@ -107,6 +109,7 @@ struct EditBabyView: View {
   let babyId: BabyID
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(\.dismiss) private var dismiss
   @State private var baby = Live<Baby>()
   @State private var dash = Live<Dashboard>()
@@ -126,6 +129,7 @@ struct EditBabyView: View {
       HeaderButton(label: "Save") { await save() }
     } content: {
       ScreenTitle("Edit baby")
+      BabyPhotoField(babyId: babyId, name: name)
       FormField(label: "Name", text: $name)
       DateOfBirthField(value: $dateOfBirth)
       ToggleRow(label: "Sex (for UK growth charts)", options: [(Sex.boy, "Boy"), (Sex.girl, "Girl")], selection: $sex)
@@ -178,6 +182,7 @@ struct EditBabyView: View {
         gestationWeeks: gestationWeeks,
         feedingMode: feedingMode
       ))
+      saveFeedback.show("Changes saved")
       if let current = baby.value {
         let updated = Baby(
           id: babyId,
@@ -190,7 +195,7 @@ struct EditBabyView: View {
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }

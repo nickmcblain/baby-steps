@@ -70,11 +70,7 @@ struct KidsView: View {
     VStack(spacing: 0) {
       Button { open(baby.id) } label: {
         HStack(spacing: 14) {
-          Text(baby.name.prefix(1).uppercased())
-            .font(.app(.displayBold, 22))
-            .foregroundStyle(C.purple)
-            .frame(width: 52, height: 52)
-            .background(C.purpleSoft, in: Circle())
+          BabyAvatar(babyId: baby.id, name: baby.name, size: 52)
             .accessibilityHidden(true)
           VStack(alignment: .leading, spacing: 3) {
             Text(baby.name)

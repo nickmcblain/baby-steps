@@ -7,6 +7,7 @@ struct AddLogSheet: View {
 
   @Environment(AppRouter.self) private var router
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @State private var voice = VoiceLogRecorder()
   @Environment(UndoCenter.self) private var undo
   @State private var baby = Live<Baby>()
@@ -149,5 +150,6 @@ struct AddLogSheet: View {
     }
     router.addLogOpen = false
     undo.show(UndoCenter.Toast(message: result.confirmation))
+    saveFeedback.haptic()
   }
 }

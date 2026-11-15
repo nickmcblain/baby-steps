@@ -40,9 +40,17 @@ export default defineSchema({
     /** Parent/guardian consented to store this baby's care details (UK GDPR). */
     careDataConsentAt: v.optional(v.number()),
     careDataConsentVersion: v.optional(v.string()),
+    photoId: v.optional(v.id("_storage")),
   })
     .index("by_creator", ["createdBy"])
     .index("by_invite_code", ["inviteCode"]),
+
+  milestones: defineTable({
+    babyId: v.id("babies"),
+    key: v.string(),
+    reachedAt: v.number(),
+    createdBy: v.id("users"),
+  }).index("by_baby_and_key", ["babyId", "key"]),
 
   babyMembers: defineTable({
     babyId: v.id("babies"),
