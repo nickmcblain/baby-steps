@@ -72,7 +72,11 @@ final class FreeAllowanceAppTests: XCTestCase {
     let pending = Task { try await gate.save(.bottle, babyId: "b1") { saves.count += 1; return "e1" } }
     _ = try await waitForPaywall(gate)
     _ = try await session.buyProduct(identifier: Subscription.monthlyProductID)
-    await gate.entitlements.refresh()
+    for _ in 0..<50 where !gate.entitlements.subscribed {
+      await gate.entitlements.refresh()
+      try await Task.sleep(for: .milliseconds(100))
+    }
+    XCTAssertTrue(gate.entitlements.subscribed)
     gate.paywallClosed()
     let result = try await pending.value
     XCTAssertEqual(result, "e1")
