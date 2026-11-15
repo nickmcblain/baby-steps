@@ -23,7 +23,8 @@ public enum Format {
     return String(localized: "\(years)y \(rem)mo", bundle: .module)
   }
 
-  private static func counted(_ value: String.LocalizationValue) -> String {
+  /// Resolves `^[…](inflect: true)` grammar agreement into a plain string.
+  static func counted(_ value: String.LocalizationValue) -> String {
     String(AttributedString(localized: value, bundle: .module).characters)
   }
 

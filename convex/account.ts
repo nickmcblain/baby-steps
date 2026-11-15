@@ -77,6 +77,7 @@ export const deleteUserData = internalMutation({
 
     for (const membership of memberships) {
       await ctx.db.delete(membership._id);
+      await deleteOwnAllowances(ctx, membership.babyId, user._id);
       const baby = await ctx.db.get(membership.babyId);
       if (!baby) continue;
 
@@ -88,6 +89,7 @@ export const deleteUserData = internalMutation({
       if (others.length === 0) {
         // Deleting the baby first revokes access and its invite code straight away.
         await ctx.db.delete(baby._id);
+        if (baby.photoId) await ctx.storage.delete(baby.photoId);
         await ctx.scheduler.runAfter(0, internal.account.purgeBabyData, {
           babyId: baby._id,
         });
@@ -98,14 +100,43 @@ export const deleteUserData = internalMutation({
       if (baby.createdBy === user._id) {
         await ctx.db.patch(baby._id, { createdBy: others[0].userId });
       }
+      const milestones = await ctx.db
+        .query("milestones")
+        .withIndex("by_baby_and_key", (q) => q.eq("babyId", baby._id))
+        .collect();
+      for (const milestone of milestones) {
+        if (milestone.createdBy === user._id) {
+          await ctx.db.patch(milestone._id, { createdBy: others[0].userId });
+        }
+      }
       await deleteOwnChats(ctx, baby._id, user._id);
       leftSharedBabies += 1;
     }
+
+    // The App Store subscription itself is managed (and cancelled) in the user's Apple account.
+    const subscriptions = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const subscription of subscriptions) await ctx.db.delete(subscription._id);
 
     await ctx.db.delete(user._id);
     return { deletedBabies, leftSharedBabies };
   },
 });
+
+/** Free-entry counts for this carer on one baby (one row per log type). */
+async function deleteOwnAllowances(
+  ctx: MutationCtx,
+  babyId: Id<"babies">,
+  userId: Id<"users">,
+) {
+  const rows = await ctx.db
+    .query("logAllowances")
+    .withIndex("by_baby_and_user_and_type", (q) => q.eq("babyId", babyId).eq("userId", userId))
+    .collect();
+  for (const row of rows) await ctx.db.delete(row._id);
+}
 
 async function deleteOwnChats(
   ctx: MutationCtx,
@@ -173,6 +204,27 @@ export const purgeBabyData = internalMutation({
       .take(BATCH);
     for (const memory of memories) await ctx.db.delete(memory._id);
     if (memories.length === BATCH) {
+      await again();
+      return null;
+    }
+
+    const milestones = await ctx.db
+      .query("milestones")
+      .withIndex("by_baby_and_key", (q) => q.eq("babyId", args.babyId))
+      .take(BATCH);
+    for (const milestone of milestones) await ctx.db.delete(milestone._id);
+    if (milestones.length === BATCH) {
+      await again();
+      return null;
+    }
+
+    // Counts left by carers who had already left this baby.
+    const allowances = await ctx.db
+      .query("logAllowances")
+      .withIndex("by_baby_and_user_and_type", (q) => q.eq("babyId", args.babyId))
+      .take(BATCH);
+    for (const row of allowances) await ctx.db.delete(row._id);
+    if (allowances.length === BATCH) {
       await again();
     }
     return null;

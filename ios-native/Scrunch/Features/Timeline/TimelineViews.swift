@@ -139,7 +139,7 @@ struct EventListView: View {
   let babyId: BabyID
   var kind: EventKind? = nil
   var window: (startMs: EpochMs, endMs: EpochMs)? = nil
-  var emptyText: String? = nil
+  var emptyText: LocalizedStringKey? = nil
   var onEmptyAdd: (() -> Void)? = nil
 
   @Environment(ConvexService.self) private var convex

@@ -119,8 +119,7 @@ public enum Patterns {
   /// "Only 1 day logged in the last 7, so these numbers are rough for now." or nil.
   public static func sparseNote(loggedDays: Int, days: Int) -> String? {
     guard loggedDays > 0, loggedDays < min(sparseDays, days) else { return nil }
-    let dayWord = loggedDays == 1 ? "day" : "days"
-    return "Only \(loggedDays) \(dayWord) logged in the last \(days), so these numbers are rough for now."
+    return Format.counted("Only ^[\(loggedDays) day](inflect: true) logged in the last \(days), so these numbers are rough for now.")
   }
 
   /// Feeds and bottle millilitres per local day, oldest first. Averages are over the days

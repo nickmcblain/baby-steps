@@ -141,3 +141,30 @@ final class LogTypesTests: XCTestCase {
     XCTAssertTrue(LogTypes.showsPotty(dateOfBirth: now - 400 * DAY, now: now))
   }
 }
+
+/// Copy from #4/#7 now comes from the String Catalog; the en-GB text is unchanged.
+final class CatalogCopyTests: XCTestCase {
+  func testSparseNoteAgreesWithTheCount() {
+    XCTAssertEqual(Patterns.sparseNote(loggedDays: 1, days: 7), "Only 1 day logged in the last 7, so these numbers are rough for now.")
+    XCTAssertEqual(Patterns.sparseNote(loggedDays: 2, days: 14), "Only 2 days logged in the last 14, so these numbers are rough for now.")
+    XCTAssertNil(Patterns.sparseNote(loggedDays: 3, days: 7))
+  }
+
+  func testStaleTitleSingularHour() {
+    let now = at(2026, 10, 14, 21)
+    XCTAssertEqual(HomeCopy.staleTitle(lastLoggedAt: now - 1 * 3_600_000, now: now, calendar: london), "Nothing logged for 1 hour")
+  }
+
+  func testMilestoneSavedReadsNaturally() {
+    XCTAssertEqual(MilestoneCopy.saved(.firstSmile, babyName: "Eliza Rose"), "Saved Eliza's first smile")
+    XCTAssertEqual(MilestoneCopy.saved(.rolledOver, babyName: "Eliza"), "Saved: Eliza rolled over")
+    XCTAssertEqual(MilestoneCopy.saved(.firstTooth, babyName: nil), "First tooth saved")
+  }
+
+  func testEverySaveLineHasBothForms() {
+    for kind in EventKind.allCases {
+      XCTAssertFalse(SaveCopy.logged(kind, babyName: "Ada").isEmpty)
+      XCTAssertFalse(SaveCopy.logged(kind, babyName: nil).contains("Ada"))
+    }
+  }
+}

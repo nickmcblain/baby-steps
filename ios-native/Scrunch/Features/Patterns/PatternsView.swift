@@ -84,7 +84,7 @@ struct PatternsView: View {
     }
   }
 
-  private var empty: (title: String, message: String) {
+  private var empty: (title: LocalizedStringKey, message: LocalizedStringKey) {
     switch kind {
     case .sleep: ("No sleeps logged yet", "Time a nap or add one you remember. Patterns show up after a few days.")
     case .feed: ("No feeds logged yet", "Log feeds as they happen to see feeds and bottle milk for each day.")

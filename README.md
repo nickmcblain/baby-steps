@@ -40,3 +40,14 @@ bun install
 bun start
 bun run ios:run
 ```
+
+## Native tests
+
+Run from `ios-native/`:
+
+```bash
+(cd Packages/ScrunchCore && swift test)
+xcodebuild -project Scrunch.xcodeproj -scheme Scrunch -destination "id=$SIM" test CODE_SIGNING_ALLOWED=NO
+```
+
+Boot the simulator and let it settle before running the app tests, for example with `xcrun simctl boot $SIM && xcrun simctl bootstatus $SIM` and then a minute's wait. On a freshly created or cold simulator, the StoreKit test daemon can fail to load `StoreKit/Scrunch.storekit`. When that happens, `EntitlementsStoreKitTests`, `FreeAllowanceAppTests`, `PaywallScreenshotTests` and some `SharingTests` fail with no products or with purchase errors. Rerun on the warm simulator before treating those failures as real.
