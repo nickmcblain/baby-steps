@@ -18,9 +18,9 @@ public enum QuickLog {
 
     public var label: String {
       switch self {
-      case .wet: "Wet"
-      case .dirty: "Dirty"
-      case .both: "Both"
+      case .wet: String(localized: "Wet", bundle: .module)
+      case .dirty: String(localized: "Dirty", bundle: .module)
+      case .both: String(localized: "Both", bundle: .module)
       }
     }
 
@@ -30,9 +30,9 @@ public enum QuickLog {
 
     public var loggedCopy: String {
       switch self {
-      case .wet: "Wet nappy logged"
-      case .dirty: "Dirty nappy logged"
-      case .both: "Wet and dirty nappy logged"
+      case .wet: String(localized: "Wet nappy logged", bundle: .module)
+      case .dirty: String(localized: "Dirty nappy logged", bundle: .module)
+      case .both: String(localized: "Wet and dirty nappy logged", bundle: .module)
       }
     }
   }
@@ -51,21 +51,21 @@ public enum QuickLog {
   public static func lastSideLine(lastFeed: Event?, now: EpochMs) -> String? {
     guard let lastFeed, lastFeed.feedKind != .bottle, let side = lastFeed.side else { return nil }
     let word = switch side {
-    case .left: "Left"
-    case .right: "Right"
-    case .both: "Both"
+    case .left: String(localized: "Left", bundle: .module)
+    case .right: String(localized: "Right", bundle: .module)
+    case .both: String(localized: "Both", bundle: .module)
     }
-    return "Last side: \(word), \(Format.relative(lastFeed.loggedAt, now: now))"
+    return String(localized: "Last side: \(word), \(Format.relative(lastFeed.loggedAt, now: now))", bundle: .module)
   }
 
   /// "Wet nappy logged · 14:32"
   public static func savedCopy(_ title: String, loggedAt: EpochMs, calendar: Calendar = .current) -> String {
-    "\(title) · \(Clock.h24(loggedAt, calendar: calendar))"
+    "\(title) · \(Clock.time(loggedAt, calendar: calendar))"
   }
 
   /// "Started 14:32"
   public static func startedCopy(_ session: TimerSession, calendar: Calendar = .current) -> String {
-    "Started \(Clock.h24(session.sessionStartedAt, calendar: calendar))"
+    String(localized: "Started \(Clock.time(session.sessionStartedAt, calendar: calendar))", bundle: .module)
   }
 
   /// A saved log moved earlier by `minutes`, snapped like every other save.
@@ -75,23 +75,27 @@ public enum QuickLog {
 
   /// "Feeding · Left", "Asleep", "Tummy time", "Pumping · Right"
   public static func runningTitle(_ session: TimerSession) -> String {
-    let side = session.activeSide.map { $0 == .left ? " · Left" : " · Right" } ?? ""
+    let side = sideSuffix(session)
     switch session.kind {
-    case .sleep: return session.isRunning ? "Asleep" : "Sleep paused"
-    case .tummy: return session.isRunning ? "Tummy time" : "Tummy time paused"
-    case .feed: return session.isRunning ? "Feeding\(side)" : "Feed paused"
-    case .pump: return session.isRunning ? "Pumping\(side)" : "Pump paused"
+    case .sleep: return session.isRunning ? String(localized: "Asleep", bundle: .module) : String(localized: "Sleep paused", bundle: .module)
+    case .tummy: return session.isRunning ? String(localized: "Tummy time", bundle: .module) : String(localized: "Tummy time paused", bundle: .module)
+    case .feed: return session.isRunning ? String(localized: "Feeding\(side)", bundle: .module) : String(localized: "Feed paused", bundle: .module)
+    case .pump: return session.isRunning ? String(localized: "Pumping\(side)", bundle: .module) : String(localized: "Pump paused", bundle: .module)
     }
   }
 
   /// Toast copy after a one-tap start.
   public static func startedToast(_ session: TimerSession) -> String {
     switch session.kind {
-    case .sleep: return "Sleep timer started"
-    case .tummy: return "Tummy time started"
-    case .feed: return "Feed started\(session.activeSide.map { $0 == .left ? " · Left" : " · Right" } ?? "")"
-    case .pump: return "Pump started"
+    case .sleep: return String(localized: "Sleep timer started", bundle: .module)
+    case .tummy: return String(localized: "Tummy time started", bundle: .module)
+    case .feed: return String(localized: "Feed started\(sideSuffix(session))", bundle: .module)
+    case .pump: return String(localized: "Pump started", bundle: .module)
     }
+  }
+
+  private static func sideSuffix(_ session: TimerSession) -> String {
+    session.activeSide.map { $0 == .left ? String(localized: " · Left", bundle: .module) : String(localized: " · Right", bundle: .module) } ?? ""
   }
 }
 

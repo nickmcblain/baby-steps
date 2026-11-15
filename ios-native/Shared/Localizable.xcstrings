@@ -1,0 +1,1680 @@
+{
+  "sourceLanguage" : "en-GB",
+  "strings" : {
+    "" : {
+
+    },
+    " / %@%@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : " / %1$@%2$@"
+          }
+        }
+      }
+    },
+    " °C" : {
+
+    },
+    " °F" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ %lld" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$lld"
+          }
+        }
+      }
+    },
+    "%@ ml" : {
+
+    },
+    "%@ side" : {
+
+    },
+    "%@ · %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@. Every answer says where it comes from." : {
+
+    },
+    "%@. Lock Screen timer is off in Settings." : {
+
+    },
+    "%@: %@ of %@%@. %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@ of %3$@%4$@. %5$@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
+    "%lld days" : {
+
+    },
+    "%lld feeds" : {
+
+    },
+    "%lld logged" : {
+
+    },
+    "%lld." : {
+
+    },
+    "%lldh" : {
+
+    },
+    "%lldh %lldm" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lldh %2$lldm"
+          }
+        }
+      }
+    },
+    "%lldm" : {
+
+    },
+    "1 feed" : {
+
+    },
+    "10" : {
+
+    },
+    "12" : {
+
+    },
+    "15" : {
+
+    },
+    "2.5 ml" : {
+
+    },
+    "40" : {
+
+    },
+    "45" : {
+
+    },
+    "90" : {
+
+    },
+    "A feed timer is already running. Stop it first." : {
+
+    },
+    "A nap timer is already running. Stop it first." : {
+
+    },
+    "A pump timer is already running. Stop it first." : {
+
+    },
+    "A tummy time timer is already running. Stop it first." : {
+
+    },
+    "Activity" : {
+
+    },
+    "Add a baby" : {
+
+    },
+    "Add a baby first. There's nothing to export yet." : {
+
+    },
+    "Add a kid to start" : {
+
+    },
+    "Add a medicine name" : {
+
+    },
+    "Add a name" : {
+
+    },
+    "Add a photo" : {
+
+    },
+    "Add a title" : {
+
+    },
+    "Add baby" : {
+
+    },
+    "Add boy / girl on Edit →" : {
+
+    },
+    "Add event" : {
+
+    },
+    "Add feed" : {
+
+    },
+    "Add nappy" : {
+
+    },
+    "Add sleep" : {
+
+    },
+    "Add tummy time" : {
+
+    },
+    "Add your baby" : {
+
+    },
+    "After bath" : {
+
+    },
+    "Age" : {
+
+    },
+    "All caught up. Rest if you can." : {
+
+    },
+    "Allow mic access in Settings to speak a log." : {
+
+    },
+    "Allow mic access to log feeds and sleeps hands-free." : {
+
+    },
+    "Allow notifications to get the next-dose nudge." : {
+
+    },
+    "Almost there" : {
+
+    },
+    "Amount (%@)" : {
+
+    },
+    "Amount (ml)" : {
+
+    },
+    "An optional card for first smiles and the like. Never sends reminders." : {
+
+    },
+    "Apple Intelligence isn't available on this iPhone. Try \"Log a wet nappy in Scrunch\" instead." : {
+
+    },
+    "Ask" : {
+
+    },
+    "Ask a question" : {
+
+    },
+    "Ask and Speak are off. You'll be asked to agree before you first use them." : {
+
+    },
+    "Ask failed" : {
+
+    },
+    "Baby" : {
+
+    },
+    "Back" : {
+
+    },
+    "Bars" : {
+
+    },
+    "Birth centile" : {
+
+    },
+    "Both" : {
+
+    },
+    "Bottle" : {
+
+    },
+    "Boy" : {
+
+    },
+    "Breast" : {
+
+    },
+    "Breastfeed" : {
+
+    },
+    "Bring red book" : {
+
+    },
+    "C-section" : {
+
+    },
+    "CLERK_PUBLISHABLE_KEY or CONVEX_URL was not set for this build. Copy Config/Secrets.example.xcconfig to Config/Secrets.xcconfig, fill it in, and build again." : {
+
+    },
+    "Calpol" : {
+
+    },
+    "Centile" : {
+
+    },
+    "Centimetres" : {
+
+    },
+    "Change photo" : {
+
+    },
+    "Chart" : {
+
+    },
+    "Chats" : {
+
+    },
+    "Check name and date of birth" : {
+
+    },
+    "Check the code." : {
+
+    },
+    "Checkbox" : {
+
+    },
+    "Clinic visit" : {
+
+    },
+    "Close" : {
+
+    },
+    "Clothing" : {
+
+    },
+    "Columns" : {
+
+    },
+    "Connecting…" : {
+
+    },
+    "Consent needed" : {
+
+    },
+    "Continue" : {
+
+    },
+    "Could not log" : {
+
+    },
+    "Could not log from voice" : {
+
+    },
+    "Could not open chat" : {
+
+    },
+    "Could not save" : {
+
+    },
+    "Could not start chat" : {
+
+    },
+    "Couldn't export" : {
+
+    },
+    "Couldn’t delete. Try again." : {
+
+    },
+    "Couldn’t get an answer" : {
+
+    },
+    "Couldn’t log that nappy. Try again." : {
+
+    },
+    "Couldn’t log that. Try again." : {
+
+    },
+    "Couldn’t open the chat" : {
+
+    },
+    "Couldn’t remove that" : {
+
+    },
+    "Couldn’t remove the photo" : {
+
+    },
+    "Couldn’t save the photo" : {
+
+    },
+    "Couldn’t start a chat" : {
+
+    },
+    "Couldn’t undo. Delete it from Timeline." : {
+
+    },
+    "Couldn’t use that photo" : {
+
+    },
+    "Create %@" : {
+
+    },
+    "Date of birth" : {
+
+    },
+    "Day" : {
+
+    },
+    "Decrease temperature" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete my account" : {
+
+    },
+    "Delivery (optional)" : {
+
+    },
+    "Describe a feed, nappy, sleep or medicine in your own words and Scrunch logs it, using Apple Intelligence on this iPhone." : {
+
+    },
+    "Didn’t catch that" : {
+
+    },
+    "Done" : {
+
+    },
+    "Done — add amount" : {
+
+    },
+    "Done — confirm details" : {
+
+    },
+    "Done — fill in details" : {
+
+    },
+    "Dose" : {
+
+    },
+    "Dots: your logs (%@)" : {
+
+    },
+    "Dream feed" : {
+
+    },
+    "Duration" : {
+
+    },
+    "Each row is one day, midnight to midnight" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edit baby" : {
+
+    },
+    "Email" : {
+
+    },
+    "End" : {
+
+    },
+    "Enter how long they slept" : {
+
+    },
+    "Enter how long tummy time lasted" : {
+
+    },
+    "Enter how long you pumped" : {
+
+    },
+    "Enter it by hand" : {
+
+    },
+    "Enter the 6-character code your partner sent. You'll both see the same feeds, sleeps and nappies." : {
+
+    },
+    "Event" : {
+
+    },
+    "Export my data first" : {
+
+    },
+    "Expressed" : {
+
+    },
+    "Feed" : {
+
+    },
+    "Feed %@" : {
+
+    },
+    "Feed on left side" : {
+
+    },
+    "Feed on right side" : {
+
+    },
+    "Feed patterns" : {
+
+    },
+    "Feed timer" : {
+
+    },
+    "Feeding (optional)" : {
+
+    },
+    "Feeds" : {
+
+    },
+    "Feeds each day" : {
+
+    },
+    "Feeds, sleep, and nappies live here once you add a baby." : {
+
+    },
+    "Feet" : {
+
+    },
+    "Feet & in" : {
+
+    },
+    "Fell asleep" : {
+
+    },
+    "Finish feed" : {
+
+    },
+    "Finish pump" : {
+
+    },
+    "Forgot to start?" : {
+
+    },
+    "Format" : {
+
+    },
+    "Formula" : {
+
+    },
+    "Gestation weeks (optional)" : {
+
+    },
+    "Gestation weeks should be between 22 and 44" : {
+
+    },
+    "Girl" : {
+
+    },
+    "Go to Kids" : {
+
+    },
+    "Hearing test" : {
+
+    },
+    "Height" : {
+
+    },
+    "Height (optional)" : {
+
+    },
+    "Hide" : {
+
+    },
+    "Hide little firsts" : {
+
+    },
+    "Home" : {
+
+    },
+    "How it's handled" : {
+
+    },
+    "How much did they have, in ml?" : {
+
+    },
+    "I am a parent or guardian and I consent to Scrunch storing this baby's care details (such as name, date of birth, growth, and logs) so the app can work. Scrunch is not a medical or healthcare service." : {
+
+    },
+    "If you subscribe through the App Store, deleting your account doesn't cancel it. Cancel in your iPhone's Settings first." : {
+
+    },
+    "Inches" : {
+
+    },
+    "Increase temperature" : {
+
+    },
+    "Invite code" : {
+
+    },
+    "Invite partner" : {
+
+    },
+    "Join with a code" : {
+
+    },
+    "Keep it under 30 seconds." : {
+
+    },
+    "Keep the little hours in one place." : {
+
+    },
+    "Kids" : {
+
+    },
+    "Kilograms" : {
+
+    },
+    "Large" : {
+
+    },
+    "Last feed" : {
+
+    },
+    "Last nappy" : {
+
+    },
+    "Left" : {
+
+    },
+    "Length" : {
+
+    },
+    "Length / height for age" : {
+
+    },
+    "Length for age chart" : {
+
+    },
+    "Let-down slow" : {
+
+    },
+    "Lines: 0.4 · 9 · 50 · 91 · 99.6" : {
+
+    },
+    "List" : {
+
+    },
+    "Listening" : {
+
+    },
+    "Little firsts" : {
+
+    },
+    "Load older" : {
+
+    },
+    "Loading chart…" : {
+
+    },
+    "Loading the week…" : {
+
+    },
+    "Loading week…" : {
+
+    },
+    "Loading…" : {
+
+    },
+    "Lock Screen timer is off" : {
+
+    },
+    "Lock Screen timer unavailable" : {
+
+    },
+    "Log" : {
+
+    },
+    "Log ${minutes} minutes of tummy time for ${baby}" : {
+
+    },
+    "Log ${name} for ${baby}" : {
+
+    },
+    "Log ${text} for ${baby}" : {
+
+    },
+    "Log %@ for %@?" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Log %1$@ for %2$@?"
+          }
+        }
+      }
+    },
+    "Log a ${feed} feed for ${baby}" : {
+
+    },
+    "Log a ${minutes} minute pump for ${baby}" : {
+
+    },
+    "Log a ${minutes} minute sleep for ${baby}" : {
+
+    },
+    "Log a ${nappy} nappy for ${baby}" : {
+
+    },
+    "Log a ${nappy} potty visit for ${baby}" : {
+
+    },
+    "Log a dirty nappy" : {
+
+    },
+    "Log a feed" : {
+
+    },
+    "Log a length" : {
+
+    },
+    "Log a length of ${length} for ${baby}" : {
+
+    },
+    "Log a medicine" : {
+
+    },
+    "Log a moment" : {
+
+    },
+    "Log a nappy" : {
+
+    },
+    "Log a nappy or start a feed without opening Scrunch." : {
+
+    },
+    "Log a potty visit" : {
+
+    },
+    "Log a pump" : {
+
+    },
+    "Log a sleep" : {
+
+    },
+    "Log a weight" : {
+
+    },
+    "Log a weight of ${weight} for ${baby}" : {
+
+    },
+    "Log a wet and dirty nappy" : {
+
+    },
+    "Log a wet nappy" : {
+
+    },
+    "Log an activity" : {
+
+    },
+    "Log dirty nappy" : {
+
+    },
+    "Log feed" : {
+
+    },
+    "Log from a description" : {
+
+    },
+    "Log now" : {
+
+    },
+    "Log pump" : {
+
+    },
+    "Log something" : {
+
+    },
+    "Log tummy time" : {
+
+    },
+    "Log wet and dirty nappy" : {
+
+    },
+    "Log wet nappy" : {
+
+    },
+    "Logged" : {
+
+    },
+    "Logged %@ for %@." : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Logged %1$@ for %2$@."
+          }
+        }
+      }
+    },
+    "Logged, no reminder" : {
+
+    },
+    "Logging…" : {
+
+    },
+    "Logs a breast or bottle feed that has already happened." : {
+
+    },
+    "Logs a length or height measurement." : {
+
+    },
+    "Logs a medicine dose, such as Calpol." : {
+
+    },
+    "Logs a nap or sleep that has just ended." : {
+
+    },
+    "Logs a wee, poo or both on the potty." : {
+
+    },
+    "Logs a weigh-in, in kilograms or pounds." : {
+
+    },
+    "Logs a wet, dirty or wet and dirty nappy." : {
+
+    },
+    "Logs an activity, such as a bath or a walk." : {
+
+    },
+    "Logs an expressing session that has just ended." : {
+
+    },
+    "Logs anything else, with an optional note." : {
+
+    },
+    "Logs tummy time that has just ended." : {
+
+    },
+    "Loved the water" : {
+
+    },
+    "Make a copy of everything logged for your baby. A PDF is easy to show your health visitor or GP. A CSV opens in Numbers, Excel or Google Sheets." : {
+
+    },
+    "Medicine" : {
+
+    },
+    "Medium" : {
+
+    },
+    "Meds" : {
+
+    },
+    "Mic produced an empty clip. Check mic permission and try again." : {
+
+    },
+    "Microphone needed" : {
+
+    },
+    "Midwife, GP, jabs and other appointments, past or upcoming." : {
+
+    },
+    "Midwife, GP, jabs, and other appointments — past or upcoming." : {
+
+    },
+    "Milk" : {
+
+    },
+    "Minutes" : {
+
+    },
+    "Minutes filled from your timer — add ml if you measured." : {
+
+    },
+    "Minutes filled from your timer — tweak anything before saving." : {
+
+    },
+    "Mixed" : {
+
+    },
+    "Month" : {
+
+    },
+    "Move %lld minutes earlier" : {
+
+    },
+    "Name" : {
+
+    },
+    "Name needed" : {
+
+    },
+    "Nappy" : {
+
+    },
+    "Nappy patterns" : {
+
+    },
+    "New baby" : {
+
+    },
+    "New chat" : {
+
+    },
+    "Next nap" : {
+
+    },
+    "Next nap, last feed and nappy at a glance" : {
+
+    },
+    "Next side" : {
+
+    },
+    "Next week" : {
+
+    },
+    "Nico" : {
+
+    },
+    "No audio captured" : {
+
+    },
+    "No bottles" : {
+
+    },
+    "No chats yet — tap + on Ask to start one." : {
+
+    },
+    "No recording saved — try again." : {
+
+    },
+    "No timer is running." : {
+
+    },
+    "Not now" : {
+
+    },
+    "Note" : {
+
+    },
+    "Notes" : {
+
+    },
+    "Notes (optional)" : {
+
+    },
+    "Nothing logged" : {
+
+    },
+    "Nothing logged this week" : {
+
+    },
+    "Nothing recorded" : {
+
+    },
+    "OK" : {
+
+    },
+    "Off" : {
+
+    },
+    "On the play mat" : {
+
+    },
+    "One more thing" : {
+
+    },
+    "Open Scrunch and add a baby first, then try again." : {
+
+    },
+    "Open Scrunch to do that." : {
+
+    },
+    "Opens %@’s home" : {
+
+    },
+    "Opens in Safari" : {
+
+    },
+    "Opens the timer" : {
+
+    },
+    "Optional" : {
+
+    },
+    "Ounces" : {
+
+    },
+    "Past chats" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Pause left side" : {
+
+    },
+    "Pause right side" : {
+
+    },
+    "Pause sleep" : {
+
+    },
+    "Pause tummy time" : {
+
+    },
+    "Paused" : {
+
+    },
+    "Photo (optional)" : {
+
+    },
+    "Pick a date" : {
+
+    },
+    "Pick a date of birth" : {
+
+    },
+    "Pick a height" : {
+
+    },
+    "Pick a kid first." : {
+
+    },
+    "Pick a weight" : {
+
+    },
+    "Pick an activity" : {
+
+    },
+    "Play" : {
+
+    },
+    "Please confirm you agree to save this baby's details before continuing." : {
+
+    },
+    "Poo" : {
+
+    },
+    "Poo size" : {
+
+    },
+    "Potty" : {
+
+    },
+    "Pounds" : {
+
+    },
+    "Pounds & oz" : {
+
+    },
+    "Pram nap" : {
+
+    },
+    "Prefers left side first" : {
+
+    },
+    "Previous week" : {
+
+    },
+    "Profile" : {
+
+    },
+    "Pump" : {
+
+    },
+    "Pump timer" : {
+
+    },
+    "Quick log" : {
+
+    },
+    "Reached %@" : {
+
+    },
+    "Remind me" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Remove photo" : {
+
+    },
+    "Reset" : {
+
+    },
+    "Resume" : {
+
+    },
+    "Right" : {
+
+    },
+    "Right now" : {
+
+    },
+    "Rows" : {
+
+    },
+    "Running" : {
+
+    },
+    "SCRUNCH" : {
+
+    },
+    "Sat on their own" : {
+
+    },
+    "Save" : {
+
+    },
+    "Save activity" : {
+
+    },
+    "Save baby" : {
+
+    },
+    "Save changes" : {
+
+    },
+    "Save event" : {
+
+    },
+    "Save feed" : {
+
+    },
+    "Save height" : {
+
+    },
+    "Save medicine" : {
+
+    },
+    "Save nappy" : {
+
+    },
+    "Save potty" : {
+
+    },
+    "Save pump" : {
+
+    },
+    "Save sleep" : {
+
+    },
+    "Save tummy time" : {
+
+    },
+    "Save weigh-in" : {
+
+    },
+    "Saved %@ for %@." : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saved %1$@ for %2$@."
+          }
+        }
+      }
+    },
+    "Saved, but no reminder" : {
+
+    },
+    "Scrunch" : {
+
+    },
+    "Scrunch %@. Not a medical service." : {
+
+    },
+    "Seedy mustard" : {
+
+    },
+    "Send" : {
+
+    },
+    "Series" : {
+
+    },
+    "Set boy or girl on Edit profile to plot against UK charts." : {
+
+    },
+    "Sex (for UK growth charts)" : {
+
+    },
+    "Share" : {
+
+    },
+    "Share code" : {
+
+    },
+    "Share code %@" : {
+
+    },
+    "Share code: invite a partner" : {
+
+    },
+    "Shares code %@ with a friendly message" : {
+
+    },
+    "Show weights in" : {
+
+    },
+    "Side" : {
+
+    },
+    "Sign out" : {
+
+    },
+    "Sign out of Scrunch?" : {
+
+    },
+    "Skip to manual entry" : {
+
+    },
+    "Sleep" : {
+
+    },
+    "Sleep patterns" : {
+
+    },
+    "Sleep timer" : {
+
+    },
+    "Sleep today" : {
+
+    },
+    "Small" : {
+
+    },
+    "Something went wrong. Try again." : {
+
+    },
+    "Sorry, I couldn't tell what to log. Try \"Log a feed in Scrunch\"." : {
+
+    },
+    "Speak" : {
+
+    },
+    "Speak a log or question" : {
+
+    },
+    "Start" : {
+
+    },
+    "Start a ${timer} timer for ${baby}" : {
+
+    },
+    "Start a feed" : {
+
+    },
+    "Start a feed timer" : {
+
+    },
+    "Start a nap" : {
+
+    },
+    "Start a timer" : {
+
+    },
+    "Start breastfeed, left side" : {
+
+    },
+    "Start breastfeed, right side" : {
+
+    },
+    "Start sleep" : {
+
+    },
+    "Start sleep timer" : {
+
+    },
+    "Start timer" : {
+
+    },
+    "Start tummy time" : {
+
+    },
+    "Start when they go on their tummy. It keeps counting on your Lock Screen if you leave the app." : {
+
+    },
+    "Start when they go on their tummy. Keeps timing on the Lock Screen / Dynamic Island while the app is away." : {
+
+    },
+    "Start when they nod off. It keeps counting on your Lock Screen if you leave the app." : {
+
+    },
+    "Start when they nod off. Keeps timing on the Lock Screen / Dynamic Island while the app is away." : {
+
+    },
+    "Started" : {
+
+    },
+    "Started %lld minutes earlier" : {
+
+    },
+    "Started a feed timer for %@." : {
+
+    },
+    "Started a nap timer for %@." : {
+
+    },
+    "Started a pump timer for %@." : {
+
+    },
+    "Started a tummy time timer for %@." : {
+
+    },
+    "Starts a feed timer for your baby." : {
+
+    },
+    "Starts a feed, nap, tummy time or pump timer on the Lock Screen and Dynamic Island." : {
+
+    },
+    "Starts a sleep timer for your baby." : {
+
+    },
+    "Stop and save" : {
+
+    },
+    "Stop and send" : {
+
+    },
+    "Stop the timer" : {
+
+    },
+    "Stops the running timer and saves it." : {
+
+    },
+    "Subscription" : {
+
+    },
+    "Subscriptions aren't available yet. Everything in Scrunch works without one." : {
+
+    },
+    "Suggested next side" : {
+
+    },
+    "Swimming" : {
+
+    },
+    "Swipe left to delete" : {
+
+    },
+    "Tap Speak, talk for a second or two, then tap again to send." : {
+
+    },
+    "Tap one when it happens. Every baby has their own pace." : {
+
+    },
+    "Tap to pause" : {
+
+    },
+    "Tap to resume" : {
+
+    },
+    "Tap to start" : {
+
+    },
+    "Tenths" : {
+
+    },
+    "That clip is too long. Keep it under 30 seconds." : {
+
+    },
+    "That didn’t save" : {
+
+    },
+    "That was a bit long" : {
+
+    },
+    "That was under five seconds, so nothing was saved." : {
+
+    },
+    "The feed timer is already running for %@." : {
+
+    },
+    "The file is made on your phone and removed when you close the share sheet. Only share it with people you trust." : {
+
+    },
+    "The nap timer is already running for %@." : {
+
+    },
+    "The pump timer is already running for %@." : {
+
+    },
+    "The tummy time timer is already running for %@." : {
+
+    },
+    "Thinking…" : {
+
+    },
+    "This permanently deletes your Scrunch account. It can't be undone." : {
+
+    },
+    "This week" : {
+
+    },
+    "Tick the box so Scrunch can keep these details safe for you." : {
+
+    },
+    "Time of day" : {
+
+    },
+    "Time one side at a time. Island keeps the active side running if you leave the app." : {
+
+    },
+    "Time one side at a time. It keeps counting on your Lock Screen if you leave the app." : {
+
+    },
+    "Timeline" : {
+
+    },
+    "Timer" : {
+
+    },
+    "Timing…" : {
+
+    },
+    "Title" : {
+
+    },
+    "Too short" : {
+
+    },
+    "Too short to save. Timer cleared." : {
+
+    },
+    "Try again" : {
+
+    },
+    "Try again." : {
+
+    },
+    "Tummy" : {
+
+    },
+    "Tummy patterns" : {
+
+    },
+    "Tummy time" : {
+
+    },
+    "Turn off Ask and Speak" : {
+
+    },
+    "Turn on notifications in Settings to get a nudge for the next dose." : {
+
+    },
+    "Type" : {
+
+    },
+    "Type %@ to confirm" : {
+
+    },
+    "Typical at this age: %@–%@h" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Typical at this age: %1$@–%2$@h"
+          }
+        }
+      }
+    },
+    "Typical day" : {
+
+    },
+    "Undo" : {
+
+    },
+    "Use a real phone" : {
+
+    },
+    "Use this date" : {
+
+    },
+    "Use this height" : {
+
+    },
+    "Use this time" : {
+
+    },
+    "Use this weight" : {
+
+    },
+    "Usual day" : {
+
+    },
+    "Vaginal" : {
+
+    },
+    "Voice log" : {
+
+    },
+    "We didn’t hear anything. Check Scrunch can use the microphone, then try again." : {
+
+    },
+    "Wee" : {
+
+    },
+    "Wee size" : {
+
+    },
+    "Week" : {
+
+    },
+    "Week chart of sleep, tummy time and logged events" : {
+
+    },
+    "Weigh-in" : {
+
+    },
+    "Weight" : {
+
+    },
+    "Weight for age" : {
+
+    },
+    "Weight for age chart" : {
+
+    },
+    "What" : {
+
+    },
+    "What did you do?" : {
+
+    },
+    "What happened?" : {
+
+    },
+    "What happens" : {
+
+    },
+    "What isn't sent" : {
+
+    },
+    "What would you like to log?" : {
+
+    },
+    "What's sent" : {
+
+    },
+    "When" : {
+
+    },
+    "Which medicine?" : {
+
+    },
+    "Who answers" : {
+
+    },
+    "You'll be asked again before you next use them. Past Ask chats stay in the app until you delete your account." : {
+
+    },
+    "Your logs stay saved to your account. The widget, reminders and any running timer on this phone are cleared." : {
+
+    },
+    "bottle" : {
+
+    },
+    "breast" : {
+
+    },
+    "breastfeed" : {
+
+    },
+    "dirty" : {
+
+    },
+    "e.g. 10" : {
+
+    },
+    "e.g. 12" : {
+
+    },
+    "e.g. 15" : {
+
+    },
+    "e.g. 2.5 ml" : {
+
+    },
+    "e.g. 40" : {
+
+    },
+    "e.g. 45" : {
+
+    },
+    "e.g. 90" : {
+
+    },
+    "e.g. Bring red book" : {
+
+    },
+    "e.g. Calpol" : {
+
+    },
+    "e.g. Dream feed" : {
+
+    },
+    "e.g. Hearing test" : {
+
+    },
+    "e.g. Let-down slow" : {
+
+    },
+    "e.g. Loved the water" : {
+
+    },
+    "e.g. Nico" : {
+
+    },
+    "e.g. On the play mat" : {
+
+    },
+    "e.g. Pram nap" : {
+
+    },
+    "e.g. Prefers left side first" : {
+
+    },
+    "e.g. Sat on their own" : {
+
+    },
+    "e.g. Seedy mustard" : {
+
+    },
+    "e.g. Swimming" : {
+
+    },
+    "expressing" : {
+
+    },
+    "feed" : {
+
+    },
+    "formula" : {
+
+    },
+    "iOS Simulator mic is usually silent, so Whisper hears nothing. Run on a device." : {
+
+    },
+    "kg" : {
+
+    },
+    "lb & oz" : {
+
+    },
+    "mixed" : {
+
+    },
+    "nap" : {
+
+    },
+    "nursing" : {
+
+    },
+    "poo" : {
+
+    },
+    "pooey" : {
+
+    },
+    "poopy" : {
+
+    },
+    "pump" : {
+
+    },
+    "pumping" : {
+
+    },
+    "sleep" : {
+
+    },
+    "tummy" : {
+
+    },
+    "tummy time" : {
+
+    },
+    "wee" : {
+
+    },
+    "wee and poo" : {
+
+    },
+    "weeing" : {
+
+    },
+    "wet" : {
+
+    },
+    "wet and dirty" : {
+
+    },
+    "your baby" : {
+
+    },
+    "°C" : {
+
+    },
+    "°F" : {
+
+    },
+    "±0.5°C" : {
+
+    },
+    "±0.9°F" : {
+
+    },
+    "· %@" : {
+
+    },
+    "•" : {
+
+    },
+    "−%lld min" : {
+
+    }
+  },
+  "version" : "1.0"
+}

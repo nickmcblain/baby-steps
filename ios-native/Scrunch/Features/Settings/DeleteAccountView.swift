@@ -36,7 +36,7 @@ struct DeleteAccountView: View {
       }
       SecondaryButton(label: "Export my data first", action: onExportFirst)
 
-      FormField(label: "Type \(Self.confirmWord) to confirm", text: $confirmation, placeholder: Self.confirmWord)
+      FormField(label: "Type \(Self.confirmWord) to confirm", text: $confirmation, placeholder: LocalizedStringKey(Self.confirmWord))
         .textInputAutocapitalization(.characters)
         .autocorrectionDisabled()
       PrimaryButton(label: "Delete my account", disabled: !confirmed, tint: C.danger) { await deleteAccount() }

@@ -1,0 +1,676 @@
+{
+  "sourceLanguage" : "en-GB",
+  "strings" : {
+    " · Left" : {
+
+    },
+    " · Right" : {
+
+    },
+    "%@ Under 3 months or a lighter baby can use one extra thin layer — never a hat indoors." : {
+
+    },
+    "%@ at %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ at %2$@"
+          }
+        }
+      }
+    },
+    "%@ min" : {
+
+    },
+    "%@ today" : {
+
+    },
+    "%@ · feed check" : {
+
+    },
+    "%@ · nap window soon" : {
+
+    },
+    "%@ · watch for hunger cues" : {
+
+    },
+    "%@h" : {
+
+    },
+    "%lld min" : {
+
+    },
+    "%lldd ago" : {
+
+    },
+    "%lldh" : {
+
+    },
+    "%lldh %lldm" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lldh %2$lldm"
+          }
+        }
+      }
+    },
+    "%lldh %lldm ago" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lldh %2$lldm ago"
+          }
+        }
+      }
+    },
+    "%lldm" : {
+
+    },
+    "%lldm ago" : {
+
+    },
+    "%lldy %lldmo" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lldy %2$lldmo"
+          }
+        }
+      }
+    },
+    "0.2 TOG" : {
+
+    },
+    "0.5 TOG" : {
+
+    },
+    "0.5 TOG bag or sheet" : {
+
+    },
+    "1.0 TOG" : {
+
+    },
+    "1.0 TOG bag or light sleepsuit" : {
+
+    },
+    "2.5 TOG" : {
+
+    },
+    "2.5 TOG bag" : {
+
+    },
+    "2.5 TOG sleeping bag" : {
+
+    },
+    "A cool room needs a thicker bag and full layers." : {
+
+    },
+    "A guess from their usual gap. Cues first." : {
+
+    },
+    "A longer night may start now." : {
+
+    },
+    "A short nap still counts." : {
+
+    },
+    "A warm room — keep bedding light." : {
+
+    },
+    "About 12–14h, nap included." : {
+
+    },
+    "About 12–15h, with a daytime nap." : {
+
+    },
+    "About 15h, mostly at night." : {
+
+    },
+    "About 18h in short bursts." : {
+
+    },
+    "Above the 98th centile" : {
+
+    },
+    "Activity" : {
+
+    },
+    "Activity · %@" : {
+
+    },
+    "Add sex to see UK chart" : {
+
+    },
+    "Answers from NHS and Lullaby Trust guidance" : {
+
+    },
+    "Around %@ since the last feed — offer if they're stirring." : {
+
+    },
+    "Around %@ since the last feed — time for a gentle check." : {
+
+    },
+    "Ask Scrunch" : {
+
+    },
+    "Ask about newborn care…" : {
+
+    },
+    "Asleep" : {
+
+    },
+    "At 24°C and above, babies overheat easily. Less is safer." : {
+
+    },
+    "At this age and weight, an active sleep timer pauses feed reminders so you can leave them sleeping." : {
+
+    },
+    "Awake %@, longer than usual" : {
+
+    },
+    "Awake for %@" : {
+
+    },
+    "Bedtime" : {
+
+    },
+    "Below the 2nd centile" : {
+
+    },
+    "Between 2nd and 9th centile" : {
+
+    },
+    "Between 91st and 98th centile" : {
+
+    },
+    "Both" : {
+
+    },
+    "Bottle" : {
+
+    },
+    "Bottle feed" : {
+
+    },
+    "Bottle · %@" : {
+
+    },
+    "Breast %@" : {
+
+    },
+    "Dirty" : {
+
+    },
+    "Dirty nappy" : {
+
+    },
+    "Dirty nappy logged" : {
+
+    },
+    "Event" : {
+
+    },
+    "Expressed" : {
+
+    },
+    "Extra vest (newborn / smaller baby)" : {
+
+    },
+    "Feed" : {
+
+    },
+    "Feed may be due now" : {
+
+    },
+    "Feed paused" : {
+
+    },
+    "Feed started%@" : {
+
+    },
+    "Feed · Both" : {
+
+    },
+    "Feed · Left" : {
+
+    },
+    "Feed · Right" : {
+
+    },
+    "Feeding%@" : {
+
+    },
+    "Feel the chest or back of the neck. Warm is good; sweaty means strip a layer." : {
+
+    },
+    "Formula" : {
+
+    },
+    "From their last two weeks" : {
+
+    },
+    "General guidance. No specific NHS or Lullaby Trust page matched, so check nhs.uk or ask your health visitor." : {
+
+    },
+    "Guidance, not medical advice. No hats or hoods indoors for sleep." : {
+
+    },
+    "Height" : {
+
+    },
+    "Height · %@" : {
+
+    },
+    "How many wet nappies should I expect?" : {
+
+    },
+    "How often do newborns usually feed?" : {
+
+    },
+    "If your baby is not breathing normally, is unresponsive, blue/grey, or having a seizure, call 999 now." : {
+
+    },
+    "Join me on Scrunch so we can both log %@'s feeds, sleeps and nappies. Open Scrunch, go to Kids, tap Join with a code and enter %@." : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Join me on Scrunch so we can both log %1$@'s feeds, sleeps and nappies. Open Scrunch, go to Kids, tap Join with a code and enter %2$@."
+          }
+        }
+      }
+    },
+    "Last feed %@ ago" : {
+
+    },
+    "Last feed: both sides" : {
+
+    },
+    "Last nappy %@ ago" : {
+
+    },
+    "Last side: %@, %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Last side: %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "Last side: left" : {
+
+    },
+    "Last side: right" : {
+
+    },
+    "Latest ≈ %@ centile · %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Latest ≈ %1$@ centile · %2$@"
+          }
+        }
+      }
+    },
+    "Left" : {
+
+    },
+    "Left %lld min · Right %lld min" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Left %1$lld min · Right %2$lld min"
+          }
+        }
+      }
+    },
+    "Light cellular blanket if still cool" : {
+
+    },
+    "Log a feed to see when the next is likely" : {
+
+    },
+    "Log a wee or poo to keep track." : {
+
+    },
+    "Log feeds as they happen and the estimate comes back." : {
+
+    },
+    "Log nappies as you change them to keep this useful." : {
+
+    },
+    "Medicine" : {
+
+    },
+    "Medicine · %@" : {
+
+    },
+    "NHS, not a timetable." : {
+
+    },
+    "Nappy" : {
+
+    },
+    "Next dose due%@." : {
+
+    },
+    "Next feed likely around %@" : {
+
+    },
+    "Next nap" : {
+
+    },
+    "Night you set. Daytime naps still follow the age shape." : {
+
+    },
+    "No feed logged for %@" : {
+
+    },
+    "No feeds yet" : {
+
+    },
+    "No nappies logged yet" : {
+
+    },
+    "No nappies yet" : {
+
+    },
+    "No nappy logged for %@" : {
+
+    },
+    "No sleep yet" : {
+
+    },
+    "No tummy yet" : {
+
+    },
+    "Not enough of a daytime pattern yet." : {
+
+    },
+    "Now" : {
+
+    },
+    "Offer a nap" : {
+
+    },
+    "Often ready around %@" : {
+
+    },
+    "Often ready around %@. Watch for cues." : {
+
+    },
+    "Often ready ~%@" : {
+
+    },
+    "On the cool side of the usual 16–20°C range." : {
+
+    },
+    "Open Scrunch to see how sleep and feeds changed." : {
+
+    },
+    "Outside usual UK chart range — check with your health visitor or GP. This is not medical advice." : {
+
+    },
+    "Poo" : {
+
+    },
+    "Poo %@" : {
+
+    },
+    "Potty" : {
+
+    },
+    "Potty · %@" : {
+
+    },
+    "Pump" : {
+
+    },
+    "Pump paused" : {
+
+    },
+    "Pump started" : {
+
+    },
+    "Pump · %@ · %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pump · %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "Pump · Left" : {
+
+    },
+    "Pump · Right" : {
+
+    },
+    "Pumping%@" : {
+
+    },
+    "Right" : {
+
+    },
+    "Scrunch is not a medical or healthcare service. Guidance only — not diagnosis, clinical advice, or triage. Emergencies: call 999. Urgent advice: NHS 111 or your midwife. Scrunch is independent and not affiliated with the NHS or The Lullaby Trust; it summarises their public guidance." : {
+
+    },
+    "Seek urgent help" : {
+
+    },
+    "Send your partner or carer the code. They tap Join with a code on their Kids tab." : {
+
+    },
+    "Set the room temperature for a TOG suggestion." : {
+
+    },
+    "Short-sleeve vest if needed" : {
+
+    },
+    "Sleep" : {
+
+    },
+    "Sleep paused" : {
+
+    },
+    "Sleep timer started" : {
+
+    },
+    "Sleep · %@" : {
+
+    },
+    "Sleepsuit" : {
+
+    },
+    "Sleepsuit or 1.0 TOG bag" : {
+
+    },
+    "Start on whichever feels fuller." : {
+
+    },
+    "Started %@" : {
+
+    },
+    "Their daytime sleep, with the night you set." : {
+
+    },
+    "This is the typical comfortable nursery band." : {
+
+    },
+    "Today" : {
+
+    },
+    "Tomorrow" : {
+
+    },
+    "Tonight at %@: %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tonight at %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "Tonight's sleeping bag" : {
+
+    },
+    "Try starting on the left next time." : {
+
+    },
+    "Try starting on the right next time." : {
+
+    },
+    "Tummy time" : {
+
+    },
+    "Tummy time paused" : {
+
+    },
+    "Tummy time started" : {
+
+    },
+    "Tummy time · %@" : {
+
+    },
+    "Typical at this age: %@. Look for yawns, rubbing eyes or staring." : {
+
+    },
+    "Typical at this age: %@. Tired signs matter more than the clock." : {
+
+    },
+    "UK Red Book centiles (WHO / UK-WHO standards)" : {
+
+    },
+    "Under 5 kg — feed check-ins stay on even if they're asleep." : {
+
+    },
+    "Under 8 weeks — feed check-ins stay on even if they're asleep." : {
+
+    },
+    "Upcoming" : {
+
+    },
+    "Vest" : {
+
+    },
+    "Warm enough that a light bag over a vest is plenty." : {
+
+    },
+    "Watch cues" : {
+
+    },
+    "We'll start with typical gaps for %@'s age." : {
+
+    },
+    "Wee" : {
+
+    },
+    "Wee %@" : {
+
+    },
+    "Wee + poo" : {
+
+    },
+    "Weight" : {
+
+    },
+    "Weight · %@" : {
+
+    },
+    "Wet" : {
+
+    },
+    "Wet and dirty nappy" : {
+
+    },
+    "Wet and dirty nappy logged" : {
+
+    },
+    "Wet nappy" : {
+
+    },
+    "Wet nappy logged" : {
+
+    },
+    "What does safer sleep look like?" : {
+
+    },
+    "What should my baby wear to sleep tonight?" : {
+
+    },
+    "Where they usually sleep. Last 2 weeks. Cues first." : {
+
+    },
+    "Where this comes from" : {
+
+    },
+    "Within expected range" : {
+
+    },
+    "Worried? Call your GP or NHS 111. Emergency: call 999." : {
+
+    },
+    "Yesterday" : {
+
+    },
+    "Your week with %@ is ready" : {
+
+    },
+    "^[%lld day](inflect: true)" : {
+
+    },
+    "^[%lld month](inflect: true)" : {
+
+    },
+    "^[%lld week](inflect: true)" : {
+
+    },
+    "^[%lld year](inflect: true)" : {
+
+    },
+    "about 2.5 hours" : {
+
+    },
+    "about 3 hours" : {
+
+    },
+    "about 3.5 hours" : {
+
+    },
+    "about 4 hours" : {
+
+    },
+    "based on the last %lld feeds" : {
+
+    },
+    "both sides" : {
+
+    },
+    "just now" : {
+
+    },
+    "left" : {
+
+    },
+    "right" : {
+
+    },
+    "typical at this age is %@" : {
+
+    }
+  },
+  "version" : "1.0"
+}

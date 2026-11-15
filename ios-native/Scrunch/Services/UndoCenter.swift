@@ -65,7 +65,7 @@ final class UndoCenter {
           try await convex.mutation(API.events.remove(id))
         } catch {
           self?.hiddenEventIds.remove(id)
-          self?.show(Toast(message: "Couldn’t delete. Try again."))
+          self?.show(Toast(message: String(localized: "Couldn’t delete. Try again.")))
         }
       }
     ))
@@ -122,7 +122,7 @@ struct UndoToastView: View {
     }
   }
 
-  private func chip(_ text: String, label: String, action: @escaping () async -> Void) -> some View {
+  private func chip(_ text: LocalizedStringKey, label: LocalizedStringKey, action: @escaping () async -> Void) -> some View {
     Button { Task { await action() } } label: {
       Text(text)
         .font(.app(.bold, 15))

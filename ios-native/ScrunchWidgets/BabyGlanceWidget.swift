@@ -96,7 +96,7 @@ struct GlanceView: View {
       .lineLimit(1)
   }
 
-  private func row(_ symbol: String, _ color: Color, _ label: String, _ value: String) -> some View {
+  private func row(_ symbol: String, _ color: Color, _ label: LocalizedStringKey, _ value: String) -> some View {
     HStack(spacing: 8) {
       Image(systemName: symbol).foregroundStyle(color)
       VStack(alignment: .leading, spacing: 0) {

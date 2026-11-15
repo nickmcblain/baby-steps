@@ -90,7 +90,7 @@ struct AskView: View {
       do {
         threadId = try await convex.mutation(API.chat.ensureThread(babyId))
       } catch {
-        alert = FormAlert(title: "Couldn’t open the chat", message: UserMessage.from(error, fallback: "Try again"))
+        alert = FormAlert(title: "Couldn’t open the chat", message: UserMessage.from(error, fallback: String(localized: "Try again")))
       }
     }
     .task(id: threadId) {
@@ -138,7 +138,7 @@ struct AskView: View {
         .padding(.leading, 4)
         .accessibilityAddTraits(.isHeader)
       Spacer()
-      CircleIconButton(systemImage: "info.circle", label: AIDisclosure.title) { aboutAIOpen = true }
+      CircleIconButton(systemImage: "info.circle", label: LocalizedStringKey(AIDisclosure.title)) { aboutAIOpen = true }
       CircleIconButton(systemImage: "plus", label: "New chat") { Task { await startNewChat() } }
       CircleIconButton(systemImage: "list.bullet", label: "Past chats") { router.push(babyId, .askHistory) }
     }
@@ -258,7 +258,7 @@ struct AskView: View {
     let text = (textArg ?? draft).trimmingCharacters(in: .whitespacesAndNewlines)
     guard !text.isEmpty, let threadId, !sending else { return }
     if AskSafety.isEmergency(text) {
-      alert = FormAlert(title: AskSafety.emergencyTitle, message: AskSafety.emergencyBody)
+      alert = FormAlert(verbatimTitle: AskSafety.emergencyTitle, message: AskSafety.emergencyBody)
     }
     draft = ""
     pendingUser = text
@@ -270,7 +270,7 @@ struct AskView: View {
     do {
       _ = try await convex.action(API.chatAgent.ask(babyId: babyId, threadId: threadId, message: text))
     } catch {
-      alert = FormAlert(title: "Couldn’t get an answer", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t get an answer", message: UserMessage.from(error, fallback: String(localized: "Try again")))
       draft = text
     }
   }
@@ -283,7 +283,7 @@ struct AskView: View {
       draft = ""
       pendingUser = nil
     } catch {
-      alert = FormAlert(title: "Couldn’t start a chat", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t start a chat", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

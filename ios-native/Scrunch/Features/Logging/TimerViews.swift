@@ -41,7 +41,7 @@ private struct ClockText: View {
 }
 
 private struct TimerFooter: View {
-  let doneLabel: String
+  let doneLabel: LocalizedStringKey
   let session: TimerSession?
   let showReset: Bool
   let onDone: () async -> Void
@@ -140,7 +140,7 @@ struct DurationTimerView: View {
       }
       .buttonStyle(PressScale())
       .sensoryFeedback(.impact(weight: .light), trigger: running)
-      .accessibilityLabel(running ? "Pause \(isSleep ? "sleep" : "tummy time")" : "Start \(isSleep ? "sleep" : "tummy time")")
+      .accessibilityLabel(running ? (isSleep ? "Pause sleep" : "Pause tummy time") : (isSleep ? "Start sleep" : "Start tummy time"))
 
       if let session { StartShiftChips(session: session) }
 
@@ -265,7 +265,7 @@ struct FeedTimerView: View {
     }
   }
 
-  private func sideCard(_ label: String, _ side: TimerSide, session: TimerSession?, ms: Double) -> some View {
+  private func sideCard(_ label: LocalizedStringKey, _ side: TimerSide, session: TimerSession?, ms: Double) -> some View {
     let running = session?.activeSide == side && session?.isRunning == true
     return Button { Task { await tap(side) } } label: {
       VStack(spacing: 8) {

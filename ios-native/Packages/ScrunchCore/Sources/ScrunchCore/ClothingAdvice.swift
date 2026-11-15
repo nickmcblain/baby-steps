@@ -21,39 +21,39 @@ public enum Clothing {
   static let bands: [Band] = [
     Band(
       maxTemp: 16,
-      tog: "2.5 TOG",
-      layers: ["Vest", "Sleepsuit", "2.5 TOG bag", "Light cellular blanket if still cool"],
-      why: "A cool room needs a thicker bag and full layers."
+      tog: String(localized: "2.5 TOG", bundle: .module),
+      layers: [String(localized: "Vest", bundle: .module), String(localized: "Sleepsuit", bundle: .module), String(localized: "2.5 TOG bag", bundle: .module), String(localized: "Light cellular blanket if still cool", bundle: .module)],
+      why: String(localized: "A cool room needs a thicker bag and full layers.", bundle: .module)
     ),
     Band(
       maxTemp: 18,
-      tog: "2.5 TOG",
-      layers: ["Vest", "Sleepsuit", "2.5 TOG sleeping bag"],
-      why: "On the cool side of the usual 16–20°C range."
+      tog: String(localized: "2.5 TOG", bundle: .module),
+      layers: [String(localized: "Vest", bundle: .module), String(localized: "Sleepsuit", bundle: .module), String(localized: "2.5 TOG sleeping bag", bundle: .module)],
+      why: String(localized: "On the cool side of the usual 16–20°C range.", bundle: .module)
     ),
     Band(
       maxTemp: 20,
-      tog: "1.0 TOG",
-      layers: ["Vest", "Sleepsuit or 1.0 TOG bag"],
-      why: "This is the typical comfortable nursery band."
+      tog: String(localized: "1.0 TOG", bundle: .module),
+      layers: [String(localized: "Vest", bundle: .module), String(localized: "Sleepsuit or 1.0 TOG bag", bundle: .module)],
+      why: String(localized: "This is the typical comfortable nursery band.", bundle: .module)
     ),
     Band(
       maxTemp: 22,
-      tog: "1.0 TOG",
-      layers: ["Vest", "1.0 TOG bag or light sleepsuit"],
-      why: "Warm enough that a light bag over a vest is plenty."
+      tog: String(localized: "1.0 TOG", bundle: .module),
+      layers: [String(localized: "Vest", bundle: .module), String(localized: "1.0 TOG bag or light sleepsuit", bundle: .module)],
+      why: String(localized: "Warm enough that a light bag over a vest is plenty.", bundle: .module)
     ),
     Band(
       maxTemp: 24,
-      tog: "0.5 TOG",
-      layers: ["Vest", "0.5 TOG bag or sheet"],
-      why: "A warm room — keep bedding light."
+      tog: String(localized: "0.5 TOG", bundle: .module),
+      layers: [String(localized: "Vest", bundle: .module), String(localized: "0.5 TOG bag or sheet", bundle: .module)],
+      why: String(localized: "A warm room — keep bedding light.", bundle: .module)
     ),
     Band(
       maxTemp: 100,
-      tog: "0.2 TOG",
-      layers: ["Nappy", "Short-sleeve vest if needed"],
-      why: "At 24°C and above, babies overheat easily. Less is safer."
+      tog: String(localized: "0.2 TOG", bundle: .module),
+      layers: [String(localized: "Nappy", bundle: .module), String(localized: "Short-sleeve vest if needed", bundle: .module)],
+      why: String(localized: "At 24°C and above, babies overheat easily. Less is safer.", bundle: .module)
     ),
   ]
 
@@ -63,8 +63,8 @@ public enum Clothing {
   public static let stepC: Double = 0.5
   public static let defaultTempC: Double = 18
 
-  public static let overheatCheck = "Feel the chest or back of the neck. Warm is good; sweaty means strip a layer."
-  public static let finePrint = "Guidance, not medical advice. No hats or hoods indoors for sleep."
+  public static let overheatCheck = String(localized: "Feel the chest or back of the neck. Warm is good; sweaty means strip a layer.", bundle: .module)
+  public static let finePrint = String(localized: "Guidance, not medical advice. No hats or hoods indoors for sleep.", bundle: .module)
 
   public static func advice(tempC: Double, dateOfBirth: EpochMs, weightGrams: Double, now: EpochMs) -> ClothingAdvice {
     let days = max(0, ((now - dateOfBirth) / dayMs).rounded(.down))
@@ -72,13 +72,13 @@ public enum Clothing {
     let band = bands.first { tempC < $0.maxTemp } ?? bands[bands.count - 1]
     var layers = band.layers
     if extraLayer && tempC < 24 {
-      layers.insert("Extra vest (newborn / smaller baby)", at: 0)
+      layers.insert(String(localized: "Extra vest (newborn / smaller baby)", bundle: .module), at: 0)
     }
     return ClothingAdvice(
       tog: band.tog,
       layers: layers,
       why: extraLayer
-        ? "\(band.why) Under 3 months or a lighter baby can use one extra thin layer — never a hat indoors."
+        ? String(localized: "\(band.why) Under 3 months or a lighter baby can use one extra thin layer — never a hat indoors.", bundle: .module)
         : band.why,
       overheat: tempC >= 22,
       extraLayer: extraLayer

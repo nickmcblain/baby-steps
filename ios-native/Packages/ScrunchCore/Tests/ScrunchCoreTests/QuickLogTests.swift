@@ -41,6 +41,7 @@ final class QuickLogTests: XCTestCase {
     XCTAssertEqual(QuickLog.savedCopy("Wet nappy logged", loggedAt: t, calendar: london), "Wet nappy logged · 14:32")
     let session = TimerSession(kind: .sleep, babyId: "b1", babyName: nil, now: t)
     XCTAssertEqual(QuickLog.startedCopy(session, calendar: london), "Started 14:32")
+    XCTAssertEqual(QuickLog.startedCopy(session, calendar: calendar("en_US", timeZone: "Europe/London")), "Started 2:32\u{202F}PM")
   }
 
   func testShiftedSavedLogSnapsToMinute() {

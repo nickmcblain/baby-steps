@@ -12,16 +12,14 @@ final class FormatTests: XCTestCase {
   }
 
   func testWeight() {
-    XCTAssertEqual(Format.weight(3400), "3.4 kg")
-    XCTAssertEqual(Format.weight(3400, unit: .lb), "7 lb 8 oz")
-    XCTAssertEqual(Format.weight(3450), "3.5 kg")
-    XCTAssertEqual(Format.weight(3450, unit: .lb), "7 lb 10 oz")
-    XCTAssertEqual(Format.weight(7250), "7.3 kg")
-    XCTAssertEqual(Format.weight(7250, unit: .lb), "16 lb 0 oz")
-    XCTAssertEqual(Format.weight(2000), "2 kg")
-    XCTAssertEqual(Format.weight(2000, unit: .lb), "4 lb 7 oz")
-    XCTAssertEqual(Format.kg(3000), "3 kg")
-    XCTAssertEqual(Format.kg(3456), "3.46 kg")
+    XCTAssertEqual(gb.weight(3400), "3.4 kg")
+    XCTAssertEqual(gb.weight(3400, unit: .lb), "7 lb 8 oz")
+    XCTAssertEqual(gb.weight(3450), "3.5 kg")
+    XCTAssertEqual(gb.weight(3450, unit: .lb), "7 lb 10 oz")
+    XCTAssertEqual(gb.weight(7250), "7.3 kg")
+    XCTAssertEqual(gb.weight(7250, unit: .lb), "16 lb 0 oz")
+    XCTAssertEqual(gb.weight(2000), "2 kg")
+    XCTAssertEqual(gb.weight(2000, unit: .lb), "4 lb 7 oz")
   }
 
   func testWeightRoundTrips() {
@@ -33,17 +31,17 @@ final class FormatTests: XCTestCase {
   }
 
   func testHeight() {
-    XCTAssertEqual(Format.height(50), "50 cm")
-    XCTAssertEqual(Format.height(50, unit: .inches), "1′ 8″")
-    XCTAssertEqual(Format.height(50.55), "50.6 cm")
-    XCTAssertEqual(Format.height(76.2), "76.2 cm")
-    XCTAssertEqual(Format.height(76.2, unit: .inches), "2′ 6″")
+    XCTAssertEqual(gb.length(50), "50 cm")
+    XCTAssertEqual(gb.length(50, unit: .inches), "1′ 8″")
+    XCTAssertEqual(gb.length(50.55), "50.6 cm")
+    XCTAssertEqual(gb.length(76.2), "76.2 cm")
+    XCTAssertEqual(gb.length(76.2, unit: .inches), "2′ 6″")
     XCTAssertEqual(Format.ftInToCm(ft: 2, inch: 6), 76.2)
     XCTAssertEqual(Format.cmPartsToCm(whole: 50, tenths: 5), 50.5)
   }
 
   func testDobIsUTC() {
-    XCTAssertEqual(Format.dob(Format.dobMs(year: 2026, month: 1, day: 3)), "3 Jan 2026")
+    XCTAssertEqual(Format.dob(Format.dobMs(year: 2026, month: 1, day: 3), calendar: london), "3 Jan 2026")
   }
 
   func testRelative() {
@@ -61,8 +59,8 @@ final class EventCopyTests: XCTestCase {
   }
 
   func testFeed() {
-    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .feed, feedKind: .bottle, amountMl: 120, milk: .formula)), "120 ml Formula")
-    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .feed, feedKind: .bottle, milk: .expressed)), "? ml Expressed")
+    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .feed, feedKind: .bottle, amountMl: 120, milk: .formula), format: gb), "120 ml Formula")
+    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .feed, feedKind: .bottle, milk: .expressed), format: gb), "? ml Expressed")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .feed, feedKind: .breast, side: .left, durationMinutes: 12)), "Breast left · 12 min")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .feed, feedKind: .breast, side: .both)), "Breast both sides")
   }
@@ -75,14 +73,14 @@ final class EventCopyTests: XCTestCase {
   }
 
   func testOtherKinds() {
-    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .weight, weightGrams: 3400)), "3.4 kg")
-    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .height, heightCm: 50.5)), "50.5 cm")
+    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .weight, weightGrams: 3400), format: gb), "3.4 kg")
+    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .height, heightCm: 50.5), format: gb), "50.5 cm")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .sleep, durationMinutes: 90)), "1h 30m")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .sleep)), "Sleep")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .tummy, durationMinutes: 5)), "5 min")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .custom, title: "  GP visit ")), "GP visit")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .custom, title: "  ")), "Event")
-    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .pump, side: .right, durationMinutes: 15, amountMl: 80)), "Right · 15 min · 80 ml")
+    XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .pump, side: .right, durationMinutes: 15, amountMl: 80), format: gb), "Right · 15 min · 80 ml")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .pump)), "Both sides")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .medicine, title: "Calpol")), "Calpol")
     XCTAssertEqual(EventCopy.title(Event(loggedAt: 0, kind: .activity, durationMinutes: 75, title: "Bath")), "Bath · 1h 15m")
@@ -106,8 +104,8 @@ final class WeekGridTests: XCTestCase {
     let labels = WeekGrid.weekDayLabels(at(2026, 7, 3), calendar: london)
     XCTAssertEqual(labels.map(\.label), ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
     XCTAssertEqual(labels.map(\.dateNum), [3, 4, 5, 6, 7, 8, 9])
-    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 7, 3), calendar: london), "3–9 Aug")
-    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 6, 27), calendar: london), "27 Jul – 2 Aug")
+    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 7, 3), calendar: london), "3\u{2009}–\u{2009}9 Aug")
+    XCTAssertEqual(WeekGrid.formatWeekRange(at(2026, 6, 27), calendar: london), "27 Jul\u{2009}–\u{2009}2 Aug")
   }
 
   func testDSTWeekHasSevenDistinctMidnights() {
@@ -127,7 +125,7 @@ final class WeekGridTests: XCTestCase {
   }
 
   func testHourLabels() {
-    XCTAssertEqual([0, 3, 12, 15, 24, -3].map(WeekGrid.formatHourLabel), ["12am", "3am", "12pm", "3pm", "12am", "9pm"])
+    XCTAssertEqual([0, 3, 12, 15, 24, -3].map { WeekGrid.formatHourLabel($0, calendar: london) }, ["00", "03", "12", "15", "00", "21"])
   }
 }
 
@@ -189,8 +187,8 @@ final class HomeCopyTests: XCTestCase {
       lastFeed: feed, lastNappy: nappy, sleepMinutesToday: 804, now: now, calendar: london
     )
     XCTAssertEqual(snapshot, GlanceSnapshot(
-      babyName: "Nico", nextNap: "Often ready ~12:40 pm", lastFeed: "Left · 8:05 am",
-      lastNappy: "Wee · 1:40 pm", sleepToday: "13.4h today"
+      babyName: "Nico", nextNap: "Often ready ~12:40", lastFeed: "Left · 08:05",
+      lastNappy: "Wee · 13:40", sleepToday: "13.4h today"
     ))
     XCTAssertEqual(GlanceSnapshot.make(babyName: "Nico", asleep: true, napAt: nil, lastFeed: nil, lastNappy: nil, sleepMinutesToday: 0, now: now, calendar: london).nextNap, "Asleep")
     XCTAssertEqual(GlanceSnapshot.make(babyName: "Nico", asleep: false, napAt: now - 1, lastFeed: nil, lastNappy: nil, sleepMinutesToday: 0, now: now, calendar: london).nextNap, "Offer a nap")

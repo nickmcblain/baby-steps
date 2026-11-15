@@ -5,7 +5,7 @@ import SwiftUI
 struct AIDisclosureContent: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
-      Subtitle(AIDisclosure.summary)
+      Subtitle(LocalizedStringKey(AIDisclosure.summary))
       Card {
         Text("Who answers").font(.app(.bold, 17)).foregroundStyle(C.ink)
         Text(AIDisclosure.provider).font(.app(.body, 15)).foregroundStyle(C.ink).lineSpacing(3)

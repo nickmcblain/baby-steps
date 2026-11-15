@@ -86,7 +86,7 @@ struct TimelineView: View {
     }
   }
 
-  private func modePill(_ label: String, _ value: Mode) -> some View {
+  private func modePill(_ label: LocalizedStringKey, _ value: Mode) -> some View {
     Button { mode = value } label: {
       Text(label)
         .font(.app(.bold, 14))
@@ -210,7 +210,7 @@ struct EventListView: View {
             .foregroundStyle(C.ink)
             .fixedSize(horizontal: false, vertical: true)
           Spacer(minLength: 0)
-          Text(Clock.h24(event.loggedAt))
+          Text(Clock.time(event.loggedAt))
             .font(.app(.medium, 14))
             .monospacedDigit()
             .foregroundStyle(C.muted)
@@ -320,15 +320,15 @@ struct WeekRhythmChart: View {
     }
   }
 
-  private static let markerLegend: [(WeekMarkerKind, String)] = [
+  private static let markerLegend: [(WeekMarkerKind, LocalizedStringKey)] = [
     (.feed, "Feed"), (.nappy, "Nappy"), (.weight, "Weight"), (.height, "Height"), (.custom, "Event"),
     (.pump, "Pump"), (.medicine, "Medicine"), (.potty, "Potty"), (.activity, "Activity"),
   ]
 
   /// Only the types that appear this week, so the key stays short.
-  private var legend: [(String, Color, Bool)] {
+  private var legend: [(LocalizedStringKey, Color, Bool)] {
     let kinds = Set(data.markers.map(\.kind))
-    var items: [(String, Color, Bool)] = []
+    var items: [(LocalizedStringKey, Color, Bool)] = []
     if !data.sleeps.isEmpty { items.append(("Sleep", C.purple, true)) }
     if !data.tummies.isEmpty { items.append(("Tummy time", C.sky, true)) }
     for (kind, label) in Self.markerLegend where kinds.contains(kind) {
@@ -429,11 +429,12 @@ struct WeekRhythmChart: View {
 
 /// Wrapping, centred legend row.
 private struct FlowLegend: View {
-  let items: [(String, Color, Bool)]
+  let items: [(LocalizedStringKey, Color, Bool)]
 
   var body: some View {
     WrapLayout(spacing: 10, rowSpacing: 6, centered: true) {
-      ForEach(items, id: \.0) { label, color, bar in
+      ForEach(items.indices, id: \.self) { index in
+        let (label, color, bar) = items[index]
         HStack(spacing: 5) {
           RoundedRectangle(cornerRadius: bar ? 4 : 6).fill(color).frame(width: bar ? 12 : 11, height: bar ? 12 : 11)
           Text(label).font(.app(.medium, 12)).foregroundStyle(C.muted)

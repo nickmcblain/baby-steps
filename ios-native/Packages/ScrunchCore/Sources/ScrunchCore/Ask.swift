@@ -24,29 +24,27 @@ public enum AskSafety {
     c == "_" || (c.isASCII && (c.isLetter || c.isNumber))
   }
 
-  public static let emergencyTitle = "Seek urgent help"
-  public static let emergencyBody =
-    "If your baby is not breathing normally, is unresponsive, blue/grey, or having a seizure, call 999 now."
+  public static var emergencyTitle: String { HealthRegion.current.emergencyTitle }
+  public static var emergencyBody: String { HealthRegion.current.emergencyBody }
+  public static var disclaimer: String { HealthRegion.current.askDisclaimer }
 
-  public static let disclaimer =
-    "Scrunch is not a medical or healthcare service. Guidance only — not diagnosis, clinical advice, or triage. Emergencies: call 999. Urgent advice: NHS 111 or your midwife. Scrunch is independent and not affiliated with the NHS or The Lullaby Trust; it summarises their public guidance."
+  public static var placeholder: String { String(localized: "Ask about newborn care…", bundle: .module) }
 
-  public static let placeholder = "Ask about newborn care…"
+  public static var entryTitle: String { String(localized: "Ask Scrunch", bundle: .module) }
+  public static var entrySubtitle: String { HealthRegion.current.askEntrySubtitle }
 
-  public static let entryTitle = "Ask Scrunch"
-  public static let entrySubtitle = "Answers from NHS and Lullaby Trust guidance"
+  public static var sourcesHeading: String { String(localized: "Where this comes from", bundle: .module) }
+  public static var noSourceNote: String { HealthRegion.current.askNoSourceNote }
+  public static var helpLine: String { HealthRegion.current.askHelpLine }
 
-  public static let sourcesHeading = "Where this comes from"
-  public static let noSourceNote =
-    "General guidance. No specific NHS or Lullaby Trust page matched, so check nhs.uk or ask your health visitor."
-  public static let helpLine = "Worried? Call your GP or NHS 111. Emergency: call 999."
-
-  public static let starterQuestions = [
-    "What should my baby wear to sleep tonight?",
-    "How many wet nappies should I expect?",
-    "How often do newborns usually feed?",
-    "What does safer sleep look like?",
-  ]
+  public static var starterQuestions: [String] {
+    [
+      String(localized: "What should my baby wear to sleep tonight?", bundle: .module),
+      String(localized: "How many wet nappies should I expect?", bundle: .module),
+      String(localized: "How often do newborns usually feed?", bundle: .module),
+      String(localized: "What does safer sleep look like?", bundle: .module),
+    ]
+  }
 
   /// Source lines for a reply. Never empty: with no citations it says so plainly.
   public static func sourceLines(_ citations: [Citation]?) -> [Citation] {

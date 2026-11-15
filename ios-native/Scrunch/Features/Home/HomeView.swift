@@ -190,7 +190,7 @@ struct HomeView: View {
       HStack(spacing: 8) {
         vital("Age", Format.age(dateOfBirth: baby.dateOfBirth, now: now)) { router.push(baby.id, .edit) }
         vital("Height", baby.heightCm.map { Format.height($0) } ?? "—") { router.push(baby.id, .height) }
-        vital("Weight", Format.weight(baby.weightGrams, unit: .lb)) { router.push(baby.id, .weight) }
+        vital("Weight", Format.weight(baby.weightGrams)) { router.push(baby.id, .weight) }
       }
       freshnessCard(baby)
       insightCard(baby)
@@ -325,7 +325,7 @@ struct HomeView: View {
     .background(C.purpleSoft, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
   }
 
-  private func vital(_ label: String, _ value: String, action: @escaping () -> Void) -> some View {
+  private func vital(_ label: LocalizedStringKey, _ value: String, action: @escaping () -> Void) -> some View {
     Button(action: action) {
       VStack(spacing: 2) {
         Text(label).font(.app(.medium, 11, relativeTo: .caption2)).foregroundStyle(C.muted)

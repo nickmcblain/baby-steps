@@ -56,14 +56,14 @@ final class PendingLogTests: XCTestCase {
   }
 
   func testSummariesUseUKCopy() {
-    XCTAssertEqual(LogEntry.nappy(.wet).summary, "Wet nappy")
-    XCTAssertEqual(LogEntry.nappy(.dirty).summary, "Dirty nappy")
-    XCTAssertEqual(LogEntry.nappy(.both).summary, "Wet and dirty nappy")
-    XCTAssertEqual(LogEntry.potty(.both).summary, "Potty · Wee + poo")
-    XCTAssertEqual(LogEntry.feed(.bottle, side: nil, minutes: nil, amountMl: 120, milk: nil).summary, "Bottle · 120 ml")
-    XCTAssertEqual(LogEntry.feed(.breast, side: .right, minutes: 10, amountMl: nil, milk: nil).summary, "Feed · Right · 10 min")
-    XCTAssertEqual(LogEntry.weight(grams: 4250).summary, "Weight · 4.25 kg")
-    XCTAssertEqual(LogEntry.height(cm: 55).summary, "Height · 55 cm")
+    XCTAssertEqual(LogEntry.nappy(.wet).summary(format: gb), "Wet nappy")
+    XCTAssertEqual(LogEntry.nappy(.dirty).summary(format: gb), "Dirty nappy")
+    XCTAssertEqual(LogEntry.nappy(.both).summary(format: gb), "Wet and dirty nappy")
+    XCTAssertEqual(LogEntry.potty(.both).summary(format: gb), "Potty · Wee + poo")
+    XCTAssertEqual(LogEntry.feed(.bottle, side: nil, minutes: nil, amountMl: 120, milk: nil).summary(format: gb), "Bottle · 120 ml")
+    XCTAssertEqual(LogEntry.feed(.breast, side: .right, minutes: 10, amountMl: nil, milk: nil).summary(format: gb), "Feed · Right · 10 min")
+    XCTAssertEqual(LogEntry.weight(grams: 4250).summary(format: gb), "Weight · 4.25 kg")
+    XCTAssertEqual(LogEntry.height(cm: 55).summary(format: gb), "Height · 55 cm")
   }
 
   func testQueueRoundTripsAndRemovesById() {
@@ -122,10 +122,10 @@ final class PendingLogTests: XCTestCase {
   func testSnapshotShowsAQueuedNappyAndFeed() {
     let now = at(2025, 0, 10, 21, 41)
     let nappy = GlanceSnapshot.placeholder.applying(PendingLog(babyId: "b1", loggedAt: now, log: .nappy(.dirty)), calendar: london)
-    XCTAssertEqual(nappy.lastNappy, "Poo · \(Clock.h12(now, calendar: london))")
+    XCTAssertEqual(nappy.lastNappy, "Poo · \(Clock.time(now, calendar: london))")
     XCTAssertEqual(nappy.lastFeed, GlanceSnapshot.placeholder.lastFeed)
 
     let feed = GlanceSnapshot.placeholder.applying(PendingLog(babyId: "b1", loggedAt: now, log: .feed(.bottle, side: nil, minutes: nil, amountMl: 90, milk: nil)), calendar: london)
-    XCTAssertEqual(feed.lastFeed, "Bottle · \(Clock.h12(now, calendar: london))")
+    XCTAssertEqual(feed.lastFeed, "Bottle · \(Clock.time(now, calendar: london))")
   }
 }

@@ -148,7 +148,7 @@ public struct TimerSession: Codable, Equatable, Sendable {
     /// The feed note the RN app pre-fills when both sides were used.
     public var bothSidesNote: String? {
       guard let leftMinutes, let rightMinutes else { return nil }
-      return "Left \(leftMinutes) min · Right \(rightMinutes) min"
+      return String(localized: "Left \(leftMinutes) min · Right \(rightMinutes) min", bundle: .module)
     }
   }
 
@@ -221,16 +221,16 @@ public struct TimerActivityContent: Codable, Equatable, Hashable, Sendable {
     switch kind {
     case .sleep:
       style = .sleep
-      title = "Sleep"
+      title = String(localized: "Sleep", bundle: .module)
     case .tummy:
       style = .tummy
-      title = "Tummy time"
+      title = String(localized: "Tummy time", bundle: .module)
     case .pump:
       style = .feed
-      title = side == .right ? "Pump · Right" : side == .left ? "Pump · Left" : "Pump"
+      title = side == .right ? String(localized: "Pump · Right", bundle: .module) : side == .left ? String(localized: "Pump · Left", bundle: .module) : String(localized: "Pump", bundle: .module)
     case .feed:
       style = .feed
-      title = side == .right ? "Feed · Right" : side == .left ? "Feed · Left" : "Feed"
+      title = side == .right ? String(localized: "Feed · Right", bundle: .module) : side == .left ? String(localized: "Feed · Left", bundle: .module) : String(localized: "Feed", bundle: .module)
     }
     subtitle = babyName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     self.running = running

@@ -23,7 +23,7 @@ final class IntentTests: XCTestCase {
     for kind in [TimerKind.sleep, .feed, .tummy, .pump] {
       XCTAssertEqual(TimerOption(kind).kind, kind)
     }
-    XCTAssertEqual(TimerOption.tummy.spoken, "tummy time")
+    XCTAssertEqual(String(localized: TimerOption.tummy.startedDialog(for: "Ada")), "Started a tummy time timer for Ada.")
   }
 
   func testMissingBabyFallsBackToActiveBaby() throws {
