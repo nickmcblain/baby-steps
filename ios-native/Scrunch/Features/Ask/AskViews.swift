@@ -16,6 +16,8 @@ struct AskView: View {
   @State private var pendingUser: String?
   @State private var sentQuestion: String?
   @State private var alert: FormAlert?
+  @State private var aboutAIOpen = false
+  @AppStorage(AIDisclosure.consentKey) private var aiConsent = ""
   @FocusState private var composerFocused: Bool
 
   init(babyId: BabyID, initialQuestion: String?, threadId: ThreadID? = nil) {
@@ -34,6 +36,15 @@ struct AskView: View {
   }
 
   var body: some View {
+    if AIDisclosure.hasConsented(aiConsent) {
+      chat
+    } else {
+      AIConsentView(onAgree: {}, onCancel: { dismiss() })
+        .toolbar(.hidden, for: .navigationBar)
+    }
+  }
+
+  private var chat: some View {
     ZStack(alignment: .top) {
       C.bg.ignoresSafeArea()
       ScrollViewReader { proxy in
@@ -73,6 +84,7 @@ struct AskView: View {
     }
     .toolbar(.hidden, for: .navigationBar)
     .formAlert($alert)
+    .sheet(isPresented: $aboutAIOpen) { AboutAIView().presentationCornerRadius(32) }
     .task {
       guard threadId == nil else { return }
       do {
@@ -126,6 +138,7 @@ struct AskView: View {
         .padding(.leading, 4)
         .accessibilityAddTraits(.isHeader)
       Spacer()
+      CircleIconButton(systemImage: "info.circle", label: AIDisclosure.title) { aboutAIOpen = true }
       CircleIconButton(systemImage: "plus", label: "New chat") { Task { await startNewChat() } }
       CircleIconButton(systemImage: "list.bullet", label: "Past chats") { router.push(babyId, .askHistory) }
     }

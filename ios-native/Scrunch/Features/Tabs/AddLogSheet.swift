@@ -10,6 +10,8 @@ struct AddLogSheet: View {
   @State private var voice = VoiceLogRecorder()
   @Environment(UndoCenter.self) private var undo
   @State private var baby = Live<Baby>()
+  @State private var aiConsentOpen = false
+  @AppStorage(AIDisclosure.consentKey) private var aiConsent = ""
 
   private struct Tile: Identifiable {
     let screen: BabyScreen
@@ -87,6 +89,10 @@ struct AddLogSheet: View {
       await baby.bind(API.babies.get(babyId), convex)
     }
     .onDisappear { voice.cancel() }
+    .sheet(isPresented: $aiConsentOpen) {
+      AIConsentView(title: "Before you use Speak", onAgree: { aiConsentOpen = false }, onCancel: { aiConsentOpen = false })
+        .presentationCornerRadius(32)
+    }
     .alert(item: $voice.alert) { alert in
       Alert(title: Text(alert.title), message: Text(alert.message))
     }
@@ -125,6 +131,10 @@ struct AddLogSheet: View {
     guard let babyId else {
       router.addLogOpen = false
       router.popToRoot(tab: .kids)
+      return
+    }
+    guard voice.recording || AIDisclosure.hasConsented(aiConsent) else {
+      aiConsentOpen = true
       return
     }
     let result = await voice.toggle(babyId: babyId, convex: convex) { handle($0, babyId: babyId) }
