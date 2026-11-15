@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as account from "../account.js";
 import type * as babies from "../babies.js";
+import type * as careExport from "../careExport.js";
 import type * as chat from "../chat.js";
 import type * as chatAgent from "../chatAgent.js";
 import type * as events from "../events.js";
@@ -31,7 +33,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  account: typeof account;
   babies: typeof babies;
+  careExport: typeof careExport;
   chat: typeof chat;
   chatAgent: typeof chatAgent;
   events: typeof events;
