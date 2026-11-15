@@ -84,7 +84,8 @@ public struct Baby: Decodable, Equatable, Hashable, Sendable, Identifiable {
   public let heightCm: Double?
   public let sex: Sex?
   public let notes: String?
-  public let inviteCode: String
+  /// Only sent to carers with an active subscription; nil until a subscriber creates one.
+  public let inviteCode: String?
   public let lastRoomTempC: Double?
   public let deliveryType: DeliveryType?
   public let gestationWeeks: Double?
@@ -112,7 +113,7 @@ public struct Baby: Decodable, Equatable, Hashable, Sendable, Identifiable {
     heightCm: Double? = nil,
     sex: Sex? = nil,
     notes: String? = nil,
-    inviteCode: String = "ABC234",
+    inviteCode: String? = "ABC234",
     lastRoomTempC: Double? = nil,
     deliveryType: DeliveryType? = nil,
     gestationWeeks: Double? = nil,

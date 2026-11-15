@@ -135,15 +135,19 @@ public struct PendingLog: Codable, Equatable, Identifiable, Sendable {
 /// operation re-reads the stored list rather than caching it.
 public struct PendingLogQueue {
   public static let storageKey = "pending-logs-v1"
+  /// Logs past the free allowance, kept until the parent subscribes or discards them.
+  public static let heldKey = "held-logs-v1"
 
   private let defaults: UserDefaults
+  private let key: String
 
-  public init(defaults: UserDefaults) {
+  public init(defaults: UserDefaults, key: String = Self.storageKey) {
     self.defaults = defaults
+    self.key = key
   }
 
   public var all: [PendingLog] {
-    guard let data = defaults.data(forKey: Self.storageKey) else { return [] }
+    guard let data = defaults.data(forKey: key) else { return [] }
     return (try? JSONDecoder().decode([PendingLog].self, from: data)) ?? []
   }
 
@@ -157,9 +161,9 @@ public struct PendingLogQueue {
 
   private func write(_ logs: [PendingLog]) {
     if logs.isEmpty {
-      defaults.removeObject(forKey: Self.storageKey)
+      defaults.removeObject(forKey: key)
     } else if let data = try? JSONEncoder().encode(logs) {
-      defaults.set(data, forKey: Self.storageKey)
+      defaults.set(data, forKey: key)
     }
   }
 }

@@ -25,6 +25,22 @@ const newBaby = (name: string) => ({
   careDataConsent: true as const,
 });
 
+async function subscribe(t: TestConvex<typeof schema>, tokenIdentifier: string) {
+  await t.run(async (ctx) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", tokenIdentifier))
+      .unique();
+    await ctx.db.insert("subscriptions", {
+      userId: user!._id,
+      appAccountToken: `token-${tokenIdentifier}`,
+      status: "active",
+      expiresAt: Date.now() + 30 * 86_400_000,
+      updatedAt: Date.now(),
+    });
+  });
+}
+
 async function seedChat(
   t: TestConvex<typeof schema>,
   babyId: string,
@@ -93,8 +109,11 @@ describe("account.deleteAccount", () => {
   test("keeps a shared baby for the partner and removes only this user's chats", async () => {
     const { t, asAlice, asBob } = await setup();
     const babyId = await asAlice.mutation(api.babies.create, newBaby("Ada"));
-    const baby = await asAlice.query(api.babies.get, { babyId });
-    await asBob.mutation(api.babies.joinByCode, { code: baby.inviteCode });
+    // Sharing needs each carer's own subscription (#13).
+    await subscribe(t, alice.tokenIdentifier);
+    await subscribe(t, bob.tokenIdentifier);
+    const code = await asAlice.mutation(api.babies.createInvite, { babyId });
+    await asBob.mutation(api.babies.joinByCode, { code });
     await seedChat(t, babyId, alice.tokenIdentifier);
     await seedChat(t, babyId, bob.tokenIdentifier);
 

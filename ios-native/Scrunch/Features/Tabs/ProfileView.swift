@@ -6,7 +6,7 @@ import SwiftUI
 /// The Profile tab: account, subscription, partner sharing, data and privacy, help.
 struct ProfileView: View {
   enum Sheet: String, Identifiable {
-    case account, subscription, joinPartner, export, aboutAI, deleteAccount
+    case account, joinPartner, export, aboutAI, deleteAccount
     var id: String { rawValue }
   }
 
@@ -18,6 +18,10 @@ struct ProfileView: View {
   @State private var babies = Live<[Baby]>()
   @State private var sheet: Sheet?
   @State private var confirmSignOut = false
+  @Environment(Entitlements.self) private var entitlements
+  @State private var sharing = SharingGate()
+  @State private var inviting: BabyID?
+  @State private var shareError: String?
   @AppStorage(MilestonesCard.visibleKey) private var showMilestones = true
   @AppStorage(WeightPreference.storageKey) private var weightPreference = WeightPreference.automatic
 
@@ -40,18 +44,35 @@ struct ProfileView: View {
       }
 
       SettingsSection(title: "Subscription") {
-        SettingsRow(title: "Scrunch Plus", value: "Not subscribed", systemImage: "star.fill", tint: C.amber) { sheet = .subscription }
+        SubscriptionRow(babyId: activeBaby.babyId)
+          .padding(.horizontal, 10)
+          .padding(.vertical, 10)
       }
 
       SettingsSection(title: "Partner sharing") {
         ForEach(babies.value ?? []) { baby in
-          ShareLink(item: PartnerInvite.message(babyName: baby.name, code: baby.inviteCode)) {
-            SettingsRowLabel(title: "Invite to \(baby.name)", value: baby.inviteCode, systemImage: "person.2.fill", tint: C.purple, accessory: "square.and.arrow.up")
+          if let code = baby.inviteCode {
+            ShareLink(item: PartnerInvite.message(babyName: baby.name, code: code)) {
+              SettingsRowLabel(title: "Invite to \(baby.name)", value: code, systemImage: "person.2.fill", tint: C.purple, accessory: "square.and.arrow.up")
+            }
+            .buttonStyle(PressScale())
+          } else {
+            SettingsRow(title: "Invite to \(baby.name)", value: inviting == baby.id ? "…" : nil, systemImage: "person.2.fill", tint: C.purple) {
+              Task { await invite(baby) }
+            }
+            .disabled(inviting != nil)
+            .accessibilityHint(SharingCopy.eachCarer)
           }
-          .buttonStyle(PressScale())
           SettingsDivider()
         }
         SettingsRow(title: "Join with a code", systemImage: "figure.and.child.holdinghands", tint: C.purple) { sheet = .joinPartner }
+      }
+      VStack(alignment: .leading, spacing: 6) {
+        if let shareError {
+          Text(shareError).font(.app(.medium, 14)).foregroundStyle(C.danger)
+        }
+        Text(SharingCopy.eachCarer).font(.app(.body, 13)).foregroundStyle(C.muted)
+          .fixedSize(horizontal: false, vertical: true)
       }
 
       SettingsSection(title: "Preferences") {
@@ -116,6 +137,10 @@ struct ProfileView: View {
     } message: {
       Text("Your logs stay saved to your account. The widget, reminders and any running timer on this phone are cleared.")
     }
+    .onAppear { sharing.entitlements = entitlements }
+    .sheet(item: Bindable(sharing).paywall, onDismiss: sharing.paywallClosed) { reason in
+      PaywallView(sharing: reason)
+    }
     .sheet(item: $sheet) { sheet in
       content(for: sheet)
         .presentationCornerRadius(32)
@@ -151,21 +176,31 @@ struct ProfileView: View {
     .accessibilityElement(children: .combine)
   }
 
+  /// The code appears once Convex has made it; the babies query is live.
+  private func invite(_ baby: Baby) async {
+    inviting = baby.id
+    shareError = nil
+    sharing.entitlements = entitlements
+    do {
+      _ = try await sharing.perform(.invite) { try await convex.mutation(API.babies.createInvite(baby.id)) }
+    } catch {
+      shareError = UserMessage.from(error, fallback: String(localized: "Couldn't make a share code. Try again."))
+    }
+    inviting = nil
+  }
+
   @ViewBuilder
   private func content(for sheet: Sheet) -> some View {
     switch sheet {
     case .account:
       UserProfileView()
-    case .subscription:
-      SubscriptionEntryView()
-        .presentationDetents([.medium])
     case .joinPartner:
       JoinPartnerSheet { id in
         self.sheet = nil
         activeBaby.select(id)
         router.popToRoot(tab: .home)
       }
-      .presentationDetents([.height(260)])
+      .presentationDetents([.height(360)])
       .presentationDragIndicator(.visible)
     case .export:
       ExportCareLogView()
@@ -173,15 +208,6 @@ struct ProfileView: View {
       AboutAIView()
     case .deleteAccount:
       DeleteAccountView { self.sheet = .export }
-    }
-  }
-}
-
-/// Entry point for the StoreKit paywall.
-struct SubscriptionEntryView: View {
-  var body: some View {
-    SettingsSheetScaffold(title: "Scrunch Plus") {
-      Subtitle("Subscriptions aren't available yet. Everything in Scrunch works without one.")
     }
   }
 }

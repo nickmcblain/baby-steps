@@ -15,7 +15,7 @@
     "convex:codegen": "convex codegen",
     "lint": "eslint convex",
     "typecheck": "tsc --noEmit",
-    "test:convex": "vitest run"
+    "test:convex": "vitest run && tsc --noEmit -p convex && node --experimental-strip-types --test \"convex/lib/**/*.test.ts\""
   },
   "trustedDependencies": [
     "esbuild",
@@ -23,6 +23,7 @@
     "unrs-resolver"
   ],
   "dependencies": {
+    "@apple/app-store-server-library": "^3.1.0",
     "@clerk/expo": "^4.5.1",
     "@expo-google-fonts/fraunces": "^0.4.1",
     "@expo-google-fonts/fredoka": "^0.4.1",

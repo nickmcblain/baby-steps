@@ -7,7 +7,7 @@ import ScrunchCore
 /// "Log it in Scrunch: 120 ml formula about 20 minutes ago". Apple's on-device model turns
 /// the sentence into one structured log, so nothing leaves the phone to parse it.
 @available(iOS 26.0, *)
-struct DescribeLogIntent: AppIntent {
+struct DescribeLogIntent: AppIntent, ForegroundContinuableIntent {
   static let title: LocalizedStringResource = "Log from a description"
   static let description = IntentDescription("Describe a feed, nappy, sleep or medicine in your own words and Scrunch logs it, using Apple Intelligence on this iPhone.")
 
@@ -28,7 +28,9 @@ struct DescribeLogIntent: AppIntent {
     guard let log = parsed.entry else { throw DescribeLogError.notUnderstood }
     try await requestConfirmation(actionName: .add, dialog: "Log \(log.summary.lowercasedFirst) for \(ref.name)?")
     let loggedAt = LoggedAt.snapToMinute(Date().epochMs - Double(max(0, parsed.minutesAgo ?? 0)) * minuteMs)
-    await QuickLogStore.record(PendingLog(babyId: ref.id, loggedAt: loggedAt, log: log))
+    if case .held(let type) = await QuickLogStore.record(PendingLog(babyId: ref.id, loggedAt: loggedAt, log: log)) {
+      throw freeLimitReached(type, from: self)
+    }
     return .result(dialog: "Logged \(log.summary.lowercasedFirst) for \(ref.name).")
   }
 }

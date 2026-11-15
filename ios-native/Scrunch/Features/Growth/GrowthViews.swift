@@ -10,6 +10,7 @@ struct GrowthLogView: View {
   @Environment(ConvexService.self) private var convex
   @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var series = Live<GrowthSeries>()
   @State private var dash = Live<Dashboard>()
@@ -59,14 +60,20 @@ struct GrowthLogView: View {
     do {
       if isWeight {
         guard let grams, grams > 0 else { return alert = FormAlert(title: "Pick a weight") }
-        try await convex.mutation(API.events.logWeight(babyId: babyId, loggedAt: loggedAt, weightGrams: grams, note: noteValue))
+        let saved = try await gate.save(.growth, babyId: babyId) {
+          try await convex.mutation(API.events.logWeight(babyId: babyId, loggedAt: loggedAt, weightGrams: grams, note: noteValue))
+        }
+        guard saved != nil else { return }
         if let baby = series.value?.baby {
           let updated = Baby(id: baby.id, name: baby.name, dateOfBirth: baby.dateOfBirth, weightGrams: grams, feedingMode: baby.feedingMode)
           await Reminders.refreshFeed(baby: updated, lastFeedAt: dash.value?.lastFeed.map(FeedWindows.feedEndedAt))
         }
       } else {
         guard let cm, cm > 0 else { return alert = FormAlert(title: "Pick a height") }
-        try await convex.mutation(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
+        let saved = try await gate.save(.growth, babyId: babyId) {
+          try await convex.mutation(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
+        }
+        guard saved != nil else { return }
       }
       saveFeedback.logged(isWeight ? .weight : .height, babyId: babyId)
       dismiss()

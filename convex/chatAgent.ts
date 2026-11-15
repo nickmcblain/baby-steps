@@ -6,6 +6,7 @@ import { z } from "zod";
 import { internal } from "./_generated/api";
 import { action } from "./_generated/server";
 import { searchGuidance } from "./guidance/corpus";
+import { SUBSCRIPTION_REQUIRED } from "./lib/allowance";
 import type { BabyContextSnapshot } from "./lib/babyContext";
 import { clothingAdvice } from "./lib/clothingAdvice";
 
@@ -82,6 +83,9 @@ export const ask = action({
       userId,
       now,
     });
+    if (!(await ctx.runQuery(internal.allowance.askAllowed, { babyId: args.babyId, userId }))) {
+      throw new ConvexError({ code: SUBSCRIPTION_REQUIRED });
+    }
 
     const context = bundle.context as BabyContextSnapshot;
     const citations: { title: string; url?: string }[] = [];

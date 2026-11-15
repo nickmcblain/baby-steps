@@ -113,6 +113,7 @@ enum UserMessage {
     if let client = error as? ClientError {
       switch client {
       case .ConvexError(let data):
+        if let refusal = ServerRefusal(errorData: data) { return refusal.message }
         if let text = try? JSONDecoder().decode(String.self, from: Data(data.utf8)) { return text }
         if let object = try? JSONDecoder().decode([String: String].self, from: Data(data.utf8)),
            let message = object["message"] { return message }
