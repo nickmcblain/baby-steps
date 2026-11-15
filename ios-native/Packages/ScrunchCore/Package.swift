@@ -13,7 +13,7 @@ let package = Package(
     .library(name: "ScrunchCore", targets: ["ScrunchCore"]),
   ],
   targets: [
-    .target(name: "ScrunchCore", resources: [.process("Localizable.xcstrings")]),
+    .target(name: "ScrunchCore", resources: [.process("Localizable.xcstrings"), .copy("Resources/free-allowance.json")]),
     .testTarget(name: "ScrunchCoreTests", dependencies: ["ScrunchCore"]),
   ]
 )

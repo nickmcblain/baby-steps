@@ -653,6 +653,30 @@
     "about 4 hours" : {
 
     },
+    "allowance.hint" : {
+      "comment" : "Toast once a few free entries of a type are left",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld free %3$@ left. Sleep is always free."
+          }
+        }
+      }
+    },
+    "allowance.paywall.title" : {
+      "comment" : "Paywall title after the free entries of a type are used",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You've used your %1$lld free %2$@"
+          }
+        }
+      }
+    },
     "based on the last %lld feeds" : {
 
     },

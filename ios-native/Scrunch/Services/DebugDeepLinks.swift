@@ -1,6 +1,7 @@
 #if DEBUG
 import Foundation
 import ScrunchCore
+import SwiftUI
 
 /// DEBUG-only deep links for screenshot and UX-review runs. Not compiled into release builds.
 ///
@@ -47,6 +48,22 @@ extension AppRouter {
       break
     }
     return true
+  }
+}
+
+/// `-debugPaywall YES` presents the paywall over whatever is showing, signed in or not.
+private struct DebugPaywall: ViewModifier {
+  let entitlements: Entitlements
+  @State private var shown = UserDefaults.standard.bool(forKey: "debugPaywall")
+
+  func body(content: Content) -> some View {
+    content.sheet(isPresented: $shown) { PaywallView(type: .nappy).environment(entitlements) }
+  }
+}
+
+extension View {
+  func debugPaywall(_ entitlements: Entitlements) -> some View {
+    modifier(DebugPaywall(entitlements: entitlements))
   }
 }
 

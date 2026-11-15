@@ -49,6 +49,15 @@
         }
       }
     },
+    "%@, so I've kept this one. Open Scrunch to subscribe and it will be saved." : {
+
+    },
+    "%@, so I've kept this one. Subscribe in Scrunch and it will be saved." : {
+
+    },
+    "%@, so this one is kept until you subscribe in Scrunch." : {
+
+    },
     "%@. Every answer says where it comes from." : {
 
     },
@@ -69,6 +78,9 @@
 
     },
     "%lld days" : {
+
+    },
+    "%lld entries are waiting to save." : {
 
     },
     "%lld feeds" : {
@@ -94,6 +106,9 @@
       }
     },
     "%lldm" : {
+
+    },
+    "1 entry is waiting to save." : {
 
     },
     "1 feed" : {
@@ -318,6 +333,9 @@
     "Could not open chat" : {
 
     },
+    "Could not restore" : {
+
+    },
     "Could not save" : {
 
     },
@@ -325,6 +343,9 @@
 
     },
     "Couldn't export" : {
+
+    },
+    "Couldn't make a share code. Try again." : {
 
     },
     "Couldn’t delete. Try again." : {
@@ -385,6 +406,9 @@
 
     },
     "Didn’t catch that" : {
+
+    },
+    "Discard waiting entries" : {
 
     },
     "Done" : {
@@ -504,10 +528,16 @@
     "Formula" : {
 
     },
+    "Free nappies used. Open Scrunch to subscribe" : {
+
+    },
     "Gestation weeks (optional)" : {
 
     },
     "Gestation weeks should be between 22 and 44" : {
+
+    },
+    "Get a code" : {
 
     },
     "Girl" : {
@@ -550,6 +580,9 @@
 
     },
     "Increase temperature" : {
+
+    },
+    "Invite a partner" : {
 
     },
     "Invite code" : {
@@ -911,6 +944,9 @@
     "Nothing recorded" : {
 
     },
+    "Nothing to restore" : {
+
+    },
     "OK" : {
 
     },
@@ -1125,6 +1161,9 @@
     "Scrunch %@. Not a medical service." : {
 
     },
+    "See subscription options" : {
+
+    },
     "Seedy mustard" : {
 
     },
@@ -1284,7 +1323,13 @@
     "Stops the running timer and saves it." : {
 
     },
+    "Subscribe to Scrunch" : {
+
+    },
     "Subscription" : {
+
+    },
+    "Subscription restored" : {
 
     },
     "Subscriptions aren't available yet. Everything in Scrunch works without one." : {
@@ -1513,6 +1558,30 @@
     "Your logs stay saved to your account. The widget, reminders and any running timer on this phone are cleared." : {
 
     },
+    "allowance.hint" : {
+      "comment" : "Toast once a few free entries of a type are left: entries left, the free limit, the log type (\"feeds\")",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld free %3$@ left. Sleep is always free."
+          }
+        }
+      }
+    },
+    "allowance.paywall.title" : {
+      "comment" : "Paywall title after the free entries of a type are used: the free limit, the log type (\"nappies\")",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've used your %1$lld free %2$@"
+          }
+        }
+      }
+    },
     "bottle" : {
 
     },
@@ -1626,6 +1695,66 @@
     },
     "pumping" : {
 
+    },
+    "sharing.eachCarer" : {
+      "comment" : "Shown wherever a baby can be shared, and on the paywall",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each carer needs their own Scrunch subscription to share a baby."
+          }
+        }
+      }
+    },
+    "sharing.join.subscribe" : {
+      "comment" : "Button in the join sheet after closing the paywall",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subscribe and join"
+          }
+        }
+      }
+    },
+    "sharing.paywall.invite" : {
+      "comment" : "Paywall subtitle when creating a share code",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subscribe and you'll get a code to send to your partner or carer."
+          }
+        }
+      }
+    },
+    "sharing.paywall.join" : {
+      "comment" : "Paywall subtitle when joining a shared baby with a code",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subscribe and you'll join straight away with the code you entered."
+          }
+        }
+      }
+    },
+    "sharing.paywall.title" : {
+      "comment" : "Paywall title when sharing needs a subscription",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sharing comes with a subscription"
+          }
+        }
+      }
     },
     "sleep" : {
 

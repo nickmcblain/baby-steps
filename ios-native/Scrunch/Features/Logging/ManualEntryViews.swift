@@ -45,6 +45,7 @@ struct FeedManualView: View {
   @Environment(ConvexService.self) private var convex
   @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @State private var baby = Live<Baby>()
   @State private var loggedAt: EpochMs
   @State private var kind: FeedKind = .breast
@@ -99,16 +100,20 @@ struct FeedManualView: View {
   private func save() async {
     let duration = minutes.isEmpty ? nil : number(minutes)
     do {
-      try await convex.mutation(API.events.logFeed(
-        babyId: babyId,
-        loggedAt: loggedAt,
-        feedKind: kind,
-        side: kind == .breast ? side : nil,
-        durationMinutes: duration,
-        amountMl: kind == .bottle ? (number(ml).map(units.millilitres(fromInput:)) ?? 0) : nil,
-        milk: kind == .bottle ? milk : nil,
-        note: trimmedOrNil(note)
-      ))
+      let type = FreeAllowance.type(for: .feed(kind, side: side, minutes: duration, amountMl: number(ml), milk: milk))
+      let saved = try await gate.save(type, babyId: babyId) {
+        try await convex.mutation(API.events.logFeed(
+          babyId: babyId,
+          loggedAt: loggedAt,
+          feedKind: kind,
+          side: kind == .breast ? side : nil,
+          durationMinutes: duration,
+          amountMl: kind == .bottle ? (number(ml).map(units.millilitres(fromInput:)) ?? 0) : nil,
+          milk: kind == .bottle ? milk : nil,
+          note: trimmedOrNil(note)
+        ))
+      }
+      guard saved != nil else { return }
       saveFeedback.logged(.feed, babyId: babyId)
       if let baby = baby.value {
         await Reminders.refreshFeed(baby: baby, lastFeedAt: loggedAt + (duration ?? 0) * minuteMs, quiet: false)
@@ -128,6 +133,7 @@ struct PumpManualView: View {
   @Environment(ConvexService.self) private var convex
   @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @State private var loggedAt: EpochMs
   @State private var side: Side
   @State private var minutes: String
@@ -169,14 +175,17 @@ struct PumpManualView: View {
       return alert = FormAlert(title: "Enter how long you pumped")
     }
     do {
-      try await convex.mutation(API.events.logPump(
-        babyId: babyId,
-        loggedAt: loggedAt,
-        side: side,
-        durationMinutes: duration,
-        amountMl: ml.isEmpty ? nil : number(ml).map(units.millilitres(fromInput:)),
-        note: trimmedOrNil(note)
-      ))
+      let saved = try await gate.save(.pump, babyId: babyId) {
+        try await convex.mutation(API.events.logPump(
+          babyId: babyId,
+          loggedAt: loggedAt,
+          side: side,
+          durationMinutes: duration,
+          amountMl: ml.isEmpty ? nil : number(ml).map(units.millilitres(fromInput:)),
+          note: trimmedOrNil(note)
+        ))
+      }
+      guard saved != nil else { return }
       saveFeedback.logged(.pump, babyId: babyId)
       router.popToRoot()
     } catch {
@@ -194,6 +203,7 @@ struct DurationManualView: View {
   @Environment(ConvexService.self) private var convex
   @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @State private var loggedAt: EpochMs
   @State private var minutes: String
   @State private var note = ""
@@ -245,7 +255,10 @@ struct DurationManualView: View {
       if isSleep {
         try await convex.mutation(API.events.logSleep(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
       } else {
-        try await convex.mutation(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
+        let saved = try await gate.save(.tummy, babyId: babyId) {
+          try await convex.mutation(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
+        }
+        guard saved != nil else { return }
       }
       saveFeedback.logged(isSleep ? .sleep : .tummy, babyId: babyId)
       router.showHome(babyId)

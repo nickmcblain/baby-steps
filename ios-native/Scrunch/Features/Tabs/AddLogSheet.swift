@@ -13,6 +13,7 @@ struct AddLogSheet: View {
   @State private var baby = Live<Baby>()
   @State private var aiConsentOpen = false
   @AppStorage(AIDisclosure.consentKey) private var aiConsent = ""
+  @Environment(LogGate.self) private var gate
 
   private struct Tile: Identifiable {
     let screen: BabyScreen
@@ -138,6 +139,7 @@ struct AddLogSheet: View {
       aiConsentOpen = true
       return
     }
+    voice.gate = gate
     let result = await voice.toggle(babyId: babyId, convex: convex) { handle($0, babyId: babyId) }
     if let result { handle(result, babyId: babyId) }
   }
