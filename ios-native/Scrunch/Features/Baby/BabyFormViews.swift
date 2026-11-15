@@ -41,12 +41,12 @@ struct NewBabyView: View {
   var body: some View {
     ScreenScaffold {
       ScreenTitle("New baby")
-      FormField(label: "Name", text: $name, placeholder: "Nico")
+      FormField(label: "Name", text: $name, placeholder: "e.g. Nico")
       DateOfBirthField(value: $dateOfBirth)
       ToggleRow(label: "Sex (for UK growth charts)", options: [(Sex.boy, "Boy"), (Sex.girl, "Girl")], selection: $sex)
       WeightField(grams: $weightGrams)
       HeightField(cm: $heightCm)
-      FormField(label: "Notes (optional)", text: $notes, placeholder: "Prefers left side first")
+      FormField(label: "Notes (optional)", text: $notes, placeholder: "e.g. Prefers left side first")
 
       Button { careConsent.toggle() } label: {
         HStack(alignment: .top, spacing: 12) {
@@ -123,19 +123,20 @@ struct EditBabyView: View {
 
   var body: some View {
     ScreenScaffold {
-      ScreenTitle("Edit")
+      HeaderButton(label: "Save") { await save() }
+    } content: {
+      ScreenTitle("Edit baby")
       FormField(label: "Name", text: $name)
       DateOfBirthField(value: $dateOfBirth)
       ToggleRow(label: "Sex (for UK growth charts)", options: [(Sex.boy, "Boy"), (Sex.girl, "Girl")], selection: $sex)
       ToggleRow(label: "Delivery (optional)", options: [(DeliveryType.vaginal, "Vaginal"), (DeliveryType.cSection, "C-section")], selection: $deliveryType)
-      FormField(label: "Gestation weeks (optional)", text: $gestation, placeholder: "40", keyboard: .numberPad)
+      FormField(label: "Gestation weeks (optional)", text: $gestation, placeholder: "e.g. 40", keyboard: .numberPad)
       ToggleRow(
         label: "Feeding (optional)",
         options: [(FeedingMode.breast, "Breast"), (FeedingMode.bottle, "Bottle"), (FeedingMode.mixed, "Mixed")],
         selection: $feedingMode
       )
       FormField(label: "Notes", text: $notes)
-      PrimaryButton(label: "Save changes") { await save() }
     }
     .formAlert($alert)
     .task { await baby.bind(API.babies.get(babyId), convex) }

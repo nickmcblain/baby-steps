@@ -150,7 +150,8 @@ final class LoggedAtTests: XCTestCase {
     XCTAssertEqual(LoggedAt.timelineDay(at(2026, 7, 20, 23), now: now, calendar: london), "Today")
     XCTAssertEqual(LoggedAt.timelineDay(at(2026, 7, 19, 1), now: now, calendar: london), "Yesterday")
     XCTAssertEqual(LoggedAt.timelineDay(at(2026, 7, 21, 9), now: now, calendar: london), "Tomorrow")
-    XCTAssertEqual(LoggedAt.timelineDay(at(2026, 7, 18, 9), now: now, calendar: london), "18 Aug 2026")
+    XCTAssertEqual(LoggedAt.timelineDay(at(2026, 7, 18, 9), now: now, calendar: london), "Tue 18 Aug")
+    XCTAssertEqual(LoggedAt.timelineDay(at(2025, 10, 7, 9), now: now, calendar: london), "Fri 7 Nov 2025")
   }
 }
 

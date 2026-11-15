@@ -332,7 +332,7 @@ public struct Citation: Decodable, Equatable, Hashable, Sendable {
   public let title: String
   public let url: String?
 
-  public init(title: String, url: String?) {
+  public init(title: String, url: String? = nil) {
     self.title = title
     self.url = url
   }

@@ -12,11 +12,11 @@ struct BabyTimerLiveActivity: Widget {
       HStack(spacing: 12) {
         Image(systemName: state.symbol).foregroundStyle(state.accent).font(.title2)
         VStack(alignment: .leading, spacing: 2) {
-          Text(state.title).font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
+          Text(state.title).font(.custom("Fredoka-Bold", size: 16)).foregroundStyle(.white)
           if !state.subtitle.isEmpty {
-            Text(state.subtitle).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6))
+            Text(state.subtitle).font(.custom("Nunito-SemiBold", size: 13)).foregroundStyle(.white.opacity(0.6))
           }
-          Text(state.running ? "Timing…" : "Paused").font(.system(size: 12)).foregroundStyle(.white.opacity(0.4))
+          Text(state.running ? "Timing…" : "Paused").font(.custom("Nunito-SemiBold", size: 12)).foregroundStyle(.white.opacity(0.4))
         }
         Spacer()
         TimerClockText(state: state, size: 28).frame(width: 110, alignment: .trailing)
@@ -32,23 +32,23 @@ struct BabyTimerLiveActivity: Widget {
         DynamicIslandExpandedRegion(.leading) {
           VStack(alignment: .leading, spacing: 4) {
             Image(systemName: state.symbol).foregroundStyle(state.accent)
-            Text(state.shortLabel).font(.system(size: 12)).foregroundStyle(.white)
+            Text(state.shortLabel).font(.custom("Nunito-SemiBold", size: 12)).foregroundStyle(.white)
           }
           .padding(10)
         }
         DynamicIslandExpandedRegion(.trailing) {
           VStack(alignment: .trailing, spacing: 2) {
             TimerClockText(state: state, size: 24).frame(width: 100, alignment: .trailing)
-            Text(state.running ? "Running" : "Paused").font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
+            Text(state.running ? "Running" : "Paused").font(.custom("Nunito-SemiBold", size: 11)).foregroundStyle(.white.opacity(0.6))
           }
           .padding(10)
         }
         DynamicIslandExpandedRegion(.bottom) {
           HStack {
             VStack(alignment: .leading, spacing: 2) {
-              Text(state.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
+              Text(state.title).font(.custom("Fredoka-SemiBold", size: 15)).foregroundStyle(.white)
               if !state.subtitle.isEmpty {
-                Text(state.subtitle).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6))
+                Text(state.subtitle).font(.custom("Nunito-SemiBold", size: 13)).foregroundStyle(.white.opacity(0.6))
               }
             }
             Spacer()

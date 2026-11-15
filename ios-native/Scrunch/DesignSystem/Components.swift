@@ -193,16 +193,16 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
-    ZStack(alignment: .top) {
-      C.bg.ignoresSafeArea()
-      Group {
-        if scrolls {
-          ScrollView(showsIndicators: false) { column }
-            .scrollDismissesKeyboard(.interactively)
-        } else {
-          column.frame(maxHeight: .infinity, alignment: .top)
-        }
+    Group {
+      if scrolls {
+        ScrollView(showsIndicators: false) { column }
+          .scrollDismissesKeyboard(.interactively)
+      } else {
+        column.frame(maxHeight: .infinity, alignment: .top)
       }
+    }
+    // An opaque bar, so scrolled text never runs under the floating buttons.
+    .safeAreaInset(edge: .top, spacing: 0) {
       if hasChrome {
         HStack {
           if showsBack {
@@ -213,8 +213,11 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
         }
         .padding(.horizontal, 16)
         .padding(.top, 4)
+        .padding(.bottom, 8)
+        .background(C.bg)
       }
     }
+    .background(C.bg.ignoresSafeArea())
     .toolbar(.hidden, for: .navigationBar)
   }
 
@@ -222,8 +225,8 @@ struct ScreenScaffold<Content: View, Trailing: View>: View {
 
   private var column: some View {
     VStack(alignment: .leading, spacing: 16) { content }
-      .padding(20)
-      .padding(.top, hasChrome ? 40 : 0)
+      .padding(.horizontal, 20)
+      .padding(.top, hasChrome ? 8 : 20)
       .padding(.bottom, clearDock ? tabDockInset + 20 : 20)
       .frame(maxWidth: .infinity, alignment: .leading)
   }
@@ -247,6 +250,97 @@ struct LoadingView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(C.bg.ignoresSafeArea())
+  }
+}
+
+/// The designed empty / first-run / stale state: icon, a short warm line, and what to do next.
+struct EmptyState: View {
+  let symbol: String
+  var tint: Color = C.teal
+  let title: String
+  let message: String
+  var actionLabel: String? = nil
+  var action: (() -> Void)? = nil
+  var secondaryLabel: String? = nil
+  var secondaryAction: (() -> Void)? = nil
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 14) {
+      IconWell(systemImage: symbol, tint: tint, size: 52)
+      VStack(alignment: .leading, spacing: 6) {
+        Text(title)
+          .font(.app(.displayBold, 21, relativeTo: .title3))
+          .foregroundStyle(C.ink)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityAddTraits(.isHeader)
+        Text(message)
+          .font(.app(.body, 15))
+          .foregroundStyle(C.muted)
+          .lineSpacing(3)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      if actionLabel != nil || secondaryLabel != nil {
+        HStack(spacing: 10) {
+          if let actionLabel, let action {
+            button(actionLabel, fill: tint, ink: C.onAccent, action: action)
+          }
+          if let secondaryLabel, let secondaryAction {
+            button(secondaryLabel, fill: C.bg, ink: C.ink, action: secondaryAction)
+          }
+        }
+        .padding(.top, 2)
+      }
+    }
+    .padding(20)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(C.card, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+    .cardShadow()
+  }
+
+  private func button(_ label: String, fill: Color, ink: Color, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      Text(label)
+        .font(.app(.bold, 15))
+        .foregroundStyle(ink)
+        .lineLimit(1)
+        .minimumScaleFactor(0.85)
+        .frame(maxWidth: .infinity, minHeight: 46)
+        .padding(.horizontal, 12)
+        .background(fill, in: Capsule())
+    }
+    .buttonStyle(PressScale())
+  }
+}
+
+/// Text action for the floating header (e.g. "Save"), same height as `CircleIconButton`.
+struct HeaderButton: View {
+  let label: String
+  let action: () async -> Void
+
+  @State private var busy = false
+
+  var body: some View {
+    Button {
+      guard !busy else { return }
+      busy = true
+      Task {
+        await action()
+        busy = false
+      }
+    } label: {
+      ZStack {
+        Text(label).opacity(busy ? 0 : 1)
+        if busy { ProgressView().tint(C.onAccent) }
+      }
+      .font(.app(.bold, 16))
+      .foregroundStyle(C.onAccent)
+      .padding(.horizontal, 20)
+      .frame(minHeight: 44)
+      .background(C.teal, in: Capsule())
+      .cardShadow()
+    }
+    .buttonStyle(PressScale())
+    .disabled(busy)
   }
 }
 

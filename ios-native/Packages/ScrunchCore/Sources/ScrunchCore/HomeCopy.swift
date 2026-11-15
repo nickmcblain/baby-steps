@@ -67,6 +67,47 @@ public enum HomeCopy {
   public static func countdownLabel(_ countdown: SleepCountdown) -> String {
     countdown.kind == .night && countdown.inMs > 0 ? "Bedtime" : "Next nap"
   }
+
+  // MARK: Freshness
+
+  public enum Freshness: Equatable, Sendable {
+    case noLogs
+    case fresh
+    case stale(lastLoggedAt: EpochMs)
+  }
+
+  /// Babies feed and need changing every few hours, so a longer silence means the
+  /// day's numbers (and any nap prediction) are out of date.
+  public static let staleAfterMs: Double = 12 * 3_600_000
+
+  /// When the most recent log finished (a sleep counts from when it ended).
+  public static func lastLoggedAt(_ events: [Event?]) -> EpochMs? {
+    events.compactMap { $0.map { $0.loggedAt + max(0, $0.durationMinutes ?? 0) * minuteMs } }.max()
+  }
+
+  public static func freshness(lastLoggedAt: EpochMs?, now: EpochMs) -> Freshness {
+    guard let lastLoggedAt else { return .noLogs }
+    return now - lastLoggedAt > staleAfterMs ? .stale(lastLoggedAt: lastLoggedAt) : .fresh
+  }
+
+  /// "Nothing logged for 14 hours" or "Nothing logged since Fri 7 Nov".
+  public static func staleTitle(lastLoggedAt: EpochMs, now: EpochMs, calendar: Calendar = .current) -> String {
+    let hours = Int(max(0, now - lastLoggedAt) / 3_600_000)
+    if hours < 48 { return "Nothing logged for \(hours) hours" }
+    return "Nothing logged since \(LoggedAt.shortDay(lastLoggedAt, now: now, calendar: calendar))"
+  }
+
+  public static let staleBody = "Today’s numbers and nap times will be off until you log again. Start with whatever’s happening now."
+
+  public static func welcomeTitle(babyName: String) -> String {
+    "Let’s log \(babyName)’s first feed"
+  }
+
+  public static func welcomeBody(babyName: String) -> String {
+    "Tap Left or Right below to start a feed, or Wet, Dirty or Both after a nappy change. After a day or so, \(babyName)’s rhythm and nap times show up here."
+  }
+
+  public static let targetsFootnote = "Rings fill towards a typical day at this age."
 }
 
 /// The home-screen widget payload (all strings preformatted, like RN's `BabyGlanceProps`).

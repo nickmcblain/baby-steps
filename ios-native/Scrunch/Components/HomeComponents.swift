@@ -126,12 +126,15 @@ struct DayRhythmBar: View {
 struct LastStrip: View {
   let text: String
   var inset: CGFloat = 12
+  /// Side-by-side tiles reserve two lines so their footers line up.
+  var reservesTwoLines = true
 
   var body: some View {
     Text(text)
       .font(.app(.medium, 11, relativeTo: .caption2))
       .foregroundStyle(C.muted)
-      .lineLimit(1)
+      .lineLimit(2, reservesSpace: reservesTwoLines)
+      .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, inset)
       .padding(.vertical, 8)
       .frame(maxWidth: .infinity, alignment: .leading)

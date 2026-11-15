@@ -214,7 +214,7 @@ final class AskAndTimelineTests: XCTestCase {
       Event(id: "y1", loggedAt: at(2026, 7, 19, 22), kind: .sleep),
     ]
     let sections = Timeline.sections(events, now: now, calendar: london)
-    XCTAssertEqual(sections.map(\.label), ["Tomorrow", "23 Aug 2026", "Today", "Yesterday"])
+    XCTAssertEqual(sections.map(\.label), ["Tomorrow", "Sun 23 Aug", "Today", "Yesterday"])
     XCTAssertEqual(sections[2].items.map(\.id), ["t1", "t2"])
   }
 

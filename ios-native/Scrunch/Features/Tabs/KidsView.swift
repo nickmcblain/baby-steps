@@ -24,48 +24,28 @@ struct KidsView: View {
             .cardShadow()
         }
         .buttonStyle(PressScale())
-        CircleIconButton(systemImage: "plus", label: "Add baby") { router.path.append(.newBaby) }
+        CircleIconButton(systemImage: "plus", label: "Add a baby") { router.path.append(.newBaby) }
           .padding(.leading, 8)
       }
 
       if babies.isLoading {
         LoadingView(label: "Connecting…").frame(minHeight: 240)
+      } else if let list = babies.value, list.isEmpty {
+        EmptyState(
+          symbol: "heart.fill",
+          tint: C.rose,
+          title: "No babies yet",
+          message: "Add your baby, or join your partner’s with the share code from their app.",
+          actionLabel: "Add a baby",
+          action: { router.path.append(.newBaby) },
+          secondaryLabel: "Join with a code",
+          secondaryAction: { joinOpen = true }
+        )
       } else {
         let now = Date().epochMs
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+        VStack(spacing: 12) {
           ForEach(babies.value ?? []) { baby in
-            VStack(alignment: .leading, spacing: 0) {
-              Button { open(baby.id) } label: {
-                VStack(alignment: .leading, spacing: 8) {
-                  Text(baby.name.prefix(1).uppercased())
-                    .font(.app(.displayBold, 20))
-                    .foregroundStyle(C.purple)
-                    .frame(width: 44, height: 44)
-                    .background(C.purpleSoft, in: Circle())
-                  Text(baby.name).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(1)
-                  Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
-                    .font(.app(.body, 13)).foregroundStyle(C.muted)
-                  Text("Share code \(baby.inviteCode)")
-                    .font(.app(.medium, 12)).foregroundStyle(C.purple)
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .topLeading)
-                .contentShape(Rectangle())
-              }
-              .buttonStyle(PressScale())
-              ShareLink(item: PartnerInvite.message(babyName: baby.name, code: baby.inviteCode)) {
-                Label("Invite partner", systemImage: "person.badge.plus")
-                  .font(.app(.bold, 13))
-                  .foregroundStyle(C.purple)
-                  .frame(maxWidth: .infinity, minHeight: 44)
-                  .background(C.purpleSoft, in: Capsule())
-              }
-              .padding([.horizontal, .bottom], 12)
-              .accessibilityHint("Shares code \(baby.inviteCode) with a friendly message")
-            }
-            .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
-            .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
-            .cardShadow()
+            babyRow(baby, now: now)
           }
         }
         if !(babies.value ?? []).isEmpty {
@@ -84,6 +64,69 @@ struct KidsView: View {
       .presentationCornerRadius(32)
       .presentationBackground(C.bg)
     }
+  }
+
+  private func babyRow(_ baby: Baby, now: EpochMs) -> some View {
+    VStack(spacing: 0) {
+      Button { open(baby.id) } label: {
+        HStack(spacing: 14) {
+          Text(baby.name.prefix(1).uppercased())
+            .font(.app(.displayBold, 22))
+            .foregroundStyle(C.purple)
+            .frame(width: 52, height: 52)
+            .background(C.purpleSoft, in: Circle())
+            .accessibilityHidden(true)
+          VStack(alignment: .leading, spacing: 3) {
+            Text(baby.name)
+              .font(.app(.bold, 18))
+              .foregroundStyle(C.ink)
+              .fixedSize(horizontal: false, vertical: true)
+            Text("\(Format.age(dateOfBirth: baby.dateOfBirth, now: now)) · \(Format.kg(baby.weightGrams))")
+              .font(.app(.body, 14))
+              .foregroundStyle(C.muted)
+          }
+          Spacer(minLength: 8)
+          Image(systemName: "chevron.right")
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(C.muted)
+            .accessibilityHidden(true)
+        }
+        .padding(16)
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(PressScale())
+      .accessibilityElement(children: .combine)
+      .accessibilityHint("Opens \(baby.name)’s home")
+
+      HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 2) {
+          Text("Share code: invite a partner")
+            .font(.app(.medium, 13))
+            .foregroundStyle(C.muted)
+          Text(baby.inviteCode)
+            .font(.app(.displayBold, 18))
+            .tracking(2)
+            .foregroundStyle(C.ink)
+            .accessibilityLabel(baby.inviteCode.map(String.init).joined(separator: " "))
+        }
+        Spacer(minLength: 8)
+        ShareLink(item: PartnerInvite.message(babyName: baby.name, code: baby.inviteCode)) {
+          Label("Share", systemImage: "square.and.arrow.up")
+            .font(.app(.bold, 15))
+            .foregroundStyle(C.purple)
+            .padding(.horizontal, 16)
+            .frame(minHeight: 40)
+            .background(C.purpleSoft, in: Capsule())
+        }
+        .buttonStyle(PressScale())
+        .accessibilityHint("Shares code \(baby.inviteCode) with a friendly message")
+      }
+      .padding(.horizontal, 16)
+      .padding(.vertical, 12)
+      .overlay(alignment: .top) { Rectangle().fill(C.line).frame(height: 1) }
+    }
+    .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+    .cardShadow()
   }
 
   private func open(_ id: BabyID) {
@@ -150,7 +193,7 @@ struct InviteCodeField: View {
         .focused($focused)
         .disabled(!editable)
         .opacity(0.02)
-        .accessibilityLabel("Invite code")
+        .accessibilityLabel("Share code")
       HStack(spacing: 8) {
         ForEach(0..<InviteCode.length, id: \.self) { index in
           let chars = Array(code)

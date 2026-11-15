@@ -71,7 +71,7 @@ struct GlanceView: View {
           header
           Spacer()
           Text(snapshot.sleepToday)
-            .font(.system(size: 12, weight: .semibold))
+            .font(.custom("Nunito-SemiBold", size: 12))
             .foregroundStyle(muted)
         }
         HStack(spacing: 12) {
@@ -91,7 +91,7 @@ struct GlanceView: View {
 
   private var header: some View {
     Text(snapshot.babyName)
-      .font(.system(size: 15, weight: .bold))
+      .font(.custom("Fredoka-Bold", size: 17))
       .foregroundStyle(ink)
       .lineLimit(1)
   }
@@ -100,8 +100,8 @@ struct GlanceView: View {
     HStack(spacing: 8) {
       Image(systemName: symbol).foregroundStyle(color)
       VStack(alignment: .leading, spacing: 0) {
-        Text(label).font(.system(size: 11, weight: .semibold)).foregroundStyle(color)
-        Text(value).font(.system(size: 13, weight: .bold)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.8)
+        Text(label).font(.custom("Nunito-SemiBold", size: 11)).foregroundStyle(color)
+        Text(value).font(.custom("Nunito-Bold", size: 13)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.8)
       }
       Spacer(minLength: 0)
     }

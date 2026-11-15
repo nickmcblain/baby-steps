@@ -34,6 +34,13 @@ struct HomeView: View {
     SleepOffer.predictedNapAt(sleeps: sleeps.map(SleepSegment.init), lastSleepEndMs: summary.value?.lastSleepEndMs)
   }
 
+  /// Fresh until the dashboard has loaded, so nothing flashes on launch.
+  private var freshness: HomeCopy.Freshness {
+    guard let dash = dash.value, dash.baby.id == babyId, !asleep else { return .fresh }
+    let last = HomeCopy.lastLoggedAt([dash.lastFeed, dash.lastNappy, dash.lastSleep, dash.lastTummy])
+    return HomeCopy.freshness(lastLoggedAt: last, now: now)
+  }
+
   var body: some View {
     ScreenScaffold(showsBack: false, clearDock: baby == nil) {
       if let list = babies.value, list.isEmpty {
@@ -119,19 +126,53 @@ struct HomeView: View {
 
   private var empty: some View {
     VStack(alignment: .leading, spacing: 16) {
-      Text("Scrunch").font(.app(.displayBold, 26)).foregroundStyle(C.ink)
-      Text("Add a kid to start").font(.app(.displayBold, 28)).foregroundStyle(C.ink)
-      Text("Feeds, sleep, and nappies live here once you add a baby.")
-        .font(.app(.body, 16)).foregroundStyle(C.muted)
-      Button { router.tab = .kids } label: {
-        Text("Go to Kids")
-          .font(.app(.bold, 16))
-          .foregroundStyle(C.onAccent)
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 16)
-          .background(C.ink, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-      }
-      .buttonStyle(PressScale())
+      brandHeader("Scrunch")
+      EmptyState(
+        symbol: "heart.fill",
+        tint: C.rose,
+        title: "Welcome to Scrunch",
+        message: "Add your baby to start logging feeds, sleep and nappies. A partner can join later with a share code.",
+        actionLabel: "Add your baby",
+        action: { router.path.append(.newBaby) }
+      )
+    }
+  }
+
+  private func brandHeader(_ title: String) -> some View {
+    HStack(spacing: 10) {
+      Image("BrandMark")
+        .resizable()
+        .frame(width: 28, height: 28)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .accessibilityHidden(true)
+      Text(title)
+        .font(.app(.displayBold, 26))
+        .foregroundStyle(C.ink)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+    }
+  }
+
+  @ViewBuilder
+  private func freshnessCard(_ baby: Baby) -> some View {
+    switch freshness {
+    case .noLogs:
+      EmptyState(
+        symbol: "drop.fill",
+        title: HomeCopy.welcomeTitle(babyName: baby.name),
+        message: HomeCopy.welcomeBody(babyName: baby.name)
+      )
+    case .stale(let lastLoggedAt):
+      EmptyState(
+        symbol: "clock.arrow.circlepath",
+        tint: C.purple,
+        title: HomeCopy.staleTitle(lastLoggedAt: lastLoggedAt, now: now),
+        message: HomeCopy.staleBody,
+        actionLabel: "Log now",
+        action: { router.addLogOpen = true }
+      )
+    case .fresh:
+      EmptyView()
     }
   }
 
@@ -139,17 +180,7 @@ struct HomeView: View {
 
   @ViewBuilder
   private var content: some View {
-    HStack(spacing: 10) {
-      Image("BrandMark")
-        .resizable()
-        .frame(width: 28, height: 28)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityHidden(true)
-      Text(baby?.name ?? " ")
-        .font(.app(.displayBold, 26))
-        .foregroundStyle(C.ink)
-        .lineLimit(1)
-    }
+    brandHeader(baby?.name ?? " ")
 
     if let baby {
       HStack(spacing: 8) {
@@ -157,6 +188,7 @@ struct HomeView: View {
         vital("Height", baby.heightCm.map { Format.height($0) } ?? "—") { router.push(baby.id, .height) }
         vital("Weight", Format.weight(baby.weightGrams, unit: .lb)) { router.push(baby.id, .weight) }
       }
+      freshnessCard(baby)
       insightCard(baby)
     }
 
@@ -187,6 +219,11 @@ struct HomeView: View {
         color: C.sky, track: C.skySoft, screen: .tummyPatterns
       )
     }
+    Text(HomeCopy.targetsFootnote)
+      .font(.app(.body, 13))
+      .foregroundStyle(C.muted)
+      .padding(.horizontal, 8)
+      .padding(.top, -6)
   }
 
   private func insightCard(_ baby: Baby) -> some View {
@@ -224,7 +261,8 @@ struct HomeView: View {
         night: $0.nightWindow
       )
     }
-    let nextWindow = rhythm.flatMap { DayRhythmEngine.nextSleepCountdown($0.segments, now: now) }
+    // Only count down when recent logs back it up; otherwise "Next nap · Now" reads as live.
+    let nextWindow = freshness == .fresh ? rhythm.flatMap { DayRhythmEngine.nextSleepCountdown($0.segments, now: now) } : nil
     let sleepH = (summary.value?.sleepMinutes ?? 0) / 60
 
     VStack(spacing: 0) {
@@ -266,7 +304,7 @@ struct HomeView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 14)
         }
-        LastStrip(text: HomeCopy.lastSleepStrip(dash.value?.lastSleep, now: now), inset: 20)
+        LastStrip(text: HomeCopy.lastSleepStrip(dash.value?.lastSleep, now: now), inset: 20, reservesTwoLines: false)
       }
       .background(C.card)
       .clipShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))

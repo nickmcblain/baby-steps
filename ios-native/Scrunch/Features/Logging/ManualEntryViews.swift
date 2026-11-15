@@ -15,18 +15,6 @@ private func initialMinutes(_ handoff: TimerSession.Handoff?) -> String {
   return String(minutes)
 }
 
-struct SectionLabel: View {
-  let text: String
-  init(_ text: String) { self.text = text }
-
-  var body: some View {
-    Text(text.uppercased())
-      .font(.app(.bold, 13))
-      .tracking(0.6)
-      .foregroundStyle(C.muted)
-  }
-}
-
 struct Hint: View {
   let text: String
   init(_ text: String) { self.text = text }
@@ -78,15 +66,15 @@ struct FeedManualView: View {
           Pill(label: "Right", selected: side == .right) { side = .right }
           Pill(label: "Both", selected: side == .both) { side = .both }
         }
-        FormField(label: "Minutes", text: $minutes, placeholder: "12", keyboard: .numberPad)
+        FormField(label: "Minutes", text: $minutes, placeholder: "e.g. 12", keyboard: .numberPad)
       } else {
-        FormField(label: "Amount (ml)", text: $ml, placeholder: "90", keyboard: .numberPad)
+        FormField(label: "Amount (ml)", text: $ml, placeholder: "e.g. 90", keyboard: .numberPad)
         HStack(spacing: 8) {
           Pill(label: "Formula", selected: milk == .formula) { milk = .formula }
           Pill(label: "Expressed", selected: milk == .expressed) { milk = .expressed }
         }
       }
-      FormField(label: "Note", text: $note, placeholder: "Dream feed")
+      FormField(label: "Note", text: $note, placeholder: "e.g. Dream feed")
       PrimaryButton(label: "Save feed") { await save() }
     }
     .formAlert($alert)
@@ -144,15 +132,15 @@ struct PumpManualView: View {
       ScreenTitle(handoff != nil ? "Finish pump" : "Log pump")
       if handoff != nil { Hint("Minutes filled from your timer — add ml if you measured.") }
       LoggedAtField(value: $loggedAt)
-      SectionLabel("Side")
+      FieldLabel("Side")
       HStack(spacing: 8) {
         Pill(label: "Left", selected: side == .left) { side = .left }
         Pill(label: "Right", selected: side == .right) { side = .right }
         Pill(label: "Both", selected: side == .both) { side = .both }
       }
-      FormField(label: "Minutes", text: $minutes, placeholder: "15", keyboard: .numberPad)
+      FormField(label: "Minutes", text: $minutes, placeholder: "e.g. 15", keyboard: .numberPad)
       FormField(label: "Amount (ml)", text: $ml, placeholder: "Optional", keyboard: .numberPad)
-      FormField(label: "Note", text: $note, placeholder: "Let-down slow")
+      FormField(label: "Note", text: $note, placeholder: "e.g. Let-down slow")
       PrimaryButton(label: "Save pump") { await save() }
     }
     .formAlert($alert)
@@ -211,7 +199,7 @@ struct DurationManualView: View {
     ScreenScaffold {
       ScreenTitle(isSleep ? "Sleep" : "Tummy time")
       LoggedAtField(value: $loggedAt, label: isSleep ? "Fell asleep" : "Started")
-      if isSleep { FieldLabel("Duration") } else { SectionLabel("Duration") }
+      FieldLabel("Duration")
       WrapLayout {
         ForEach(quick, id: \.self) { m in
           Pill(
@@ -222,8 +210,8 @@ struct DurationManualView: View {
           ) { minutes = String(m) }
         }
       }
-      FormField(label: "Minutes", text: $minutes, placeholder: isSleep ? "45" : "10", keyboard: .numberPad)
-      FormField(label: "Note", text: $note, placeholder: isSleep ? "Pram nap" : "On the play mat")
+      FormField(label: "Minutes", text: $minutes, placeholder: isSleep ? "e.g. 45" : "e.g. 10", keyboard: .numberPad)
+      FormField(label: "Note", text: $note, placeholder: isSleep ? "e.g. Pram nap" : "e.g. On the play mat")
       PrimaryButton(label: isSleep ? "Save sleep" : "Save tummy time") { await save() }
     }
     .formAlert($alert)

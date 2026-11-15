@@ -32,7 +32,7 @@ struct QuickLogView: View {
           AccessoryWidgetBackground()
           VStack(spacing: 0) {
             Image(systemName: "drop.fill").font(.system(size: 16, weight: .bold))
-            Text(QuickLog.Nappy.wet.label).font(.system(size: 11, weight: .bold))
+            Text(QuickLog.Nappy.wet.label).font(.custom("Nunito-Bold", size: 11))
           }
         }
       }
@@ -46,7 +46,7 @@ struct QuickLogView: View {
           Label(snapshot.lastNappy, systemImage: "circle.grid.2x2.fill")
           Spacer(minLength: 0)
         }
-        .font(.system(size: 13, weight: .semibold))
+        .font(.custom("Nunito-SemiBold", size: 13))
         .lineLimit(1)
         .frame(maxWidth: .infinity, alignment: .leading)
         buttons
@@ -61,7 +61,7 @@ struct QuickLogView: View {
 
   private var title: some View {
     Text(snapshot.babyName)
-      .font(.system(size: 15, weight: .bold))
+      .font(.custom("Fredoka-Bold", size: 15))
       .lineLimit(1)
   }
 
@@ -89,7 +89,7 @@ struct QuickLogButton<Intent: AppIntent>: View {
     Button(intent: intent) {
       VStack(spacing: 2) {
         Image(systemName: symbol).font(.system(size: 14, weight: .bold))
-        Text(label).font(.system(size: 12, weight: .bold)).lineLimit(1)
+        Text(label).font(.custom("Nunito-Bold", size: 12)).lineLimit(1)
       }
       .foregroundStyle(.primary)
       .frame(maxWidth: .infinity, maxHeight: .infinity)
