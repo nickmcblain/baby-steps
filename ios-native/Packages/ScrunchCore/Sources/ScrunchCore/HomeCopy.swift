@@ -93,21 +93,26 @@ public enum HomeCopy {
   /// "Nothing logged for 14 hours" or "Nothing logged since Fri 7 Nov".
   public static func staleTitle(lastLoggedAt: EpochMs, now: EpochMs, calendar: Calendar = .current) -> String {
     let hours = Int(max(0, now - lastLoggedAt) / 3_600_000)
-    if hours < 48 { return "Nothing logged for \(hours) hours" }
-    return "Nothing logged since \(LoggedAt.shortDay(lastLoggedAt, now: now, calendar: calendar))"
+    if hours < 48 { return Format.counted("Nothing logged for ^[\(hours) hour](inflect: true)") }
+    let day = LoggedAt.shortDay(lastLoggedAt, now: now, calendar: calendar)
+    return String(localized: "Nothing logged since \(day)", bundle: .module, comment: "Home card title; the day is like Fri 7 Nov")
   }
 
-  public static let staleBody = "Today’s numbers and nap times will be off until you log again. Start with whatever’s happening now."
+  public static var staleBody: String {
+    String(localized: "Today’s numbers and nap times will be off until you log again. Start with whatever’s happening now.", bundle: .module)
+  }
 
   public static func welcomeTitle(babyName: String) -> String {
-    "Let’s log \(babyName)’s first feed"
+    String(localized: "Let’s log \(babyName)’s first feed", bundle: .module)
   }
 
   public static func welcomeBody(babyName: String) -> String {
-    "Tap Left or Right below to start a feed, or Wet, Dirty or Both after a nappy change. After a day or so, \(babyName)’s rhythm and nap times show up here."
+    String(localized: "Tap Left or Right below to start a feed, or Wet, Dirty or Both after a nappy change. After a day or so, \(babyName)’s rhythm and nap times show up here.", bundle: .module)
   }
 
-  public static let targetsFootnote = "Rings fill towards a typical day at this age."
+  public static var targetsFootnote: String {
+    String(localized: "Rings fill towards a typical day at this age.", bundle: .module)
+  }
 }
 
 /// The home-screen widget payload (all strings preformatted, like RN's `BabyGlanceProps`).

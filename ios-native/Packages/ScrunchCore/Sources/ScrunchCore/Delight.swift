@@ -5,28 +5,36 @@ public enum SaveCopy {
   /// "Logged Eliza's feed", or "Feed logged" without a name.
   public static func logged(_ kind: EventKind, babyName: String?) -> String {
     // Pumping is the parent's, not the baby's.
-    if kind == .pump { return "Pump logged" }
-    let noun = noun(kind)
-    let verb = kind == .weight || kind == .height || kind == .custom ? "Saved" : "Logged"
-    guard let name = firstName(babyName) else {
-      return "\(EventCopy.capitalize(noun)) \(verb.lowercased())"
+    if kind == .pump { return String(localized: "Pump logged", bundle: .module) }
+    guard let name = firstName(babyName) else { return unnamed(kind) }
+    switch kind {
+    case .feed: return String(localized: "Logged \(name)'s feed", bundle: .module)
+    case .nappy: return String(localized: "Logged \(name)'s nappy", bundle: .module)
+    case .potty: return String(localized: "Logged \(name)'s potty trip", bundle: .module)
+    case .sleep: return String(localized: "Logged \(name)'s sleep", bundle: .module)
+    case .tummy: return String(localized: "Logged \(name)'s tummy time", bundle: .module)
+    case .pump: return String(localized: "Pump logged", bundle: .module)
+    case .medicine: return String(localized: "Logged \(name)'s medicine", bundle: .module)
+    case .activity: return String(localized: "Logged \(name)'s activity", bundle: .module)
+    case .custom: return String(localized: "Saved \(name)'s event", bundle: .module)
+    case .weight: return String(localized: "Saved \(name)'s weight", bundle: .module)
+    case .height: return String(localized: "Saved \(name)'s height", bundle: .module)
     }
-    return "\(verb) \(possessive(name)) \(noun)"
   }
 
-  static func noun(_ kind: EventKind) -> String {
+  static func unnamed(_ kind: EventKind) -> String {
     switch kind {
-    case .feed: "feed"
-    case .nappy: "nappy"
-    case .potty: "potty trip"
-    case .sleep: "sleep"
-    case .tummy: "tummy time"
-    case .pump: "pump"
-    case .medicine: "medicine"
-    case .activity: "activity"
-    case .custom: "event"
-    case .weight: "weight"
-    case .height: "height"
+    case .feed: String(localized: "Feed logged", bundle: .module)
+    case .nappy: String(localized: "Nappy logged", bundle: .module)
+    case .potty: String(localized: "Potty trip logged", bundle: .module)
+    case .sleep: String(localized: "Sleep logged", bundle: .module)
+    case .tummy: String(localized: "Tummy time logged", bundle: .module)
+    case .pump: String(localized: "Pump logged", bundle: .module)
+    case .medicine: String(localized: "Medicine logged", bundle: .module)
+    case .activity: String(localized: "Activity logged", bundle: .module)
+    case .custom: String(localized: "Event saved", bundle: .module)
+    case .weight: String(localized: "Weight saved", bundle: .module)
+    case .height: String(localized: "Height saved", bundle: .module)
     }
   }
 
@@ -37,8 +45,6 @@ public enum SaveCopy {
     return String(first)
   }
 
-  /// UK style: "James's", "Eliza's".
-  static func possessive(_ name: String) -> String { "\(name)'s" }
 }
 
 public extension Insights {
@@ -69,14 +75,14 @@ public enum Milestone: String, CaseIterable, Identifiable, Sendable, ConvexRepre
 
   public var title: String {
     switch self {
-    case .firstSmile: "First smile"
-    case .firstLaugh: "First laugh"
-    case .rolledOver: "Rolled over"
-    case .satUp: "Sat up"
-    case .firstTooth: "First tooth"
-    case .firstFood: "First taste of food"
-    case .crawled: "First crawl"
-    case .firstSteps: "First steps"
+    case .firstSmile: String(localized: "First smile", bundle: .module)
+    case .firstLaugh: String(localized: "First laugh", bundle: .module)
+    case .rolledOver: String(localized: "Rolled over", bundle: .module)
+    case .satUp: String(localized: "Sat up", bundle: .module)
+    case .firstTooth: String(localized: "First tooth", bundle: .module)
+    case .firstFood: String(localized: "First taste of food", bundle: .module)
+    case .crawled: String(localized: "First crawl", bundle: .module)
+    case .firstSteps: String(localized: "First steps", bundle: .module)
     }
   }
 }
@@ -97,9 +103,19 @@ public struct MilestoneMark: Decodable, Equatable, Hashable, Sendable {
 public enum MilestoneCopy {
   /// "Saved Eliza's first smile", or "First smile saved" without a name.
   public static func saved(_ milestone: Milestone, babyName: String?) -> String {
-    let title = milestone.title
-    guard let name = SaveCopy.firstName(babyName) else { return "\(title) saved" }
-    return "Saved \(SaveCopy.possessive(name)) \(title.prefix(1).lowercased() + title.dropFirst())"
+    guard let name = SaveCopy.firstName(babyName) else {
+      return String(localized: "\(milestone.title) saved", bundle: .module, comment: "Toast after ticking a milestone, e.g. First smile saved")
+    }
+    switch milestone {
+    case .firstSmile: return String(localized: "Saved \(name)'s first smile", bundle: .module)
+    case .firstLaugh: return String(localized: "Saved \(name)'s first laugh", bundle: .module)
+    case .rolledOver: return String(localized: "Saved: \(name) rolled over", bundle: .module)
+    case .satUp: return String(localized: "Saved: \(name) sat up", bundle: .module)
+    case .firstTooth: return String(localized: "Saved \(name)'s first tooth", bundle: .module)
+    case .firstFood: return String(localized: "Saved \(name)'s first taste of food", bundle: .module)
+    case .crawled: return String(localized: "Saved \(name)'s first crawl", bundle: .module)
+    case .firstSteps: return String(localized: "Saved \(name)'s first steps", bundle: .module)
+    }
   }
 
   /// Every milestone in catalogue order, with the date it was reached if it has been.

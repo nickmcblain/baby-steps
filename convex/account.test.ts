@@ -137,6 +137,44 @@ describe("account.deleteAccount", () => {
     await expect(asAlice.query(api.users.current, {})).resolves.toBeNull();
   });
 
+  test("removes the user's subscription, free-entry counts and solo babies' milestones", async () => {
+    const { t, asAlice, asBob } = await setup();
+    const shared = await asAlice.mutation(api.babies.create, newBaby("Ada"));
+    const solo = await asAlice.mutation(api.babies.create, newBaby("Bea"));
+    await subscribe(t, alice.tokenIdentifier);
+    await subscribe(t, bob.tokenIdentifier);
+    const code = await asAlice.mutation(api.babies.createInvite, { babyId: shared });
+    await asBob.mutation(api.babies.joinByCode, { code });
+    const bobUser = await asBob.query(api.users.me, {});
+    await t.run(async (ctx) => {
+      const aliceUser = await ctx.db
+        .query("users")
+        .withIndex("by_token", (q) => q.eq("tokenIdentifier", alice.tokenIdentifier))
+        .unique();
+      for (const [babyId, userId] of [
+        [shared, aliceUser!._id],
+        [solo, aliceUser!._id],
+        [shared, bobUser._id],
+      ] as const) {
+        await ctx.db.insert("logAllowances", { babyId, userId, type: "nappy", used: 3 });
+      }
+      await ctx.db.insert("milestones", { babyId: solo, key: "firstSmile", reachedAt: 1, createdBy: aliceUser!._id });
+      await ctx.db.insert("milestones", { babyId: shared, key: "firstSmile", reachedAt: 1, createdBy: aliceUser!._id });
+    });
+
+    await asAlice.action(api.account.deleteAccount, {});
+    await t.finishAllScheduledFunctions(() => {});
+
+    await t.run(async (ctx) => {
+      const subscriptions = await ctx.db.query("subscriptions").collect();
+      expect(subscriptions.map((s) => s.userId)).toEqual([bobUser._id]);
+      const allowances = await ctx.db.query("logAllowances").collect();
+      expect(allowances.map((a) => [a.babyId, a.userId])).toEqual([[shared, bobUser._id]]);
+      const milestones = await ctx.db.query("milestones").collect();
+      expect(milestones.map((m) => [m.babyId, m.createdBy])).toEqual([[shared, bobUser._id]]);
+    });
+  });
+
   test("purges large logs in batches", async () => {
     const { t, asAlice } = await setup();
     const babyId = await asAlice.mutation(api.babies.create, newBaby("Ada"));

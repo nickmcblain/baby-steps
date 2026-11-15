@@ -138,6 +138,9 @@
     "A feed timer is already running. Stop it first." : {
 
     },
+    "A few minutes a day on their tummy helps. Time a session to start." : {
+
+    },
     "A nap timer is already running. Stop it first." : {
 
     },
@@ -504,6 +507,9 @@
     "Feeds, sleep, and nappies live here once you add a baby." : {
 
     },
+    "Feeds, sleeps and nappies show up here as you log them. Midwife visits and jab dates too." : {
+
+    },
     "Feet" : {
 
     },
@@ -751,7 +757,13 @@
     "Log dirty nappy" : {
 
     },
+    "Log each change to see wees and poos for each day." : {
+
+    },
     "Log feed" : {
+
+    },
+    "Log feeds as they happen to see feeds and bottle milk for each day." : {
 
     },
     "Log from a description" : {
@@ -917,10 +929,22 @@
     "No chats yet — tap + on Ask to start one." : {
 
     },
+    "No feeds logged yet" : {
+
+    },
+    "No nappies logged yet" : {
+
+    },
     "No recording saved — try again." : {
 
     },
+    "No sleeps logged yet" : {
+
+    },
     "No timer is running." : {
+
+    },
+    "No tummy time yet" : {
 
     },
     "Not now" : {
@@ -939,6 +963,9 @@
 
     },
     "Nothing logged this week" : {
+
+    },
+    "Nothing logged yet" : {
 
     },
     "Nothing recorded" : {
@@ -1399,6 +1426,9 @@
 
     },
     "Tick the box so Scrunch can keep these details safe for you." : {
+
+    },
+    "Time a nap or add one you remember. Patterns show up after a few days." : {
 
     },
     "Time of day" : {

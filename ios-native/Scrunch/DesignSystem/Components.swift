@@ -258,23 +258,56 @@ struct LoadingView: View {
 struct EmptyState: View {
   let symbol: String
   var tint: Color = C.teal
-  let title: String
-  let message: String
+  let title: Text
+  let message: Text
   var actionLabel: LocalizedStringKey? = nil
   var action: (() -> Void)? = nil
   var secondaryLabel: LocalizedStringKey? = nil
   var secondaryAction: (() -> Void)? = nil
 
+  /// Literal copy, looked up in the String Catalog.
+  init(
+    symbol: String, tint: Color = C.teal, title: LocalizedStringKey, message: LocalizedStringKey,
+    actionLabel: LocalizedStringKey? = nil, action: (() -> Void)? = nil,
+    secondaryLabel: LocalizedStringKey? = nil, secondaryAction: (() -> Void)? = nil
+  ) {
+    self.init(symbol: symbol, tint: tint, title: Text(title), message: Text(message), actionLabel: actionLabel, action: action, secondaryLabel: secondaryLabel, secondaryAction: secondaryAction)
+  }
+
+  /// Copy that's already localised, e.g. from ScrunchCore's HomeCopy.
+  init<T: StringProtocol, M: StringProtocol>(
+    symbol: String, tint: Color = C.teal, title: T, message: M,
+    actionLabel: LocalizedStringKey? = nil, action: (() -> Void)? = nil,
+    secondaryLabel: LocalizedStringKey? = nil, secondaryAction: (() -> Void)? = nil
+  ) {
+    self.init(symbol: symbol, tint: tint, title: Text(title), message: Text(message), actionLabel: actionLabel, action: action, secondaryLabel: secondaryLabel, secondaryAction: secondaryAction)
+  }
+
+  private init(
+    symbol: String, tint: Color, title: Text, message: Text,
+    actionLabel: LocalizedStringKey?, action: (() -> Void)?,
+    secondaryLabel: LocalizedStringKey?, secondaryAction: (() -> Void)?
+  ) {
+    self.symbol = symbol
+    self.tint = tint
+    self.title = title
+    self.message = message
+    self.actionLabel = actionLabel
+    self.action = action
+    self.secondaryLabel = secondaryLabel
+    self.secondaryAction = secondaryAction
+  }
+
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
       IconWell(systemImage: symbol, tint: tint, size: 52)
       VStack(alignment: .leading, spacing: 6) {
-        Text(title)
+        title
           .font(.app(.displayBold, 21, relativeTo: .title3))
           .foregroundStyle(C.ink)
           .fixedSize(horizontal: false, vertical: true)
           .accessibilityAddTraits(.isHeader)
-        Text(message)
+        message
           .font(.app(.body, 15))
           .foregroundStyle(C.muted)
           .lineSpacing(3)
