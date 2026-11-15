@@ -18,6 +18,7 @@ struct ProfileView: View {
   @State private var babies = Live<[Baby]>()
   @State private var sheet: Sheet?
   @State private var confirmSignOut = false
+  @AppStorage(MilestonesCard.visibleKey) private var showMilestones = true
 
   private var email: String {
     user.value??.email ?? clerk.user?.primaryEmailAddress?.emailAddress ?? "—"
@@ -50,6 +51,20 @@ struct ProfileView: View {
           SettingsDivider()
         }
         SettingsRow(title: "Join with a code", systemImage: "figure.and.child.holdinghands", tint: C.purple) { sheet = .joinPartner }
+      }
+
+      SettingsSection(title: "Home") {
+        Toggle(isOn: $showMilestones) {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Little firsts").font(.app(.bold, 16)).foregroundStyle(C.ink)
+            Text("An optional card for first smiles and the like. Never sends reminders.")
+              .font(.app(.body, 14)).foregroundStyle(C.muted)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+        }
+        .tint(C.teal)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
       }
 
       SettingsSection(title: "Data and privacy") {

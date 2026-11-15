@@ -9,10 +9,11 @@ struct SignedInRoot: View {
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(SaveFeedback.self) private var saveFeedback
+  @State private var babies = Live<[Baby]>()
   @State private var storedUser = false
   @State private var slowConnect = false
   @State private var undo = UndoCenter()
-  @State private var babies = Live<[Baby]>()
 
   var body: some View {
     @Bindable var router = router
@@ -25,6 +26,9 @@ struct SignedInRoot: View {
               destination(route)
             }
         }
+        .saveFeedbackHost()
+        .task { await babies.bind(API.babies.list(), convex) }
+        .onChange(of: babies.value) { _, list in saveFeedback.remember(list ?? []) }
         .overlay(alignment: .bottom) {
           // Over the dock, so it never covers the quick-log buttons.
           UndoToastView().padding(.bottom, 6)
@@ -46,7 +50,6 @@ struct SignedInRoot: View {
           if (try? await convex.mutation(API.users.store())) != nil { storedUser = true }
         }
         .task { await PendingLogSender.shared.send() }
-        .task { await babies.bind(API.babies.list(), convex) }
         .onChange(of: babies.value, initial: true) { syncIntentBabies() }
         .onChange(of: activeBaby.babyId) { syncIntentBabies() }
       case .loading, .signedOut:

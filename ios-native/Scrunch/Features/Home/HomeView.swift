@@ -140,11 +140,15 @@ struct HomeView: View {
 
   private func brandHeader(_ title: String) -> some View {
     HStack(spacing: 10) {
-      Image("BrandMark")
-        .resizable()
-        .frame(width: 28, height: 28)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityHidden(true)
+      if let baby {
+        BabyAvatar(babyId: baby.id, name: baby.name, size: 32)
+      } else {
+        Image("BrandMark")
+          .resizable()
+          .frame(width: 28, height: 28)
+          .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+          .accessibilityHidden(true)
+      }
       Text(title)
         .font(.app(.displayBold, 26))
         .foregroundStyle(C.ink)
@@ -224,6 +228,10 @@ struct HomeView: View {
       .foregroundStyle(C.muted)
       .padding(.horizontal, 8)
       .padding(.top, -6)
+
+    if let baby {
+      MilestonesCard(baby: baby)
+    }
   }
 
   private func insightCard(_ baby: Baby) -> some View {
@@ -239,7 +247,9 @@ struct HomeView: View {
       asleep: asleep
     )
     // The quick-log panel already shows the last and next breast side.
-    return InsightCard(insights: Insights.all(input).filter { $0.kind != .breastSide }) { kind in
+    let timerRunning = !asleep && timers.session.map { $0.babyId == baby.id && $0.isRunning } ?? false
+    let caughtUp = isToday && !timerRunning && Insights.allCaughtUp(input)
+    return InsightCard(insights: Insights.all(input).filter { $0.kind != .breastSide }, caughtUp: caughtUp) { kind in
       switch kind {
       case .nextFeed, .breastSide: router.push(baby.id, .feedPatterns)
       case .lastNappy: router.push(baby.id, .nappyPatterns)

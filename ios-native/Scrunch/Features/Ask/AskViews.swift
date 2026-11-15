@@ -90,7 +90,7 @@ struct AskView: View {
       do {
         threadId = try await convex.mutation(API.chat.ensureThread(babyId))
       } catch {
-        alert = FormAlert(title: "Could not open chat", message: UserMessage.from(error, fallback: "Try again"))
+        alert = FormAlert(title: "Couldn’t open the chat", message: UserMessage.from(error, fallback: "Try again"))
       }
     }
     .task(id: threadId) {
@@ -270,7 +270,7 @@ struct AskView: View {
     do {
       _ = try await convex.action(API.chatAgent.ask(babyId: babyId, threadId: threadId, message: text))
     } catch {
-      alert = FormAlert(title: "Ask failed", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t get an answer", message: UserMessage.from(error, fallback: "Try again"))
       draft = text
     }
   }
@@ -283,7 +283,7 @@ struct AskView: View {
       draft = ""
       pendingUser = nil
     } catch {
-      alert = FormAlert(title: "Could not start chat", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t start a chat", message: UserMessage.from(error, fallback: "Try again"))
     }
   }
 }
