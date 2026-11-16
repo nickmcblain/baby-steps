@@ -146,4 +146,5 @@ export const eventValidator = v.object({
   heightCm: v.optional(v.number()),
   title: v.optional(v.string()),
   note: v.optional(v.string()),
+  clientId: v.optional(v.string()),
 });

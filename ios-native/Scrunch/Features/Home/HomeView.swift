@@ -66,18 +66,26 @@ struct HomeView: View {
     .onChange(of: scenePhase) { _, phase in
       if phase == .active { Task { await syncSideEffects() } }
     }
-    .task { await babies.bind(API.babies.list(), convex) }
+    .task { await babies.bind(API.babies.list(), convex, cacheKey: API.babies.list().key) }
     .task(id: babyId.map { API.events.daySummary(babyId: $0, dayStart: dayStart, dayEnd: WeekGrid.addDays(dayStart, 1)).key }) {
       guard let babyId else { return }
-      await summary.bind(API.events.daySummary(babyId: babyId, dayStart: dayStart, dayEnd: WeekGrid.addDays(dayStart, 1)), convex)
+      let call = API.events.daySummary(babyId: babyId, dayStart: dayStart, dayEnd: WeekGrid.addDays(dayStart, 1))
+      await summary.bind(call, convex, cacheKey: call.key)
     }
     .task(id: babyId) {
       guard let babyId else { return }
-      await dash.bind(API.events.dashboard(babyId), convex)
+      await dash.bind(API.events.dashboard(babyId), convex, cacheKey: API.events.dashboard(babyId).key)
     }
     .task(id: babyId) {
       guard let babyId else { return }
-      await patterns.bind(API.events.sleepPatterns(babyId: babyId, days: 14, rangeEndMs: rangeEndMs), convex)
+      // rangeEndMs changes every launch, so key the cached copy by baby only.
+      await patterns.bind(API.events.sleepPatterns(babyId: babyId, days: 14, rangeEndMs: rangeEndMs), convex, cacheKey: "home.sleepPatterns.\(babyId)")
+    }
+    .onChange(of: babies.value != nil, initial: true) { _, known in
+      if known { LaunchMetrics.homeUsable(fromCache: !babies.isFresh) }
+    }
+    .onChange(of: babies.isFresh && summary.isFresh, initial: true) { _, live in
+      if live { LaunchMetrics.homeLive() }
     }
     .task {
       while !Task.isCancelled {

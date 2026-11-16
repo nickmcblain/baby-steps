@@ -23,6 +23,36 @@ export function snapLoggedAt(loggedAt: number, allowFuture = false): number {
   return snapped;
 }
 
+/**
+ * Offline clients resend a log with the same `clientId` until they see it land, so a
+ * replay returns the original event instead of inserting a second one.
+ */
+export async function insertOnce(
+  ctx: MutationCtx,
+  babyId: Id<"babies">,
+  clientId: string | undefined,
+  insert: () => Promise<Id<"events">>,
+): Promise<Id<"events">> {
+  if (clientId === undefined) {
+    return await insert();
+  }
+  if (clientId.length < 1 || clientId.length > 64) {
+    throw new ConvexError("Invalid client id");
+  }
+  const existing = await ctx.db
+    .query("events")
+    .withIndex("by_baby_and_clientId", (q) =>
+      q.eq("babyId", babyId).eq("clientId", clientId),
+    )
+    .first();
+  if (existing) {
+    return existing._id;
+  }
+  const eventId = await insert();
+  await ctx.db.patch(eventId, { clientId });
+  return eventId;
+}
+
 export async function syncBabyWeight(
   ctx: MutationCtx,
   babyId: Id<"babies">,

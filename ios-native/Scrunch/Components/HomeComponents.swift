@@ -70,6 +70,8 @@ struct WeekStrip: View {
                 .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color(hex: 0xE4E6EA), lineWidth: 1))
             }
           }
+          // Unselected days have no fill, so without this only the glyphs are tappable.
+          .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.selection, trigger: selected)

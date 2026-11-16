@@ -106,7 +106,7 @@ struct FeedManualView: View {
     do {
       let type = FreeAllowance.type(for: .feed(kind, side: side, minutes: duration, amountMl: number(ml), milk: milk))
       let saved = try await gate.save(type, babyId: babyId) {
-        try await convex.mutation(API.events.logFeed(
+        try await convex.log(API.events.logFeed(
           babyId: babyId,
           loggedAt: loggedAt,
           feedKind: kind,
@@ -182,7 +182,7 @@ struct PumpManualView: View {
     }
     do {
       let saved = try await gate.save(.pump, babyId: babyId) {
-        try await convex.mutation(API.events.logPump(
+        try await convex.log(API.events.logPump(
           babyId: babyId,
           loggedAt: loggedAt,
           side: side,
@@ -259,10 +259,10 @@ struct DurationManualView: View {
     }
     do {
       if isSleep {
-        try await convex.mutation(API.events.logSleep(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
+        try await convex.log(API.events.logSleep(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
       } else {
         let saved = try await gate.save(.tummy, babyId: babyId) {
-          try await convex.mutation(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
+          try await convex.log(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
         }
         guard saved != nil else { return }
       }

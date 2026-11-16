@@ -63,7 +63,7 @@ struct GrowthLogView: View {
       if isWeight {
         guard let grams, grams > 0 else { return alert = FormAlert(title: "Pick a weight") }
         let saved = try await gate.save(.growth, babyId: babyId) {
-          try await convex.mutation(API.events.logWeight(babyId: babyId, loggedAt: loggedAt, weightGrams: grams, note: noteValue))
+          try await convex.log(API.events.logWeight(babyId: babyId, loggedAt: loggedAt, weightGrams: grams, note: noteValue))
         }
         guard saved != nil else { return }
         if let baby = series.value?.baby {
@@ -73,7 +73,7 @@ struct GrowthLogView: View {
       } else {
         guard let cm, cm > 0 else { return alert = FormAlert(title: "Pick a height") }
         let saved = try await gate.save(.growth, babyId: babyId) {
-          try await convex.mutation(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
+          try await convex.log(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
         }
         guard saved != nil else { return }
       }

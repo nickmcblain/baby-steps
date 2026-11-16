@@ -168,9 +168,12 @@ struct QuickLogPanel: View {
     defer { savingNappy = nil }
     let loggedAt = LoggedAt.nowSnapped()
     do {
-      guard let id = try await gate.save(.nappy, babyId: baby.id, { try await convex.mutation(nappyCall(nappy, at: loggedAt)) }) else { return }
+      guard let outcome = try await gate.save(.nappy, babyId: baby.id, { try await convex.log(nappyCall(nappy, at: loggedAt)) }) else { return }
       saveFeedback.haptic()
-      showSaved(nappy, saved: SavedLog(id: id, loggedAt: loggedAt))
+      switch outcome {
+      case .synced(let id): showSaved(nappy, saved: SavedLog(id: id, loggedAt: loggedAt))
+      case .queued: undo.show(UndoCenter.Toast(message: String(localized: "Saved on this phone. It will sync when you’re back online.")))
+      }
     } catch {
       undo.show(UndoCenter.Toast(message: error is LogGate.GateError ? UserMessage.from(error) : String(localized: "Couldn’t log that nappy. Try again.")))
     }

@@ -60,9 +60,9 @@ struct NappyView: View {
     do {
       let saved = try await gate.save(potty ? LogType.potty : .nappy, babyId: babyId) {
         if potty {
-          try await convex.mutation(API.events.logPotty(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+          try await convex.log(API.events.logPotty(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
         } else {
-          try await convex.mutation(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+          try await convex.log(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
         }
       }
       guard saved != nil else { return }
@@ -115,7 +115,7 @@ struct MedicineView: View {
     let doseValue = trimmedDose.isEmpty ? nil : trimmedDose
     do {
       let saved = try await gate.save(.medicine, babyId: babyId) {
-        try await convex.mutation(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
+        try await convex.log(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
       }
       guard saved != nil else { return }
       saveFeedback.logged(.medicine, babyId: babyId)
@@ -187,7 +187,7 @@ struct ActivityLogView: View {
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
       let saved = try await gate.save(.activity, babyId: babyId) {
-        try await convex.mutation(API.events.logActivity(
+        try await convex.log(API.events.logActivity(
           babyId: babyId,
           loggedAt: loggedAt,
           title: title,
@@ -249,7 +249,7 @@ struct CustomEventView: View {
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
       let saved = try await gate.save(.note, babyId: babyId) {
-        try await convex.mutation(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
+        try await convex.log(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
       }
       guard saved != nil else { return }
       saveFeedback.logged(.custom, babyId: babyId)

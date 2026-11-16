@@ -62,7 +62,7 @@ struct KidsView: View {
         }
       }
     }
-    .task { await babies.bind(API.babies.list(), convex) }
+    .task { await babies.bind(API.babies.list(), convex, cacheKey: API.babies.list().key) }
     .onAppear { sharing.entitlements = entitlements }
     .sheet(item: Bindable(sharing).paywall, onDismiss: sharing.paywallClosed) { reason in
       PaywallView(sharing: reason)

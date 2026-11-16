@@ -176,6 +176,7 @@ final class LogGate {
 
   static func refusal(_ error: Error) -> ServerRefusal? {
     if let refusal = error as? ServerRefusal { return refusal }
+    if let rejected = error as? Outbox.Rejected { return rejected.data.flatMap(ServerRefusal.init(errorData:)) }
     guard case ClientError.ConvexError(let data) = error else { return nil }
     return ServerRefusal(errorData: data)
   }

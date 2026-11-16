@@ -333,6 +333,9 @@
     "Calpol" : {
 
     },
+    "Can't reach Scrunch" : {
+
+    },
     "Centile" : {
 
     },
@@ -352,6 +355,9 @@
 
     },
     "Check the code." : {
+
+    },
+    "Check your connection and try again." : {
 
     },
     "Checkbox" : {
@@ -1232,6 +1238,9 @@
     "Resume" : {
 
     },
+    "Retry" : {
+
+    },
     "Right" : {
 
     },
@@ -1307,6 +1316,9 @@
           }
         }
       }
+    },
+    "Saved on this phone. It will sync when you’re back online." : {
+
     },
     "Saved, but no reminder" : {
 
