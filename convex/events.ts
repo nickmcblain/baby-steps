@@ -19,6 +19,7 @@ import {
   insertSleep,
   insertTummy,
   insertWeight,
+  snapLoggedAt,
   syncBabyHeight,
   syncBabyWeight,
 } from "./lib/logEvents";
@@ -501,6 +502,23 @@ export const remove = authedMutation({
     if (kind === "height") {
       await syncBabyHeight(ctx, babyId);
     }
+    return null;
+  },
+});
+
+/** Fixing the time of a fresh log, so it doesn't use up a free entry the way re-logging would. */
+export const moveLoggedAt = authedMutation({
+  args: { eventId: v.id("events"), loggedAt: v.number() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new ConvexError("Event not found");
+    }
+    await requireBabyMember(ctx, event.babyId, ctx.user._id);
+    await ctx.db.patch(args.eventId, {
+      loggedAt: snapLoggedAt(args.loggedAt, event.kind === "custom"),
+    });
     return null;
   },
 });

@@ -16,20 +16,23 @@ private func initialMinutes(_ handoff: TimerSession.Handoff?) -> String {
 }
 
 struct SectionLabel: View {
-  let text: String
-  init(_ text: String) { self.text = text }
+  let text: LocalizedStringKey
+  init(_ text: LocalizedStringKey) { self.text = text }
 
   var body: some View {
-    Text(text.uppercased())
+    Text(text)
+      .textCase(.uppercase)
       .font(.app(.bold, 13))
       .tracking(0.6)
       .foregroundStyle(C.muted)
+      .accessibilityLabel(text)
+      .accessibilityAddTraits(.isHeader)
   }
 }
 
 struct Hint: View {
-  let text: String
-  init(_ text: String) { self.text = text }
+  let text: LocalizedStringKey
+  init(_ text: LocalizedStringKey) { self.text = text }
 
   var body: some View {
     Text(text).font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
@@ -42,7 +45,9 @@ struct FeedManualView: View {
   let handoff: TimerSession.Handoff?
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @State private var baby = Live<Baby>()
   @State private var loggedAt: EpochMs
   @State private var kind: FeedKind = .breast
@@ -50,6 +55,7 @@ struct FeedManualView: View {
   @State private var minutes: String
   @State private var ml = ""
   @State private var milk: Milk = .formula
+  private let units = DisplayFormat.current
   @State private var note: String
   @State private var alert: FormAlert?
 
@@ -67,26 +73,28 @@ struct FeedManualView: View {
       ScreenTitle(handoff != nil ? "Finish feed" : "Log feed")
       if handoff != nil { Hint("Minutes filled from your timer — tweak anything before saving.") }
       LoggedAtField(value: $loggedAt)
-      HStack(spacing: 8) {
+      WrapLayout {
         Pill(label: "Breast", selected: kind == .breast) { kind = .breast }
         Pill(label: "Bottle", selected: kind == .bottle) { kind = .bottle }
       }
       if kind == .breast {
         FieldLabel("Side")
-        HStack(spacing: 8) {
+        WrapLayout {
           Pill(label: "Left", selected: side == .left) { side = .left }
           Pill(label: "Right", selected: side == .right) { side = .right }
           Pill(label: "Both", selected: side == .both) { side = .both }
         }
-        FormField(label: "Minutes", text: $minutes, placeholder: "12", keyboard: .numberPad)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Side")
+        FormField(label: "Minutes", text: $minutes, placeholder: "e.g. 12", keyboard: .numberPad)
       } else {
-        FormField(label: "Amount (ml)", text: $ml, placeholder: "90", keyboard: .numberPad)
-        HStack(spacing: 8) {
+        FormField(label: "Amount (\(units.volumeSymbol))", text: $ml, placeholder: "e.g. 90", keyboard: units.volumeUnit == .milliliters ? .numberPad : .decimalPad)
+        WrapLayout {
           Pill(label: "Formula", selected: milk == .formula) { milk = .formula }
           Pill(label: "Expressed", selected: milk == .expressed) { milk = .expressed }
         }
       }
-      FormField(label: "Note", text: $note, placeholder: "Dream feed")
+      FormField(label: "Note", text: $note, placeholder: "e.g. Dream feed")
       PrimaryButton(label: "Save feed") { await save() }
     }
     .formAlert($alert)
@@ -96,22 +104,27 @@ struct FeedManualView: View {
   private func save() async {
     let duration = minutes.isEmpty ? nil : number(minutes)
     do {
-      try await convex.log(API.events.logFeed(
-        babyId: babyId,
-        loggedAt: loggedAt,
-        feedKind: kind,
-        side: kind == .breast ? side : nil,
-        durationMinutes: duration,
-        amountMl: kind == .bottle ? (number(ml) ?? 0) : nil,
-        milk: kind == .bottle ? milk : nil,
-        note: trimmedOrNil(note)
-      ))
+      let type = FreeAllowance.type(for: .feed(kind, side: side, minutes: duration, amountMl: number(ml), milk: milk))
+      let saved = try await gate.save(type, babyId: babyId) {
+        try await convex.log(API.events.logFeed(
+          babyId: babyId,
+          loggedAt: loggedAt,
+          feedKind: kind,
+          side: kind == .breast ? side : nil,
+          durationMinutes: duration,
+          amountMl: kind == .bottle ? (number(ml).map(units.millilitres(fromInput:)) ?? 0) : nil,
+          milk: kind == .bottle ? milk : nil,
+          note: trimmedOrNil(note)
+        ))
+      }
+      guard saved != nil else { return }
+      saveFeedback.logged(.feed, babyId: babyId)
       if let baby = baby.value {
         await Reminders.refreshFeed(baby: baby, lastFeedAt: loggedAt + (duration ?? 0) * minuteMs, quiet: false)
       }
-      router.dismissToBabyHome(babyId)
+      router.showHome(babyId)
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -122,13 +135,16 @@ struct PumpManualView: View {
   let handoff: TimerSession.Handoff?
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @State private var loggedAt: EpochMs
   @State private var side: Side
   @State private var minutes: String
   @State private var ml = ""
   @State private var note: String
   @State private var alert: FormAlert?
+  private let units = DisplayFormat.current
 
   init(babyId: BabyID, handoff: TimerSession.Handoff?) {
     self.babyId = babyId
@@ -144,15 +160,17 @@ struct PumpManualView: View {
       ScreenTitle(handoff != nil ? "Finish pump" : "Log pump")
       if handoff != nil { Hint("Minutes filled from your timer — add ml if you measured.") }
       LoggedAtField(value: $loggedAt)
-      SectionLabel("Side")
-      HStack(spacing: 8) {
+      FieldLabel("Side")
+      WrapLayout {
         Pill(label: "Left", selected: side == .left) { side = .left }
         Pill(label: "Right", selected: side == .right) { side = .right }
         Pill(label: "Both", selected: side == .both) { side = .both }
       }
-      FormField(label: "Minutes", text: $minutes, placeholder: "15", keyboard: .numberPad)
-      FormField(label: "Amount (ml)", text: $ml, placeholder: "Optional", keyboard: .numberPad)
-      FormField(label: "Note", text: $note, placeholder: "Let-down slow")
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel("Side")
+      FormField(label: "Minutes", text: $minutes, placeholder: "e.g. 15", keyboard: .numberPad)
+      FormField(label: "Amount (\(units.volumeSymbol))", text: $ml, placeholder: "Optional", keyboard: units.volumeUnit == .milliliters ? .numberPad : .decimalPad)
+      FormField(label: "Note", text: $note, placeholder: "e.g. Let-down slow")
       PrimaryButton(label: "Save pump") { await save() }
     }
     .formAlert($alert)
@@ -163,17 +181,21 @@ struct PumpManualView: View {
       return alert = FormAlert(title: "Enter how long you pumped")
     }
     do {
-      try await convex.log(API.events.logPump(
-        babyId: babyId,
-        loggedAt: loggedAt,
-        side: side,
-        durationMinutes: duration,
-        amountMl: ml.isEmpty ? nil : number(ml),
-        note: trimmedOrNil(note)
-      ))
+      let saved = try await gate.save(.pump, babyId: babyId) {
+        try await convex.log(API.events.logPump(
+          babyId: babyId,
+          loggedAt: loggedAt,
+          side: side,
+          durationMinutes: duration,
+          amountMl: ml.isEmpty ? nil : number(ml).map(units.millilitres(fromInput:)),
+          note: trimmedOrNil(note)
+        ))
+      }
+      guard saved != nil else { return }
+      saveFeedback.logged(.pump, babyId: babyId)
       router.popToRoot()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -185,7 +207,9 @@ struct DurationManualView: View {
   let handoff: TimerSession.Handoff?
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @State private var loggedAt: EpochMs
   @State private var minutes: String
   @State private var note = ""
@@ -202,7 +226,7 @@ struct DurationManualView: View {
   private var isSleep: Bool { kind == .sleep }
   private var quick: [Int] { isSleep ? [30, 45, 60, 90, 120, 180] : [3, 5, 10, 15, 20, 30] }
 
-  private func quickLabel(_ m: Int) -> String {
+  private func quickLabel(_ m: Int) -> LocalizedStringKey {
     if !isSleep || m < 60 { return "\(m)m" }
     return m % 60 == 0 ? "\(m / 60)h" : "\(m / 60)h \(m % 60)m"
   }
@@ -211,7 +235,7 @@ struct DurationManualView: View {
     ScreenScaffold {
       ScreenTitle(isSleep ? "Sleep" : "Tummy time")
       LoggedAtField(value: $loggedAt, label: isSleep ? "Fell asleep" : "Started")
-      if isSleep { FieldLabel("Duration") } else { SectionLabel("Duration") }
+      FieldLabel("Duration")
       WrapLayout {
         ForEach(quick, id: \.self) { m in
           Pill(
@@ -222,8 +246,8 @@ struct DurationManualView: View {
           ) { minutes = String(m) }
         }
       }
-      FormField(label: "Minutes", text: $minutes, placeholder: isSleep ? "45" : "10", keyboard: .numberPad)
-      FormField(label: "Note", text: $note, placeholder: isSleep ? "Pram nap" : "On the play mat")
+      FormField(label: "Minutes", text: $minutes, placeholder: isSleep ? "e.g. 45" : "e.g. 10", keyboard: .numberPad)
+      FormField(label: "Note", text: $note, placeholder: isSleep ? "e.g. Pram nap" : "e.g. On the play mat")
       PrimaryButton(label: isSleep ? "Save sleep" : "Save tummy time") { await save() }
     }
     .formAlert($alert)
@@ -237,11 +261,15 @@ struct DurationManualView: View {
       if isSleep {
         try await convex.log(API.events.logSleep(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
       } else {
-        try await convex.log(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
+        let saved = try await gate.save(.tummy, babyId: babyId) {
+          try await convex.log(API.events.logTummy(babyId: babyId, loggedAt: loggedAt, durationMinutes: duration, note: trimmedOrNil(note)))
+        }
+        guard saved != nil else { return }
       }
-      router.dismissToBabyHome(babyId)
+      saveFeedback.logged(isSleep ? .sleep : .tummy, babyId: babyId)
+      router.showHome(babyId)
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

@@ -7,7 +7,7 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>en-GB</string>
 	<key>CFBundleDisplayName</key>
 	<string>Scrunch</string>
 	<key>CFBundleExecutable</key>
@@ -44,11 +44,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Scrunch uses the microphone so you can log feeds, sleeps, and nappies hands-free.</string>
+	<string>Scrunch uses the microphone when you tap Speak, so you can log feeds, sleeps and nappies hands-free. The recording is sent for transcription and isn't kept.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
 	<true/>
+	<key>PrivacyPolicyURL</key>
+	<string>$(PRIVACY_POLICY_URL)</string>
+	<key>SupportEmail</key>
+	<string>$(SUPPORT_EMAIL)</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Fredoka_600SemiBold.ttf</string>

@@ -1,0 +1,30 @@
+{
+  "sourceLanguage": "en-GB",
+  "strings": {
+    "CFBundleDisplayName": {
+      "comment": "Home screen name",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrunch"
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription": {
+      "comment": "Privacy - Microphone Usage Description",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrunch uses the microphone so you can log feeds, sleeps, and nappies hands-free."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

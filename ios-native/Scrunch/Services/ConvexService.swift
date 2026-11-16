@@ -14,7 +14,13 @@ private extension ConvexCall {
 
 enum AppConfig {
   static var clerkPublishableKey: String { value("ClerkPublishableKey") }
-  static var convexURL: String { value("ConvexDeploymentURL") }
+  static var convexURL: String {
+    #if DEBUG
+    // UI tests point Convex at an unreachable host to exercise the offline path.
+    if let url = ProcessInfo.processInfo.environment["SCRUNCH_CONVEX_URL"] { return url }
+    #endif
+    return value("ConvexDeploymentURL")
+  }
   static let appGroup = "group.com.nickmcblain.babysteps"
 
   /// xcconfig treats `//` as a comment, so an unescaped `https://...` arrives as `https:`.
@@ -51,6 +57,7 @@ final class ConvexService {
   @ObservationIgnored let hasLastKnownState: Bool
   @ObservationIgnored private let provider: ClerkConvexTemplateAuthProvider
   @ObservationIgnored private let outbox: Outbox
+  @ObservationIgnored private let results: SyncedLogIds
   @ObservationIgnored private var bag = Set<AnyCancellable>()
   @ObservationIgnored private var retrying = false
 
@@ -64,12 +71,15 @@ final class ConvexService {
     self.cache = cache
     hasLastKnownState = cache.contains(API.babies.list().key)
 
+    let results = SyncedLogIds()
+    self.results = results
     outbox = Outbox(fileURL: files.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("Outbox/pending.json")) { entry in
       do {
-        let _: EventID = try await client.mutation(entry.name, with: entry.args.mapValues { Optional($0 as ConvexEncodable) })
+        let id: EventID = try await client.mutation(entry.name, with: entry.args.mapValues { Optional($0 as ConvexEncodable) })
+        results.ids[entry.id] = id
       } catch let error as ClientError {
-        if case .ConvexError = error { throw Outbox.Rejected(message: UserMessage.from(error)) }
+        if case .ConvexError(let data) = error { throw Outbox.Rejected(message: UserMessage.from(error), data: data) }
         throw error
       }
     }
@@ -110,11 +120,23 @@ final class ConvexService {
     try await client.mutation(call.name, with: call.encodedArgs)
   }
 
+  /// What happened to a log sent through the outbox.
+  enum LogOutcome: Equatable {
+    /// Convex saved it; the id lets the caller offer Undo.
+    case synced(EventID)
+    /// Kept on this phone and sent when Convex is reachable.
+    case queued
+  }
+
   /// Event logs go through the outbox: saved on the phone first, so a dropped connection
-  /// or a killed app can't lose them, and replays can't duplicate them.
+  /// or a killed app can't lose them, and replays can't duplicate them. A refusal
+  /// (e.g. past the free allowance) throws `Outbox.Rejected`, which `LogGate` understands.
   @discardableResult
-  func log(_ call: ConvexCall<EventID>) async throws -> Outbox.Outcome {
-    try await outbox.submit(call.name, call.args, now: Date().epochMs)
+  func log(_ call: ConvexCall<EventID>) async throws -> LogOutcome {
+    let clientId = UUID().uuidString.lowercased()
+    let outcome = try await outbox.submit(call.name, call.args, now: Date().epochMs, id: clientId)
+    guard outcome == .synced, let id = results.ids.removeValue(forKey: clientId) else { return .queued }
+    return .synced(id)
   }
 
   func action<R: Decodable>(_ call: ConvexCall<R>) async throws -> R {
@@ -145,6 +167,7 @@ final class ConvexService {
   }
 
   func signOut() async {
+    PendingLogSender.publish(babies: [], activeId: nil)
     await client.logout()
   }
 
@@ -204,10 +227,11 @@ final class Live<Value: Decodable> {
 enum UserMessage {
   /// Turns `ConvexError("No baby matches that code")` and friends into the plain message,
   /// the same text RN showed via `err.message`.
-  static func from(_ error: Error, fallback: String = "Something went wrong. Try again.") -> String {
+  static func from(_ error: Error, fallback: String = String(localized: "Something went wrong. Try again.")) -> String {
     if let client = error as? ClientError {
       switch client {
       case .ConvexError(let data):
+        if let refusal = ServerRefusal(errorData: data) { return refusal.message }
         if let text = try? JSONDecoder().decode(String.self, from: Data(data.utf8)) { return text }
         if let object = try? JSONDecoder().decode([String: String].self, from: Data(data.utf8)),
            let message = object["message"] { return message }
@@ -228,4 +252,10 @@ enum UserMessage {
     }
     return msg.isEmpty ? nil : msg
   }
+}
+
+/// Server ids of logs the outbox sent, keyed by `clientId`, until `log` collects them.
+@MainActor
+private final class SyncedLogIds {
+  var ids: [String: EventID] = [:]
 }

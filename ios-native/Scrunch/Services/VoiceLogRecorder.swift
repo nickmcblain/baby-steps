@@ -28,6 +28,8 @@ final class VoiceLogRecorder {
   @ObservationIgnored private var maxTimer: Task<Void, Never>?
   @ObservationIgnored private var starting = false
   @ObservationIgnored private var onAutoFinish: ((VoiceLogResult) -> Void)?
+  /// Past the free allowance the paywall shows, and the same clip is sent again after subscribing.
+  @ObservationIgnored var gate: LogGate?
 
   private var fileURL: URL {
     FileManager.default.temporaryDirectory.appendingPathComponent("voice-log.m4a")
@@ -57,8 +59,8 @@ final class VoiceLogRecorder {
     defer { starting = false }
     #if targetEnvironment(simulator)
     alert = Alert(
-      title: "Use a real phone",
-      message: "iOS Simulator mic is usually silent, so Whisper hears nothing. Run on a device."
+      title: String(localized: "Use a real phone"),
+      message: String(localized: "iOS Simulator mic is usually silent, so Whisper hears nothing. Run on a device.")
     )
     return
     #else
@@ -82,7 +84,7 @@ final class VoiceLogRecorder {
       recording = true
       startedAt = Date()
       UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-      status = "Listening… tap again to send"
+      status = String(localized: "Listening… tap again to send")
       maxTimer?.cancel()
       maxTimer = Task { [weak self] in
         try? await Task.sleep(for: .seconds(Self.maxSeconds))
@@ -94,7 +96,7 @@ final class VoiceLogRecorder {
     } catch {
       recording = false
       status = nil
-      alert = Alert(title: "Could not record", message: error.localizedDescription.isEmpty ? "Try again" : error.localizedDescription)
+      alert = Alert(title: String(localized: "Couldn’t record"), message: error.localizedDescription.isEmpty ? String(localized: "Try again") : error.localizedDescription)
     }
     #endif
   }
@@ -109,23 +111,23 @@ final class VoiceLogRecorder {
     recorder.stop()
     if elapsed < Self.minSeconds {
       status = nil
-      alert = Alert(title: "Too short", message: "Tap Speak, talk for a second or two, then tap again to send.")
+      alert = Alert(title: String(localized: "Too short"), message: String(localized: "Tap Speak, talk for a second or two, then tap again to send."))
       return nil
     }
 
     guard let data = try? Data(contentsOf: fileURL) else {
       status = nil
-      alert = Alert(title: "Voice log", message: "No recording saved — try again.")
+      alert = Alert(title: String(localized: "Nothing recorded"), message: String(localized: "Try again."))
       return nil
     }
     if data.count < Self.minBytes {
       status = nil
-      alert = Alert(title: "No audio captured", message: "Mic produced an empty clip. Check mic permission and try again.")
+      alert = Alert(title: String(localized: "Didn’t catch that"), message: String(localized: "We didn’t hear anything. Check Scrunch can use the microphone, then try again."))
       return nil
     }
 
     busy = true
-    status = "Logging…"
+    status = String(localized: "Logging…")
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
     defer {
       busy = false
@@ -135,19 +137,24 @@ final class VoiceLogRecorder {
     let base64 = data.base64EncodedString()
     guard base64.count <= API.voiceLog.maxAudioBase64Length else {
       status = nil
-      alert = Alert(title: "Voice log", message: "That clip is too long. Keep it under 30 seconds.")
+      alert = Alert(title: String(localized: "That was a bit long"), message: String(localized: "Keep it under 30 seconds."))
       return nil
     }
 
     do {
-      let result = try await convex.action(API.voiceLog.logFromAudio(babyId: babyId, audioBase64: base64))
-      UINotificationFeedbackGenerator().notificationOccurred(.success)
+      let send = { try await convex.action(API.voiceLog.logFromAudio(babyId: babyId, audioBase64: base64)) }
+      let sent: VoiceLogResult?
+      if let gate { sent = try await gate.save(nil, babyId: babyId, send) } else { sent = try await send() }
+      guard let result = sent else {
+        status = nil
+        return nil
+      }
       status = nil
       return result
     } catch {
       UINotificationFeedbackGenerator().notificationOccurred(.error)
       status = nil
-      alert = Alert(title: "Voice log", message: UserMessage.from(error, fallback: "Could not log from voice"))
+      alert = Alert(title: String(localized: "Voice log"), message: UserMessage.from(error, fallback: String(localized: "Couldn’t log that. Try again.")))
       return nil
     }
   }
@@ -159,11 +166,11 @@ final class VoiceLogRecorder {
     case .undetermined:
       let granted = await AVAudioApplication.requestRecordPermission()
       if !granted {
-        alert = Alert(title: "Microphone needed", message: "Allow mic access to log feeds and sleeps hands-free.")
+        alert = Alert(title: String(localized: "Microphone needed"), message: String(localized: "Allow mic access to log feeds and sleeps hands-free."))
       }
       return granted
     default:
-      alert = Alert(title: "Microphone needed", message: "Allow mic access in Settings to speak a log.")
+      alert = Alert(title: String(localized: "Microphone needed"), message: String(localized: "Allow mic access in Settings to speak a log."))
       return false
     }
   }

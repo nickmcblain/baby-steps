@@ -7,14 +7,14 @@ import SwiftUI
 
 /// Field-styled button that opens a picker sheet.
 struct PickerTrigger: View {
-  let label: String
+  let label: LocalizedStringKey
   let value: String
   var placeholder = false
   let action: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      FieldLabel(label)
+      FieldLabel(label).accessibilityHidden(true)
       Button(action: action) {
         HStack {
           Text(value)
@@ -33,13 +33,14 @@ struct PickerTrigger: View {
       .buttonStyle(PressScale())
       .accessibilityLabel(label)
       .accessibilityValue(value)
+      .accessibilityHint("Opens a picker")
     }
   }
 }
 
 /// Sheet chrome shared by the pickers: content plus a teal confirm button.
 struct PickerSheet<Content: View>: View {
-  let confirm: String
+  let confirm: LocalizedStringKey
   let onConfirm: () -> Void
   @ViewBuilder var content: Content
 
@@ -58,7 +59,7 @@ struct PickerSheet<Content: View>: View {
     .padding(.horizontal, 20)
     .padding(.top, 28)
     .padding(.bottom, 12)
-    .presentationDetents([.height(420)])
+    .adaptiveDetents([.height(420)])
     .presentationDragIndicator(.visible)
     .presentationCornerRadius(32)
     .presentationBackground(C.bg)
@@ -87,7 +88,7 @@ struct DateOfBirthField: View {
   }
 
   var body: some View {
-    PickerTrigger(label: "Date of birth", value: value.map(Format.dob) ?? "Pick a date", placeholder: value == nil) {
+    PickerTrigger(label: "Date of birth", value: value.map { Format.dob($0) } ?? String(localized: "Pick a date"), placeholder: value == nil) {
       draft = value.map { Date(epochMs: $0) } ?? Date()
       open = true
     }
@@ -112,7 +113,7 @@ struct DateOfBirthField: View {
 
 struct LoggedAtField: View {
   @Binding var value: EpochMs
-  var label = "When"
+  var label: LocalizedStringKey = "When"
   /// Allow dates ahead of now (appointments).
   var allowFuture = false
 
@@ -151,23 +152,23 @@ struct LoggedAtField: View {
 
 struct WeightField: View {
   @Binding var grams: Double?
-  var label = "Weight"
+  var label: LocalizedStringKey = "Weight"
 
   @State private var open = false
-  @State private var unit: WeightUnit = .kg
+  @State private var unit = DisplayFormat.current.weightUnit
   @State private var kg = 3
   @State private var tenths = 4
   @State private var lb = 7
   @State private var oz = 8
 
   var body: some View {
-    PickerTrigger(label: label, value: grams.map { Format.weight($0, unit: unit) } ?? "Pick a weight", placeholder: grams == nil) {
+    PickerTrigger(label: label, value: grams.map { Format.weight($0, unit: unit) } ?? String(localized: "Pick a weight"), placeholder: grams == nil) {
       load(grams, into: unit)
       open = true
     }
     .sheet(isPresented: $open, onDismiss: apply) {
       PickerSheet(confirm: "Use this weight", onConfirm: { open = false }) {
-        HStack(spacing: 8) {
+        WrapLayout {
           Pill(label: "Kilograms", selected: unit == .kg) { switchUnit(.kg) }
           Pill(label: "Pounds & oz", selected: unit == .lb, tint: C.peachSoft, ink: C.peach) { switchUnit(.lb) }
         }
@@ -222,23 +223,23 @@ struct WeightField: View {
 
 struct HeightField: View {
   @Binding var cm: Double?
-  var label = "Height (optional)"
+  var label: LocalizedStringKey = "Height (optional)"
 
   @State private var open = false
-  @State private var unit: HeightUnit = .cm
+  @State private var unit = DisplayFormat.current.heightUnit
   @State private var whole = 50
   @State private var tenths = 0
   @State private var ft = 1
   @State private var inch = 8
 
   var body: some View {
-    PickerTrigger(label: label, value: cm.map { Format.height($0, unit: unit) } ?? "Pick a height", placeholder: cm == nil) {
+    PickerTrigger(label: label, value: cm.map { Format.height($0, unit: unit) } ?? String(localized: "Pick a height"), placeholder: cm == nil) {
       load(cm, into: unit)
       open = true
     }
     .sheet(isPresented: $open, onDismiss: apply) {
       PickerSheet(confirm: "Use this height", onConfirm: { open = false }) {
-        HStack(spacing: 8) {
+        WrapLayout {
           Pill(label: "Centimetres", selected: unit == .cm) { switchUnit(.cm) }
           Pill(label: "Feet & in", selected: unit == .inches, tint: C.skySoft, ink: C.sky) { switchUnit(.inches) }
         }
@@ -291,7 +292,7 @@ struct HeightField: View {
 
 // MARK: - Shared wheel bits
 
-func wheel(_ label: String, _ selection: Binding<Int>, _ values: [Int], text: @escaping (Int) -> String) -> some View {
+func wheel(_ label: LocalizedStringKey, _ selection: Binding<Int>, _ values: [Int], text: @escaping (Int) -> String) -> some View {
   Picker(label, selection: selection) {
     ForEach(values, id: \.self) { value in
       Text(text(value)).font(.app(.bold, 20)).tag(value)
@@ -309,20 +310,22 @@ func unitGlyph(_ text: String) -> some View {
 
 /// Boy / Girl style toggle pills where tapping the selected one clears it.
 struct ToggleRow<Value: Hashable>: View {
-  let label: String
-  let options: [(Value, String)]
+  let label: LocalizedStringKey
+  let options: [(Value, LocalizedStringKey)]
   @Binding var selection: Value?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       FieldLabel(label)
-      HStack(spacing: 8) {
+      WrapLayout {
         ForEach(options, id: \.0) { option in
           Pill(label: option.1, selected: selection == option.0) {
             selection = selection == option.0 ? nil : option.0
           }
         }
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel(label)
     }
   }
 }

@@ -1,11 +1,12 @@
 "use node";
 
 import { OpenRouter, stepCountIs, tool } from "@openrouter/agent";
-import { ConvexError, v } from "convex/values";
+import { ConvexError, v, type Value } from "convex/values";
 import { z } from "zod";
 import { internal } from "./_generated/api";
 import { action, type ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import { isFreeLimit } from "./lib/allowance";
 import type { BabyContextSnapshot } from "./lib/babyContext";
 
 const INSTRUCTIONS = `You are Scrunch Voice Log — you turn a parent's spoken note into logged baby activities.
@@ -339,6 +340,16 @@ async function runLogFromNote(args: {
     args;
   let loggedCount = 0;
   let askHandoff = false;
+  const blocked: { error?: ConvexError<Value> } = {};
+
+  async function guard<T>(run: () => Promise<T>): Promise<T> {
+    try {
+      return await run();
+    } catch (error) {
+      if (isFreeLimit(error)) blocked.error = error;
+      throw error;
+    }
+  }
 
     const getBabyContextTool = tool({
       name: "get_baby_context",
@@ -366,17 +377,19 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logFeed, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          feedKind: input.feedKind,
-          side: input.side,
-          durationMinutes: input.durationMinutes,
-          amountMl: input.amountMl,
-          milk: input.milk,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logFeed, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            feedKind: input.feedKind,
+            side: input.side,
+            durationMinutes: input.durationMinutes,
+            amountMl: input.amountMl,
+            milk: input.milk,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -391,13 +404,15 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logSleep, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          durationMinutes: input.durationMinutes,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logSleep, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            durationMinutes: input.durationMinutes,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -412,13 +427,15 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logTummy, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          durationMinutes: input.durationMinutes,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logTummy, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            durationMinutes: input.durationMinutes,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -435,15 +452,17 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logNappy, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          nappy: input.nappy,
-          weeSize: input.weeSize,
-          pooSize: input.pooSize,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logNappy, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            nappy: input.nappy,
+            weeSize: input.weeSize,
+            pooSize: input.pooSize,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -458,13 +477,15 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logWeight, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          weightGrams: input.weightGrams,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logWeight, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            weightGrams: input.weightGrams,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -479,13 +500,15 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logHeight, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          heightCm: input.heightCm,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logHeight, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            heightCm: input.heightCm,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -500,13 +523,15 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logCustom, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          title: input.title,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logCustom, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            title: input.title,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -523,15 +548,17 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logPump, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          side: input.side,
-          durationMinutes: input.durationMinutes,
-          amountMl: input.amountMl,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logPump, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            side: input.side,
+            durationMinutes: input.durationMinutes,
+            amountMl: input.amountMl,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -546,13 +573,15 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logMedicine, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          title: input.title,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logMedicine, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            title: input.title,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -569,15 +598,17 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logPotty, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          nappy: input.nappy,
-          weeSize: input.weeSize,
-          pooSize: input.pooSize,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logPotty, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            nappy: input.nappy,
+            weeSize: input.weeSize,
+            pooSize: input.pooSize,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -593,14 +624,16 @@ async function runLogFromNote(args: {
         note: z.string().optional(),
       }),
       execute: async (input) => {
-        const id = await ctx.runMutation(internal.voiceTools.logActivity, {
-          userId,
-          babyId,
-          loggedAt: input.loggedAtMs,
-          title: input.title,
-          durationMinutes: input.durationMinutes,
-          note: input.note,
-        });
+        const id = await guard(() =>
+          ctx.runMutation(internal.voiceTools.logActivity, {
+            userId,
+            babyId,
+            loggedAt: input.loggedAtMs,
+            title: input.title,
+            durationMinutes: input.durationMinutes,
+            note: input.note,
+          }),
+        );
         loggedCount += 1;
         return { ok: true, eventId: id };
       },
@@ -665,10 +698,13 @@ async function runLogFromNote(args: {
     try {
       confirmation = (await result.getText()).trim();
     } catch (error) {
+      if (blocked.error) throw blocked.error;
       throw new ConvexError(
         error instanceof Error ? error.message : "Log failed",
       );
     }
+    // The app shows the paywall and offers to send the same note again after subscribing.
+    if (blocked.error && loggedCount === 0) throw blocked.error;
 
     return {
       confirmation: confirmation || "Done.",

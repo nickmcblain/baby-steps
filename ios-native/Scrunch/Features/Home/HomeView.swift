@@ -7,6 +7,7 @@ struct HomeView: View {
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
   @Environment(TimerStore.self) private var timers
+  @Environment(\.scenePhase) private var scenePhase
 
   @State private var babies = Live<[Baby]>()
   @State private var summary = Live<DaySummary>()
@@ -33,13 +34,37 @@ struct HomeView: View {
     SleepOffer.predictedNapAt(sleeps: sleeps.map(SleepSegment.init), lastSleepEndMs: summary.value?.lastSleepEndMs)
   }
 
+  /// Fresh until the dashboard has loaded, so nothing flashes on launch.
+  private var freshness: HomeCopy.Freshness {
+    guard let dash = dash.value, dash.baby.id == babyId, !asleep else { return .fresh }
+    let last = HomeCopy.lastLoggedAt([dash.lastFeed, dash.lastNappy, dash.lastSleep, dash.lastTummy])
+    return HomeCopy.freshness(lastLoggedAt: last, now: now)
+  }
+
   var body: some View {
-    ScreenScaffold(showsBack: false, clearDock: true) {
+    ScreenScaffold(showsBack: false, clearDock: baby == nil) {
       if let list = babies.value, list.isEmpty {
         empty
       } else {
         content
       }
+    }
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      if let baby, babies.value?.isEmpty == false {
+        QuickLogPanel(baby: baby, lastFeed: dash.value?.lastFeed, now: now)
+          .padding(.horizontal, 16)
+          .padding(.top, 8)
+          .padding(.bottom, quickLogDockClearance)
+          .background(alignment: .top) {
+            LinearGradient(colors: [C.bg.opacity(0), C.bg], startPoint: .top, endPoint: .bottom)
+              .frame(height: 24)
+              .offset(y: -24)
+          }
+          .background(C.bg.ignoresSafeArea(edges: .bottom))
+      }
+    }
+    .onChange(of: scenePhase) { _, phase in
+      if phase == .active { Task { await syncSideEffects() } }
     }
     .task { await babies.bind(API.babies.list(), convex, cacheKey: API.babies.list().key) }
     .task(id: babyId.map { API.events.daySummary(babyId: $0, dayStart: dayStart, dayEnd: WeekGrid.addDays(dayStart, 1)).key }) {
@@ -77,6 +102,9 @@ struct HomeView: View {
     }
   }
 
+  /// The floating dock's height, so the quick-log panel sits just above it.
+  private let quickLogDockClearance: CGFloat = 72
+
   private struct SideEffectKey: Equatable {
     let baby: Baby?
     let napAt: EpochMs?
@@ -89,6 +117,7 @@ struct HomeView: View {
   private func syncSideEffects() async {
     guard let baby, baby.id == babyId else { return }
     await Reminders.refreshNap(babyId: baby.id, babyName: baby.name, napAt: napAt, asleep: asleep)
+    await Reminders.refreshFeed(baby: baby, lastFeedAt: dash.value?.lastFeed.map(FeedWindows.feedEndedAt))
     WidgetSync.push(GlanceSnapshot.make(
       babyName: baby.name,
       asleep: asleep,
@@ -105,19 +134,57 @@ struct HomeView: View {
 
   private var empty: some View {
     VStack(alignment: .leading, spacing: 16) {
-      Text("Scrunch").font(.app(.displayBold, 26)).foregroundStyle(C.ink)
-      Text("Add a kid to start").font(.app(.displayBold, 28)).foregroundStyle(C.ink)
-      Text("Feeds, sleep, and nappies live here once you add a baby.")
-        .font(.app(.body, 16)).foregroundStyle(C.muted)
-      Button { router.tab = .kids } label: {
-        Text("Go to Kids")
-          .font(.app(.bold, 16))
-          .foregroundStyle(C.onAccent)
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 16)
-          .background(C.ink, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+      brandHeader("Scrunch")
+      EmptyState(
+        symbol: "heart.fill",
+        tint: C.rose,
+        title: "Welcome to Scrunch",
+        message: "Add your baby to start logging feeds, sleep and nappies. A partner can join later with a share code.",
+        actionLabel: "Add your baby",
+        action: { router.path.append(.newBaby) }
+      )
+    }
+  }
+
+  private func brandHeader(_ title: String) -> some View {
+    HStack(spacing: 10) {
+      if let baby {
+        BabyAvatar(babyId: baby.id, name: baby.name, size: 32)
+      } else {
+        Image("BrandMark")
+          .resizable()
+          .frame(width: 28, height: 28)
+          .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+          .accessibilityHidden(true)
       }
-      .buttonStyle(PressScale())
+      Text(title)
+        .font(.app(.displayBold, 26))
+        .foregroundStyle(C.ink)
+        .lineLimit(2)
+        .accessibilityAddTraits(.isHeader)
+    }
+  }
+
+  @ViewBuilder
+  private func freshnessCard(_ baby: Baby) -> some View {
+    switch freshness {
+    case .noLogs:
+      EmptyState(
+        symbol: "drop.fill",
+        title: HomeCopy.welcomeTitle(babyName: baby.name),
+        message: HomeCopy.welcomeBody(babyName: baby.name)
+      )
+    case .stale(let lastLoggedAt):
+      EmptyState(
+        symbol: "clock.arrow.circlepath",
+        tint: C.purple,
+        title: HomeCopy.staleTitle(lastLoggedAt: lastLoggedAt, now: now),
+        message: HomeCopy.staleBody,
+        actionLabel: "Log now",
+        action: { router.addLogOpen = true }
+      )
+    case .fresh:
+      EmptyView()
     }
   }
 
@@ -125,31 +192,40 @@ struct HomeView: View {
 
   @ViewBuilder
   private var content: some View {
-    HStack(spacing: 10) {
-      Image("BrandMark")
-        .resizable()
-        .frame(width: 28, height: 28)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityHidden(true)
-      Text(baby?.name ?? " ")
-        .font(.app(.displayBold, 26))
-        .foregroundStyle(C.ink)
-        .lineLimit(1)
-    }
+    brandHeader(baby?.name ?? " ")
 
     if let baby {
-      HStack(spacing: 8) {
+      AdaptiveStack(spacing: 8) {
         vital("Age", Format.age(dateOfBirth: baby.dateOfBirth, now: now)) { router.push(baby.id, .edit) }
         vital("Height", baby.heightCm.map { Format.height($0) } ?? "—") { router.push(baby.id, .height) }
-        vital("Weight", Format.weight(baby.weightGrams, unit: .lb)) { router.push(baby.id, .weight) }
+        vital("Weight", Format.weight(baby.weightGrams)) { router.push(baby.id, .weight) }
       }
+      freshnessCard(baby)
+      insightCard(baby)
     }
 
     WeekStrip(selectedDayStart: dayStart) { dayStart = $0 }
 
     sleepBlock
 
-    HStack(alignment: .top, spacing: 10) {
+    if let day = summary.value {
+      let isToday = dayStart == WeekGrid.startOfLocalDay(now)
+      Text(isToday ? "Today" : Date(epochMs: dayStart).formatted(.dateTime.weekday(.wide).day().month(.wide)))
+        .font(.app(.bold, 13, relativeTo: .footnote))
+        .foregroundStyle(C.muted)
+        .padding(.leading, 8)
+        .padding(.bottom, -8)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityLabel(isToday ? "Today's summary" : "Summary for \(Date(epochMs: dayStart).formatted(.dateTime.weekday(.wide).day().month(.wide)))")
+        .accessibilityValue(Spoken.daySummary(
+          feeds: day.feedCount,
+          nappies: day.nappyCount,
+          sleepMinutes: day.sleepMinutes,
+          tummyMinutes: day.tummyMinutes
+        ))
+    }
+
+    AdaptiveStack(alignment: .top, spacing: 10) {
       macro(
         value: summary.value?.feedCount ?? 0,
         goal: baby.map { Double(SleepGoals.typicalFeedCount(dateOfBirth: $0.dateOfBirth, now: now)) } ?? 6,
@@ -172,6 +248,42 @@ struct HomeView: View {
         color: C.sky, track: C.skySoft, screen: .tummyPatterns
       )
     }
+    Text(HomeCopy.targetsFootnote)
+      .font(.app(.body, 13))
+      .foregroundStyle(C.muted)
+      .padding(.horizontal, 8)
+      .padding(.top, -6)
+
+    if let baby {
+      MilestonesCard(baby: baby)
+    }
+  }
+
+  private func insightCard(_ baby: Baby) -> some View {
+    let isToday = dayStart == WeekGrid.startOfLocalDay(now)
+    let todayEvents = isToday ? summary.value?.events ?? [] : []
+    let lastSleep = dash.value?.lastSleep
+    let input = InsightInput(
+      baby: baby,
+      now: now,
+      recentFeeds: todayEvents + [dash.value?.lastFeed].compactMap { $0 },
+      lastNappy: dash.value?.lastNappy,
+      lastSleepEndMs: lastSleep.map { $0.loggedAt + ($0.durationMinutes ?? 0) * minuteMs },
+      asleep: asleep
+    )
+    // The quick-log panel already shows the last and next breast side.
+    let timerRunning = !asleep && timers.session.map { $0.babyId == baby.id && $0.isRunning } ?? false
+    let caughtUp = isToday && !timerRunning && Insights.allCaughtUp(input)
+    return InsightCard(insights: Insights.all(input).filter { $0.kind != .breastSide }, caughtUp: caughtUp) { kind in
+      switch kind {
+      case .nextFeed, .breastSide: router.push(baby.id, .feedPatterns)
+      case .lastNappy: router.push(baby.id, .nappyPatterns)
+      case .awake: router.push(baby.id, .sleepPatterns)
+      case .tonightTog: router.push(baby.id, .clothing)
+      }
+    } onAsk: {
+      router.push(baby.id, .ask())
+    }
   }
 
   @ViewBuilder
@@ -184,22 +296,27 @@ struct HomeView: View {
         night: $0.nightWindow
       )
     }
-    let nextWindow = rhythm.flatMap { DayRhythmEngine.nextSleepCountdown($0.segments, now: now) }
+    // Only count down when recent logs back it up; otherwise "Next nap · Now" reads as live.
+    let nextWindow = freshness == .fresh ? rhythm.flatMap { DayRhythmEngine.nextSleepCountdown($0.segments, now: now) } : nil
     let sleepH = (summary.value?.sleepMinutes ?? 0) / 60
 
     VStack(spacing: 0) {
       if let nextWindow, let baby {
         Button { router.push(baby.id, .sleepTimer) } label: {
-          HStack {
+          AdaptiveStack(spacing: 4) {
             Text(HomeCopy.countdownLabel(nextWindow)).font(.app(.medium, 13)).foregroundStyle(C.purple)
-            Spacer()
+            Spacer(minLength: 0)
             Text(HomeCopy.countdown(nextWindow.inMs)).font(.app(.bold, 16)).foregroundStyle(C.ink)
           }
           .padding(.horizontal, 10)
           .padding(.vertical, 12)
+          .frame(maxWidth: .infinity, alignment: .leading)
           .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Opens the sleep timer")
+        .accessibilityInputLabels(["Sleep timer", HomeCopy.countdownLabel(nextWindow)])
       }
 
       VStack(alignment: .leading, spacing: 0) {
@@ -220,13 +337,16 @@ struct HomeView: View {
           .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Opens sleep patterns")
+        .accessibilityInputLabels(["Sleep today", "Sleep patterns"])
 
         if let rhythm, let baby {
           DayRhythmBar(rhythm: rhythm, now: now) { router.push(baby.id, .sleepPatterns) }
             .padding(.horizontal, 20)
             .padding(.bottom, 14)
         }
-        LastStrip(text: HomeCopy.lastSleepStrip(dash.value?.lastSleep, now: now), inset: 20)
+        LastStrip(text: HomeCopy.lastSleepStrip(dash.value?.lastSleep, now: now), inset: 20, reservesTwoLines: false)
       }
       .background(C.card)
       .clipShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
@@ -237,12 +357,13 @@ struct HomeView: View {
     .background(C.purpleSoft, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
   }
 
-  private func vital(_ label: String, _ value: String, action: @escaping () -> Void) -> some View {
+  private func vital(_ label: LocalizedStringKey, _ value: String, action: @escaping () -> Void) -> some View {
     Button(action: action) {
       VStack(spacing: 2) {
-        Text(label).font(.app(.medium, 11, relativeTo: .caption2)).foregroundStyle(C.muted)
-        Text(value).font(.app(.bold, 14)).foregroundStyle(C.ink).lineLimit(1).minimumScaleFactor(0.8)
+        Text(label).font(.app(.medium, 11, relativeTo: .caption)).foregroundStyle(C.muted)
+        Text(value).font(.app(.bold, 14)).foregroundStyle(C.ink)
       }
+      .multilineTextAlignment(.center)
       .frame(maxWidth: .infinity)
       .padding(10)
       .background(C.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -250,6 +371,7 @@ struct HomeView: View {
     }
     .buttonStyle(PressScale())
     .accessibilityElement(children: .combine)
+    .accessibilityInputLabels([label])
   }
 
   private func macro(
@@ -277,5 +399,7 @@ struct HomeView: View {
     .buttonStyle(PressScale())
     .accessibilityElement(children: .combine)
     .accessibilityLabel("\(label): \(jsNumber(value)) of \(jsNumber(goal))\(unit.map { " \($0)" } ?? ""). \(last)")
+    .accessibilityHint("Opens \(label.lowercased()) patterns")
+    .accessibilityInputLabels([label, "\(label) patterns"])
   }
 }

@@ -1,3 +1,4 @@
+import Accessibility
 import Charts
 import ScrunchCore
 import SwiftUI
@@ -8,7 +9,9 @@ struct GrowthLogView: View {
   let metric: GrowthMetric
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var series = Live<GrowthSeries>()
   @State private var dash = Live<Dashboard>()
@@ -27,8 +30,9 @@ struct GrowthLogView: View {
         GrowthChart(metric: metric, sex: series.baby.sex, dateOfBirth: series.baby.dateOfBirth, points: series.points)
         if series.baby.sex == nil {
           Button { router.push(babyId, .edit) } label: {
-            Text("Add boy / girl on Edit →").font(.app(.medium, 14)).foregroundStyle(C.tealDark)
+            Text("Add boy / girl on Edit →").font(.app(.medium, 14)).foregroundStyle(C.tealDark).frame(minHeight: 44)
           }
+          .accessibilityLabel("Add boy or girl on Edit")
         }
       } else {
         Text("Loading chart…").font(.app(.body, 15)).foregroundStyle(C.muted)
@@ -58,18 +62,25 @@ struct GrowthLogView: View {
     do {
       if isWeight {
         guard let grams, grams > 0 else { return alert = FormAlert(title: "Pick a weight") }
-        try await convex.log(API.events.logWeight(babyId: babyId, loggedAt: loggedAt, weightGrams: grams, note: noteValue))
+        let saved = try await gate.save(.growth, babyId: babyId) {
+          try await convex.log(API.events.logWeight(babyId: babyId, loggedAt: loggedAt, weightGrams: grams, note: noteValue))
+        }
+        guard saved != nil else { return }
         if let baby = series.value?.baby {
           let updated = Baby(id: baby.id, name: baby.name, dateOfBirth: baby.dateOfBirth, weightGrams: grams, feedingMode: baby.feedingMode)
           await Reminders.refreshFeed(baby: updated, lastFeedAt: dash.value?.lastFeed.map(FeedWindows.feedEndedAt))
         }
       } else {
         guard let cm, cm > 0 else { return alert = FormAlert(title: "Pick a height") }
-        try await convex.log(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
+        let saved = try await gate.save(.growth, babyId: babyId) {
+          try await convex.log(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
+        }
+        guard saved != nil else { return }
       }
+      saveFeedback.logged(isWeight ? .weight : .height, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -102,7 +113,8 @@ struct GrowthChart: View {
     VStack(alignment: .leading, spacing: 6) {
       Text(metric == .weight ? "Weight for age" : "Length / height for age")
         .font(.app(.display, 18)).foregroundStyle(C.ink)
-      Text("UK Red Book centiles (WHO / UK-WHO standards)")
+        .accessibilityAddTraits(.isHeader)
+      Text(HealthRegion.current.growthChartSource)
         .font(.app(.body, 12)).foregroundStyle(C.muted).padding(.bottom, 4)
 
       if let sex {
@@ -116,8 +128,9 @@ struct GrowthChart: View {
           Text("Lines: 0.4 · 9 · 50 · 91 · 99.6")
           Text("Dots: your logs (\(metric == .weight ? "kg" : "cm"))")
         }
-        .font(.app(.body, 11))
+        .font(.app(.body, 12, relativeTo: .caption))
         .foregroundStyle(C.muted)
+        .fixedSize(horizontal: false, vertical: true)
         .padding(.top, 4)
         if let band = status?.band, band == .veryLow || band == .veryHigh {
           Text(GrowthLMS.outsideRangeCaution).font(.app(.medium, 12)).foregroundStyle(C.danger).padding(.top, 6)
@@ -156,9 +169,15 @@ struct GrowthChart: View {
 
     return Chart {
       ForEach(centiles) { point in
-        LineMark(x: .value("Month", point.month), y: .value("Centile", point.value), series: .value("Centile", point.centile))
-          .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
-          .lineStyle(StrokeStyle(lineWidth: point.centile == "50th" ? 2 : 1))
+        if point.month == 0 {
+          PointMark(x: .value("Month", point.month), y: .value("Birth centile", point.value))
+            .symbolSize(12)
+            .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
+        } else {
+          LineMark(x: .value("Month", point.month), y: .value("Centile", point.value), series: .value("Centile", point.centile))
+            .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
+            .lineStyle(StrokeStyle(lineWidth: point.centile == "50th" ? 2 : 1))
+        }
       }
       if logs.count > 1 {
         ForEach(logs) { point in
@@ -193,7 +212,49 @@ struct GrowthChart: View {
         }
       }
     }
+    .dynamicTypeSize(...DynamicTypeSize.xxLarge)
     .frame(height: 220)
     .accessibilityLabel(metric == .weight ? "Weight for age chart" : "Length for age chart")
+    .accessibilityChartDescriptor(GrowthChartDescriptor(
+      metric: metric,
+      logs: logs.map { (month: $0.month, value: $0.value) },
+      maxMonth: maxMonth,
+      range: low...high,
+      summary: points.max { $0.at < $1.at }.flatMap { GrowthLMS.latestStatus(metric, sex: sex, dateOfBirth: dateOfBirth, latest: $0) }?.text
+    ))
+  }
+}
+
+/// Audio graph of the logged growth points against age in months.
+private struct GrowthChartDescriptor: AXChartDescriptorRepresentable {
+  let metric: GrowthMetric
+  let logs: [(month: Double, value: Double)]
+  let maxMonth: Double
+  let range: ClosedRange<Double>
+  let summary: String?
+
+  private var unit: String { metric == .weight ? "kg" : "cm" }
+
+  func makeChartDescriptor() -> AXChartDescriptor {
+    let xAxis = AXNumericDataAxisDescriptor(title: "Age", range: 0...max(1, maxMonth), gridlinePositions: []) {
+      "\(jsToFixed($0, 1)) months"
+    }
+    let yAxis = AXNumericDataAxisDescriptor(title: metric == .weight ? "Weight" : "Length", range: range, gridlinePositions: []) {
+      "\(jsToFixed($0, 1)) \(unit)"
+    }
+    let series = AXDataSeriesDescriptor(
+      name: "Your logs",
+      isContinuous: true,
+      dataPoints: logs.map { AXDataPoint(x: $0.month, y: $0.value) }
+    )
+    let count = logs.count == 1 ? "1 log" : "\(logs.count) logs"
+    return AXChartDescriptor(
+      title: metric == .weight ? "Weight for age" : "Length for age",
+      summary: [count + " plotted against UK-WHO centiles.", summary].compactMap { $0 }.joined(separator: " "),
+      xAxis: xAxis,
+      yAxis: yAxis,
+      additionalAxes: [],
+      series: [series]
+    )
   }
 }

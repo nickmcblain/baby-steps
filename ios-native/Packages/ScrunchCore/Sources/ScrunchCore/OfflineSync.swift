@@ -76,7 +76,12 @@ public final class Outbox {
   /// Convex refused the write (a `ConvexError`), so retrying can't help.
   public struct Rejected: LocalizedError, Equatable, Sendable {
     public let message: String
-    public init(message: String) { self.message = message }
+    /// The `ConvexError` payload, so callers can tell a free-allowance refusal from a bad log.
+    public let data: String?
+    public init(message: String, data: String? = nil) {
+      self.message = message
+      self.data = data
+    }
     public var errorDescription: String? { message }
   }
 
@@ -102,7 +107,7 @@ public final class Outbox {
   private var flushing = false
 
   private enum Resolution {
-    case synced, queued, rejected(String)
+    case synced, queued, rejected(Rejected)
   }
 
   public init(fileURL: URL?, send: @escaping Send) {
@@ -140,7 +145,7 @@ public final class Outbox {
     switch resolution {
     case .synced: return .synced
     case .queued: return .queued
-    case .rejected(let message): throw Rejected(message: message)
+    case .rejected(let rejected): throw rejected
     }
   }
 
@@ -162,7 +167,7 @@ public final class Outbox {
         resolve(next.id, .synced)
       } catch let rejected as Rejected {
         remove(next.id)
-        if !resolve(next.id, .rejected(rejected.message)) {
+        if !resolve(next.id, .rejected(rejected)) {
           failures.append(Failure(id: next.id, name: next.name, message: rejected.message))
           changed()
         }

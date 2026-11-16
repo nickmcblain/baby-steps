@@ -7,6 +7,10 @@ CURRENT_PROJECT_VERSION = 1
 
 CLERK_PUBLISHABLE_KEY =
 CONVEX_URL =
+
+// Placeholders until the domain is chosen. Secrets.xcconfig can override them.
+PRIVACY_POLICY_URL = https:/$()/babysteps.app/privacy
+SUPPORT_EMAIL = hello@babysteps.app
 DEVELOPMENT_TEAM =
 CODE_SIGN_STYLE = Automatic
 

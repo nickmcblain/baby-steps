@@ -16,7 +16,10 @@ struct AskView: View {
   @State private var pendingUser: String?
   @State private var sentQuestion: String?
   @State private var alert: FormAlert?
+  @State private var aboutAIOpen = false
+  @AppStorage(AIDisclosure.consentKey) private var aiConsent = ""
   @FocusState private var composerFocused: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   init(babyId: BabyID, initialQuestion: String?, threadId: ThreadID? = nil) {
     self.babyId = babyId
@@ -34,11 +37,23 @@ struct AskView: View {
   }
 
   var body: some View {
+    if AIDisclosure.hasConsented(aiConsent) {
+      chat
+    } else {
+      AIConsentView(onAgree: {}, onCancel: { dismiss() })
+        .toolbar(.hidden, for: .navigationBar)
+    }
+  }
+
+  private var chat: some View {
     ZStack(alignment: .top) {
       C.bg.ignoresSafeArea()
       ScrollViewReader { proxy in
         ScrollView(showsIndicators: false) {
           LazyVStack(spacing: 10) {
+            if messages.value?.isEmpty == true && !sending && !showPendingUser {
+              starters
+            }
             ForEach(messages.value ?? []) { message in
               bubble(message)
             }
@@ -52,11 +67,12 @@ struct AskView: View {
               }
               .frame(maxWidth: .infinity, alignment: .leading)
               .padding(.vertical, 8)
+              .accessibilityElement(children: .combine)
             }
             Color.clear.frame(height: 1).id("bottom")
           }
           .padding(.horizontal, 20)
-          .padding(.top, 64)
+          .padding(.top, 8)
           .padding(.bottom, 12)
         }
         .defaultScrollAnchor(.bottom)
@@ -65,26 +81,18 @@ struct AskView: View {
         .onChange(of: sending) { scrollToEnd(proxy) }
         .onChange(of: showPendingUser) { scrollToEnd(proxy) }
       }
+      .safeAreaInset(edge: .top, spacing: 0) { header }
       .safeAreaInset(edge: .bottom) { composer }
-
-      HStack {
-        CircleIconButton(systemImage: "chevron.left", label: "Back") { dismiss() }
-        Spacer()
-        CircleIconButton(systemImage: "plus", label: "New chat") { Task { await startNewChat() } }
-        CircleIconButton(systemImage: "list.bullet", label: "Past chats") { router.push(babyId, .askHistory) }
-          .padding(.leading, 8)
-      }
-      .padding(.horizontal, 16)
-      .padding(.top, 4)
     }
     .toolbar(.hidden, for: .navigationBar)
     .formAlert($alert)
+    .sheet(isPresented: $aboutAIOpen) { AboutAIView().presentationCornerRadius(32) }
     .task {
       guard threadId == nil else { return }
       do {
         threadId = try await convex.mutation(API.chat.ensureThread(babyId))
       } catch {
-        alert = FormAlert(title: "Could not open chat", message: UserMessage.from(error, fallback: "Try again"))
+        alert = FormAlert(title: "Couldn’t open the chat", message: UserMessage.from(error, fallback: String(localized: "Try again")))
       }
     }
     .task(id: threadId) {
@@ -97,6 +105,49 @@ struct AskView: View {
       sentQuestion = question
       await send(question)
     }
+  }
+
+  private var starters: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text(AskSafety.entryTitle).font(.app(.displayBold, 28)).foregroundStyle(C.ink).accessibilityAddTraits(.isHeader)
+      Text("\(AskSafety.entrySubtitle). Every answer says where it comes from.")
+        .font(.app(.body, 15)).foregroundStyle(C.muted)
+        .padding(.bottom, 6)
+      ForEach(AskSafety.starterQuestions, id: \.self) { question in
+        Button { Task { await send(question) } } label: {
+          Text(question)
+            .font(.app(.medium, 15))
+            .foregroundStyle(C.ink)
+            .multilineTextAlignment(.leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(C.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .cardShadow()
+        }
+        .buttonStyle(PressScale())
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var header: some View {
+    HStack(spacing: 8) {
+      CircleIconButton(systemImage: "chevron.left", label: "Back") { dismiss() }
+      Text("Ask")
+        .font(.app(.displayBold, 22, relativeTo: .title2))
+        .foregroundStyle(C.ink)
+        .padding(.leading, 4)
+        .accessibilityAddTraits(.isHeader)
+      Spacer()
+      CircleIconButton(systemImage: "info.circle", label: LocalizedStringKey(AIDisclosure.title)) { aboutAIOpen = true }
+      CircleIconButton(systemImage: "plus", label: "New chat", spokenNames: ["New", "Plus"]) { Task { await startNewChat() } }
+      CircleIconButton(systemImage: "list.bullet", label: "Past chats", spokenNames: ["Chats", "History"]) { router.push(babyId, .askHistory) }
+    }
+    .padding(.horizontal, 16)
+    .padding(.top, 4)
+    .padding(.bottom, 8)
+    .background(C.bg)
   }
 
   private var composer: some View {
@@ -118,6 +169,7 @@ struct AskView: View {
           .frame(minHeight: 48)
           .background(C.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
           .cardShadow()
+          .accessibilityLabel("Question")
         Button { Task { await send(nil) } } label: {
           Image(systemName: "arrow.up")
             .font(.system(size: 20, weight: .bold))
@@ -128,6 +180,7 @@ struct AskView: View {
         }
         .disabled(!canSend)
         .accessibilityLabel("Send")
+        .accessibilityInputLabels(["Send", "Ask"])
       }
     }
     .padding(.horizontal, 20)
@@ -141,22 +194,25 @@ struct AskView: View {
     if message.role == .user {
       userBubble(message.content)
     } else {
-      VStack(alignment: .leading, spacing: 6) {
-        MarkdownText(text: message.content)
-        if let citations = message.citations, !citations.isEmpty {
-          VStack(alignment: .leading, spacing: 2) {
-            ForEach(citations, id: \.self) { citation in
-              if let url = citation.url.flatMap(URL.init(string:)) {
-                Link("· \(citation.title)", destination: url)
-                  .font(.app(.medium, 12))
-                  .foregroundStyle(C.muted)
-              } else {
-                Text("· \(citation.title)").font(.app(.medium, 12)).foregroundStyle(C.muted)
-              }
-            }
+      let answer = AskAnswer.split(message.content)
+      let sources = AskSafety.sourceLines(AskAnswer.merge(answer.sources, message.citations))
+      VStack(alignment: .leading, spacing: 10) {
+        MarkdownText(text: answer.body)
+        VStack(alignment: .leading, spacing: 6) {
+          Text(AskSafety.sourcesHeading).font(.app(.bold, 13)).foregroundStyle(C.muted)
+          ForEach(sources, id: \.self) { source in
+            sourceRow(source)
           }
-          .padding(.top, 4)
         }
+        .padding(.top, 10)
+        .overlay(alignment: .top) { Rectangle().fill(C.line).frame(height: 1) }
+        Text(AskSafety.helpLine)
+          .font(.app(.bold, 12))
+          .foregroundStyle(C.ink)
+          .padding(.horizontal, 10)
+          .padding(.vertical, 8)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .background(C.peachSoft, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
       }
       .padding(.horizontal, 14)
       .padding(.vertical, 12)
@@ -164,6 +220,27 @@ struct AskView: View {
       .cardShadow()
       .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in width * 0.92 }
       .frame(maxWidth: .infinity, alignment: .leading)
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel("Scrunch")
+    }
+  }
+
+  @ViewBuilder
+  private func sourceRow(_ source: Citation) -> some View {
+    let label = HStack(alignment: .firstTextBaseline, spacing: 6) {
+      Image(systemName: source.url == nil ? "book.closed.fill" : "link")
+        .font(.system(size: 11, weight: .semibold))
+        .accessibilityHidden(true)
+      Text(source.title)
+        .font(.app(.medium, 13))
+        .multilineTextAlignment(.leading)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    if let url = source.url.flatMap(URL.init(string:)) {
+      Link(destination: url) { label.foregroundStyle(C.tealDark) }
+        .accessibilityHint("Opens in Safari")
+    } else {
+      label.foregroundStyle(C.muted)
     }
   }
 
@@ -177,17 +254,22 @@ struct AskView: View {
       .background(C.teal, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
       .frame(maxWidth: .infinity, alignment: .trailing)
       .padding(.leading, 28)
+      .accessibilityLabel("You: \(text)")
   }
 
   private func scrollToEnd(_ proxy: ScrollViewProxy) {
-    withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+    if reduceMotion {
+      proxy.scrollTo("bottom", anchor: .bottom)
+    } else {
+      withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+    }
   }
 
   private func send(_ textArg: String?) async {
     let text = (textArg ?? draft).trimmingCharacters(in: .whitespacesAndNewlines)
     guard !text.isEmpty, let threadId, !sending else { return }
     if AskSafety.isEmergency(text) {
-      alert = FormAlert(title: AskSafety.emergencyTitle, message: AskSafety.emergencyBody)
+      alert = FormAlert(verbatimTitle: AskSafety.emergencyTitle, message: AskSafety.emergencyBody)
     }
     draft = ""
     pendingUser = text
@@ -199,7 +281,7 @@ struct AskView: View {
     do {
       _ = try await convex.action(API.chatAgent.ask(babyId: babyId, threadId: threadId, message: text))
     } catch {
-      alert = FormAlert(title: "Ask failed", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t get an answer", message: UserMessage.from(error, fallback: String(localized: "Try again")))
       draft = text
     }
   }
@@ -212,7 +294,7 @@ struct AskView: View {
       draft = ""
       pendingUser = nil
     } catch {
-      alert = FormAlert(title: "Could not start chat", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "Couldn’t start a chat", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -266,8 +348,16 @@ struct AskHistoryView: View {
     let now = Date().epochMs
     ScreenScaffold {
       ScreenTitle("Chats")
-      if (threads.value ?? []).isEmpty {
-        Text("No chats yet — tap + on Ask to start one.").font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4)
+      if threads.value == nil {
+        LoadingView().frame(minHeight: 200)
+      } else if threads.value?.isEmpty == true {
+        EmptyState(
+          symbol: "bubble.left.and.text.bubble.right.fill",
+          title: "No chats yet",
+          message: "Ask about feeding, sleep or anything else. Answers draw on NHS and Lullaby Trust guidance.",
+          actionLabel: "Ask a question",
+          action: { router.replaceTop(babyId, .ask(question: nil)) }
+        )
       } else {
         VStack(spacing: 10) {
           ForEach(threads.value ?? []) { thread in

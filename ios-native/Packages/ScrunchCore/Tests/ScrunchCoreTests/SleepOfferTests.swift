@@ -103,7 +103,7 @@ final class SleepOfferTests: XCTestCase {
     let last = pattern.last!
     let offer = label(pattern, lastEnd: last.endMs, lastMinutes: last.durationMinutes, asleep: false, now: last.endMs + 10 * 60_000)
     // 10:45 + 85m = 12:10
-    XCTAssertEqual(offer, NapOffer(label: "Often ready around 12:10 pm", subline: "From their last two weeks"))
+    XCTAssertEqual(offer, NapOffer(label: "Often ready around 12:10", subline: "From their last two weeks"))
   }
 
   func testPastTheUsualGapSaysOfferANap() {

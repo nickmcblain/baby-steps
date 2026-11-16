@@ -7,6 +7,8 @@ struct NappyView: View {
   let potty: Bool
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var kind: NappyKind = .wee
@@ -19,31 +21,35 @@ struct NappyView: View {
     ScreenScaffold {
       ScreenTitle(potty ? "Potty" : "Nappy")
       LoggedAtField(value: $loggedAt)
-      HStack(spacing: 8) {
+      WrapLayout {
         Pill(label: "Wee", selected: kind == .wee, tint: C.amberSoft, ink: C.ink) { kind = .wee }
         Pill(label: "Poo", selected: kind == .poo, tint: C.peachSoft, ink: C.peach) { kind = .poo }
         Pill(label: "Both", selected: kind == .both) { kind = .both }
       }
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel(potty ? "Potty type" : "Nappy type")
       if kind != .poo {
         FieldLabel("Wee size")
-        sizeRow($wee)
+        sizeRow($wee, "Wee size")
       }
       if kind != .wee {
         FieldLabel("Poo size")
-        sizeRow($poo)
+        sizeRow($poo, "Poo size")
       }
-      FormField(label: "Note", text: $note, placeholder: potty ? "Sat on their own" : "Seedy mustard")
+      FormField(label: "Note", text: $note, placeholder: potty ? "e.g. Sat on their own" : "e.g. Seedy mustard")
       PrimaryButton(label: potty ? "Save potty" : "Save nappy") { await save() }
     }
     .formAlert($alert)
   }
 
-  private func sizeRow(_ value: Binding<NappySize>) -> some View {
-    HStack(spacing: 8) {
+  private func sizeRow(_ value: Binding<NappySize>, _ label: String) -> some View {
+    WrapLayout {
       Pill(label: "Small", selected: value.wrappedValue == .small) { value.wrappedValue = .small }
       Pill(label: "Medium", selected: value.wrappedValue == .medium) { value.wrappedValue = .medium }
       Pill(label: "Large", selected: value.wrappedValue == .large) { value.wrappedValue = .large }
     }
+    .accessibilityElement(children: .contain)
+    .accessibilityLabel(label)
   }
 
   private func save() async {
@@ -52,14 +58,18 @@ struct NappyView: View {
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     let noteValue = trimmed.isEmpty ? nil : trimmed
     do {
-      if potty {
-        try await convex.log(API.events.logPotty(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
-      } else {
-        try await convex.log(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+      let saved = try await gate.save(potty ? LogType.potty : .nappy, babyId: babyId) {
+        if potty {
+          try await convex.log(API.events.logPotty(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+        } else {
+          try await convex.log(API.events.logNappy(babyId: babyId, loggedAt: loggedAt, nappy: kind, weeSize: weeSize, pooSize: pooSize, note: noteValue))
+        }
       }
+      guard saved != nil else { return }
+      saveFeedback.logged(potty ? .potty : .nappy, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -69,6 +79,8 @@ struct MedicineView: View {
   let babyId: BabyID
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var baby = Live<Baby>()
   @State private var loggedAt = LoggedAt.nowSnapped()
@@ -81,10 +93,10 @@ struct MedicineView: View {
     ScreenScaffold {
       ScreenTitle("Medicine")
       LoggedAtField(value: $loggedAt)
-      FormField(label: "Name", text: $name, placeholder: "Calpol")
-      FormField(label: "Dose", text: $dose, placeholder: "2.5 ml")
+      FormField(label: "Name", text: $name, placeholder: "e.g. Calpol")
+      FormField(label: "Dose", text: $dose, placeholder: "e.g. 2.5 ml")
       FieldLabel("Remind me")
-      HStack(spacing: 8) {
+      WrapLayout {
         ForEach(ReminderPlans.medicineReminderHours.compactMap { $0 }, id: \.self) { hours in
           Pill(label: "\(hours)h", selected: remindHours == hours, tint: C.amberSoft, ink: C.ink) { remindHours = hours }
         }
@@ -102,18 +114,22 @@ struct MedicineView: View {
     let trimmedDose = dose.trimmingCharacters(in: .whitespacesAndNewlines)
     let doseValue = trimmedDose.isEmpty ? nil : trimmedDose
     do {
-      try await convex.log(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
+      let saved = try await gate.save(.medicine, babyId: babyId) {
+        try await convex.log(API.events.logMedicine(babyId: babyId, loggedAt: loggedAt, title: title, note: doseValue))
+      }
+      guard saved != nil else { return }
+      saveFeedback.logged(.medicine, babyId: babyId)
       if let remindHours, let baby = baby.value {
         let scheduled = await Reminders.scheduleMedicine(babyId: baby.id, babyName: baby.name, name: title, dose: doseValue, hours: remindHours)
         if !scheduled {
           let close = dismiss
-          alert = FormAlert(title: "Logged, no reminder", message: "Allow notifications to get the next-dose nudge.", onDismiss: { close() })
+          alert = FormAlert(title: "Saved, but no reminder", message: String(localized: "Turn on notifications in Settings to get a nudge for the next dose."), onDismiss: { close() })
           return
         }
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -126,6 +142,8 @@ struct ActivityLogView: View {
   private static let quick = [5, 10, 15, 20, 30, 45]
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var preset = "Play"
@@ -142,23 +160,23 @@ struct ActivityLogView: View {
     ScreenScaffold {
       ScreenTitle("Activity")
       LoggedAtField(value: $loggedAt)
-      SectionLabel("Type")
+      FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
-          Pill(label: item, selected: preset == item, tint: C.purpleSoft, ink: C.purple) { preset = item }
+          Pill(label: LocalizedStringKey(item), selected: preset == item, tint: C.purpleSoft, ink: C.purple) { preset = item }
         }
       }
       if preset == "Other" {
-        FormField(label: "Title", text: $customTitle, placeholder: "Swimming")
+        FormField(label: "Title", text: $customTitle, placeholder: "e.g. Swimming")
       }
-      SectionLabel("Duration")
+      FieldLabel("Duration")
       WrapLayout {
         ForEach(Self.quick, id: \.self) { m in
           Pill(label: "\(m)m", selected: Double(minutes) == Double(m), tint: C.purpleSoft, ink: C.purple) { minutes = String(m) }
         }
       }
       FormField(label: "Minutes", text: $minutes, placeholder: "Optional", keyboard: .numberPad)
-      FormField(label: "Note", text: $note, placeholder: "Loved the water")
+      FormField(label: "Note", text: $note, placeholder: "e.g. Loved the water")
       PrimaryButton(label: "Save activity") { await save() }
     }
     .formAlert($alert)
@@ -168,16 +186,20 @@ struct ActivityLogView: View {
     guard !title.isEmpty else { return alert = FormAlert(title: "Pick an activity") }
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
-      try await convex.log(API.events.logActivity(
-        babyId: babyId,
-        loggedAt: loggedAt,
-        title: title,
-        durationMinutes: minutes.isEmpty ? nil : Double(minutes.trimmingCharacters(in: .whitespaces)),
-        note: trimmed.isEmpty ? nil : trimmed
-      ))
+      let saved = try await gate.save(.activity, babyId: babyId) {
+        try await convex.log(API.events.logActivity(
+          babyId: babyId,
+          loggedAt: loggedAt,
+          title: title,
+          durationMinutes: minutes.isEmpty ? nil : Double(minutes.trimmingCharacters(in: .whitespaces)),
+          note: trimmed.isEmpty ? nil : trimmed
+        ))
+      }
+      guard saved != nil else { return }
+      saveFeedback.logged(.activity, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not log", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -189,6 +211,8 @@ struct CustomEventView: View {
   private static let presets = ["Midwife visit", "GP visit", "Immunisation", "Health visitor", "Other"]
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var loggedAt = LoggedAt.nowSnapped()
   @State private var preset = "Midwife visit"
@@ -203,18 +227,18 @@ struct CustomEventView: View {
   var body: some View {
     ScreenScaffold {
       ScreenTitle("Add event")
-      Hint("Midwife, GP, jabs, and other appointments — past or upcoming.")
+      Hint("Midwife, GP, jabs and other appointments, past or upcoming.")
       FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
-          Pill(label: item, selected: preset == item, tint: C.roseSoft, ink: C.rose) { preset = item }
+          Pill(label: LocalizedStringKey(item), selected: preset == item) { preset = item }
         }
       }
       if preset == "Other" {
-        FormField(label: "Title", text: $customTitle, placeholder: "Hearing test")
+        FormField(label: "Title", text: $customTitle, placeholder: "e.g. Hearing test")
       }
       LoggedAtField(value: $loggedAt, label: "When", allowFuture: true)
-      FormField(label: "Note", text: $note, placeholder: "Bring red book")
+      FormField(label: "Note", text: $note, placeholder: "e.g. Bring red book")
       PrimaryButton(label: "Save event") { await save() }
     }
     .formAlert($alert)
@@ -224,10 +248,14 @@ struct CustomEventView: View {
     guard !title.isEmpty else { return alert = FormAlert(title: "Add a title") }
     let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
-      try await convex.log(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
+      let saved = try await gate.save(.note, babyId: babyId) {
+        try await convex.log(API.events.logCustom(babyId: babyId, loggedAt: loggedAt, title: title, note: trimmed.isEmpty ? nil : trimmed))
+      }
+      guard saved != nil else { return }
+      saveFeedback.logged(.custom, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

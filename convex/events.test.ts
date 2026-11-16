@@ -1,10 +1,27 @@
 /// <reference types="vite/client" />
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
+
+/** Sharing needs each carer to subscribe, and subscribers skip the free allowance. */
+async function subscribe(t: TestConvex<typeof schema>, tokenIdentifier: string) {
+  await t.run(async (ctx) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", tokenIdentifier))
+      .unique();
+    await ctx.db.insert("subscriptions", {
+      userId: user!._id,
+      appAccountToken: `token-${tokenIdentifier}`,
+      status: "active",
+      expiresAt: Date.now() + 30 * 86_400_000,
+      updatedAt: Date.now(),
+    });
+  });
+}
 
 async function twoParents() {
   const t = convexTest(schema, modules);
@@ -12,14 +29,16 @@ async function twoParents() {
   const dad = t.withIdentity({ tokenIdentifier: "test|dad", name: "Dad" });
   await mum.mutation(api.users.store, {});
   await dad.mutation(api.users.store, {});
+  await subscribe(t, "test|mum");
+  await subscribe(t, "test|dad");
   const babyId = await mum.mutation(api.babies.create, {
     name: "Ada",
     dateOfBirth: Date.now() - 30 * 86_400_000,
     weightGrams: 3400,
     careDataConsent: true,
   });
-  const baby = await mum.query(api.babies.get, { babyId });
-  await dad.mutation(api.babies.joinByCode, { code: baby.inviteCode });
+  const code = await mum.mutation(api.babies.createInvite, { babyId });
+  await dad.mutation(api.babies.joinByCode, { code });
   return { t, mum, dad, babyId };
 }
 
@@ -47,6 +66,25 @@ describe("offline replay", () => {
     const events = await eventsOf(t, "nappy");
     expect(events).toHaveLength(1);
     expect(events[0].clientId).toBe(args.clientId);
+  });
+
+  test("a replayed log isn't charged to the free allowance twice", async () => {
+    const t = convexTest(schema, modules);
+    const free = t.withIdentity({ tokenIdentifier: "test|free", name: "Free" });
+    await free.mutation(api.users.store, {});
+    const babyId = await free.mutation(api.babies.create, {
+      name: "Bea",
+      weightGrams: 3300,
+      dateOfBirth: Date.now() - 30 * 86_400_000,
+      careDataConsent: true,
+    });
+    const args = { babyId, loggedAt: minutesAgo(5), nappy: "wee" as const, weeSize: "small" as const, clientId: "replayed" };
+    await free.mutation(api.events.logNappy, args);
+    await free.mutation(api.events.logNappy, args);
+    await free.mutation(api.events.logNappy, args);
+    const { babies } = await free.query(api.allowance.mine, {});
+    const nappy = babies[0].used.find((u) => u.type === "nappy");
+    expect(nappy?.used).toBe(1);
   });
 
   test("concurrent replays of one entry still insert once", async () => {
