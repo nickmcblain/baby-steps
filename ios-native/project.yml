@@ -183,6 +183,5 @@ schemes:
         - ScrunchTests
         - ScrunchUITests
         - package: ScrunchCore/ScrunchCoreTests
-        - ScrunchUITests
     archive:
       config: Release
