@@ -55,7 +55,13 @@ final class AccessibilityAuditTests: XCTestCase {
           return
         }
         try app.performAccessibilityAudit(for: Self.auditTypes) { issue in
-          Self.isKnownSystemIssue(issue) || Self.isTextBehindSheet(issue, on: screen)
+          if Self.isKnownSystemIssue(issue) || Self.isTextBehindSheet(issue, on: screen) || Self.isTextCutByScreenEdge(issue, in: app) {
+            return true
+          }
+          // The audit's own message doesn't say which element; this makes failures actionable.
+          let element = issue.element.map { "\($0.elementType.rawValue) \"\($0.label)\" at \($0.frame)" } ?? "no element"
+          print("Audit issue on \(screen.path): \(issue.compactDescription), \(element)")
+          return false
         }
       }
     }
@@ -79,6 +85,17 @@ final class AccessibilityAuditTests: XCTestCase {
   /// from the screenshot, but VoiceOver rightly skips it while the sheet is modal.
   private static func isTextBehindSheet(_ issue: XCUIAccessibilityAuditIssue, on screen: Screen) -> Bool {
     screen.path.hasPrefix("sheet/") && issue.auditType == .elementDetection && issue.element == nil
+  }
+
+  /// A list row that runs off the bottom of the screen is one combined element whose frame
+  /// leaves the window, so the audit can't match the visible half of its text to it and reports
+  /// that text with no element. Only skipped when such a row is actually on screen.
+  private static func isTextCutByScreenEdge(_ issue: XCUIAccessibilityAuditIssue, in app: XCUIApplication) -> Bool {
+    guard issue.auditType == .elementDetection, issue.element == nil else { return false }
+    let bottom = app.windows.firstMatch.frame.maxY
+    return app.staticTexts.allElementsBoundByIndex.contains { text in
+      text.frame.height > 40 && text.frame.minY < bottom && text.frame.maxY > bottom
+    }
   }
 
   /// Issues raised on system chrome we don't control (status bar, keyboard).
