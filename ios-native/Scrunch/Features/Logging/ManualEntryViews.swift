@@ -50,7 +50,7 @@ struct FeedManualView: View {
   @Environment(LogGate.self) private var gate
   @State private var baby = Live<Baby>()
   @State private var loggedAt: EpochMs
-  @State private var kind: FeedKind = .breast
+  @State private var kind: FeedKind
   @State private var side: Side
   @State private var minutes: String
   @State private var ml = ""
@@ -59,10 +59,11 @@ struct FeedManualView: View {
   @State private var note: String
   @State private var alert: FormAlert?
 
-  init(babyId: BabyID, handoff: TimerSession.Handoff?) {
+  init(babyId: BabyID, handoff: TimerSession.Handoff?, kind: FeedKind = .breast) {
     self.babyId = babyId
     self.handoff = handoff
     _loggedAt = State(initialValue: handoff.map { LoggedAt.snapToMinute($0.startedAt) } ?? LoggedAt.nowSnapped())
+    _kind = State(initialValue: kind)
     _side = State(initialValue: handoff?.side ?? .left)
     _minutes = State(initialValue: initialMinutes(handoff))
     _note = State(initialValue: handoff?.bothSidesNote ?? "")

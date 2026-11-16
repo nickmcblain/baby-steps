@@ -46,7 +46,7 @@ final class AppRouterTests: XCTestCase {
   func testShowHomeReturnsToTheHomeTab() {
     let router = AppRouter()
     router.tab = .timeline
-    router.path = [.baby("b1", .feedTimer), .baby("b1", .feedManual(nil))]
+    router.path = [.baby("b1", .feedTimer), .baby("b1", .feedManual(nil, .breast))]
     router.showHome("b1")
     XCTAssertTrue(router.path.isEmpty)
     XCTAssertEqual(router.tab, .home)

@@ -324,11 +324,11 @@ struct FeedTimerView: View {
       return
     }
     await timers.stop()
-    router.replaceTop(babyId, isPump ? .pumpManual(handoff) : .feedManual(handoff))
+    router.replaceTop(babyId, isPump ? .pumpManual(handoff) : .feedManual(handoff, .breast))
   }
 
   private func skip() async {
     if model.session != nil { await timers.stop() }
-    router.replaceTop(babyId, isPump ? .pumpManual(nil) : .feedManual(nil))
+    router.replaceTop(babyId, isPump ? .pumpManual(nil) : .feedManual(nil, .breast))
   }
 }

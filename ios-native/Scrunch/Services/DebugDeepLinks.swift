@@ -73,7 +73,8 @@ extension BabyScreen {
     case "edit": self = .edit
     case "customEvent": self = .customEvent
     case "feedTimer": self = .feedTimer
-    case "feedManual": self = .feedManual(nil)
+    case "feedManual": self = .feedManual(nil, .breast)
+    case "bottleManual": self = .feedManual(nil, .bottle)
     case "feedPatterns": self = .feedPatterns
     case "sleepTimer": self = .sleepTimer
     case "sleepManual": self = .sleepManual(nil)

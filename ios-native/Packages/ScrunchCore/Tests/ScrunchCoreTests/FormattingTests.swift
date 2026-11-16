@@ -168,6 +168,13 @@ final class HomeCopyTests: XCTestCase {
     XCTAssertEqual(HomeCopy.selectedDayLabel(dayStart: at(2025, 10, 7), now: now, calendar: london), "Fri 7 Nov 2025")
   }
 
+  func testWelcomeBodyMentionsBreastAndBottle() {
+    XCTAssertEqual(
+      HomeCopy.welcomeBody(babyName: "Ada"),
+      "Tap Breast or Bottle below to log a feed, or Wet, Dirty or Both after a nappy change. After a day or so, Ada’s rhythm and nap times show up here."
+    )
+  }
+
   func testHours() {
     XCTAssertEqual(HomeCopy.hours(13.44), "13.4h")
     XCTAssertEqual(HomeCopy.hours(12), "12h")
