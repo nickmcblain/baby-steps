@@ -285,6 +285,25 @@ struct LoadingView: View {
   }
 }
 
+/// First in-app frame after `UILaunchScreen`. The moon stays centred on `C.bg`
+/// (the same colour as `LaunchBackground`) so the hand-off does not jump.
+struct SplashLoadingView: View {
+  var body: some View {
+    Image("LaunchIcon")
+      .resizable()
+      .frame(width: 160, height: 160)
+      .accessibilityHidden(true)
+      .overlay(alignment: .bottom) {
+        ProgressView().tint(C.teal)
+          .offset(y: 32)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .background(C.bg.ignoresSafeArea())
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel("Loading…")
+  }
+}
+
 /// The designed empty / first-run / stale state: icon, a short warm line, and what to do next.
 struct EmptyState: View {
   let symbol: String

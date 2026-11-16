@@ -68,7 +68,7 @@ struct RootView: View {
   var body: some View {
     Group {
       if !clerk.isLoaded {
-        LoadingView()
+        SplashLoadingView()
       } else if clerk.session == nil {
         SignInView()
       } else {
