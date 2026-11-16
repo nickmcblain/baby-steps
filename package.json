@@ -14,7 +14,8 @@
     "convex": "convex dev",
     "convex:codegen": "convex codegen",
     "lint": "eslint convex",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:convex": "vitest run && tsc --noEmit -p convex && node --experimental-strip-types --test \"convex/lib/**/*.test.ts\""
   },
   "trustedDependencies": [
     "esbuild",
@@ -22,6 +23,7 @@
     "unrs-resolver"
   ],
   "dependencies": {
+    "@apple/app-store-server-library": "^3.1.0",
     "@clerk/expo": "^4.5.1",
     "@expo-google-fonts/fraunces": "^0.4.1",
     "@expo-google-fonts/fredoka": "^0.4.1",
@@ -66,9 +68,12 @@
   },
   "devDependencies": {
     "@convex-dev/eslint-plugin": "^4.0.0",
+    "@edge-runtime/vm": "^5.0.0",
     "@types/react": "~19.2.18",
+    "convex-test": "^0.0.71",
     "eslint": "^10.8.1",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.0"
   },
   "patchedDependencies": {
     "@expo/ui@57.0.12": "patches/@expo%2Fui@57.0.12.patch"

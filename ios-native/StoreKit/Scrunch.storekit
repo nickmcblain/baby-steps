@@ -1,0 +1,64 @@
+{
+  "identifier" : "5C1A3E2B",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_developerTeamID" : "8W9QBY4PYJ",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_GB",
+    "_storefront" : "GBR",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21800001",
+      "localizations" : [
+        {
+          "description" : "Keep logging everything in Scrunch",
+          "displayName" : "Scrunch",
+          "locale" : "en_GB"
+        }
+      ],
+      "name" : "Scrunch",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6780000001",
+          "localizations" : [
+            {
+              "description" : "Unlimited logging, Ask and patterns. Sleep stays free.",
+              "displayName" : "Scrunch monthly",
+              "locale" : "en_GB"
+            }
+          ],
+          "productID" : "com.nickmcblain.babysteps.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Monthly",
+          "subscriptionGroupID" : "21800001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

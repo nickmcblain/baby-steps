@@ -91,7 +91,7 @@ struct DayRhythmBar: View {
   let onTap: () -> Void
 
   private let napFill = Color(hex: 0xC4BEF8)
-  private let ticks = ["7am", "1pm", "7pm", "1am"]
+  private let ticks = [7, 13, 19, 1].map { WeekGrid.formatHourLabel($0) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: embedded ? 8 : 10) {
@@ -145,7 +145,7 @@ struct DayRhythmBar: View {
     HStack {
       ForEach(labels, id: \.self) { tick in
         Text(tick)
-          .font(.app(.medium, 11, relativeTo: .caption2))
+          .font(.app(.medium, 11, relativeTo: .caption))
           .foregroundStyle(C.muted)
           .fixedSize()
         if tick != labels.last { Spacer(minLength: 4) }
@@ -166,11 +166,14 @@ struct DayRhythmBar: View {
 struct LastStrip: View {
   let text: String
   var inset: CGFloat = 12
+  /// Side-by-side tiles reserve two lines so their footers line up.
+  var reservesTwoLines = true
 
   var body: some View {
     Text(text)
-      .font(.app(.medium, 11, relativeTo: .caption2))
+      .font(.app(.medium, 11, relativeTo: .caption))
       .foregroundStyle(C.muted)
+      .lineLimit(2, reservesSpace: reservesTwoLines)
       .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, inset)
       .padding(.vertical, 8)

@@ -28,15 +28,12 @@ public enum Spoken {
     return m == 0 ? plural(h, "hour") : "\(plural(h, "hour")) \(plural(m, "minute"))"
   }
 
-  /// Minutes after midnight as "9:30am", "12pm"; 1440 reads as "midnight".
-  public static func timeOfDay(minutes: Double) -> String {
+  /// Minutes after midnight in the user's clock style ("09:30" or "9:30 AM"); 1440 reads as "midnight".
+  public static func timeOfDay(minutes: Double, calendar: Calendar = .current) -> String {
     let total = Int(jsRound(max(0, minutes)))
-    if total >= 1440 { return "midnight" }
-    let hourLabel = WeekGrid.formatHourLabel(total / 60)
-    let m = total % 60
-    guard m > 0 else { return hourLabel }
-    let suffix = hourLabel.suffix(2)
-    return "\(hourLabel.dropLast(2)):\(m < 10 ? "0" : "")\(m)\(suffix)"
+    if total >= 1440 { return String(localized: "midnight", bundle: .module) }
+    let date = calendar.date(from: DateComponents(year: 2026, month: 1, day: 5, hour: total / 60, minute: total % 60)) ?? Date()
+    return DisplayFormat(calendar: calendar).time(date.epochMs)
   }
 
   /// One pattern row: "Nothing logged", or "2 logged, 1 hour 5 minutes in total".

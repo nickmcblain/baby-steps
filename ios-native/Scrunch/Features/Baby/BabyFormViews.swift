@@ -5,8 +5,18 @@ import SwiftUI
 struct FormAlert: Identifiable {
   let id = UUID()
   let title: String
-  var message: String? = nil
-  var onDismiss: (() -> Void)? = nil
+  var message: String?
+  var onDismiss: (() -> Void)?
+
+  init(title: String.LocalizationValue, message: String? = nil, onDismiss: (() -> Void)? = nil) {
+    self.init(verbatimTitle: String(localized: title), message: message, onDismiss: onDismiss)
+  }
+
+  init(verbatimTitle: String, message: String? = nil, onDismiss: (() -> Void)? = nil) {
+    title = verbatimTitle
+    self.message = message
+    self.onDismiss = onDismiss
+  }
 }
 
 extension View {
@@ -26,6 +36,7 @@ extension View {
 /// Port of app/(app)/babies/new.tsx.
 struct NewBabyView: View {
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
   @Environment(ActiveBabyStore.self) private var activeBaby
 
@@ -41,12 +52,12 @@ struct NewBabyView: View {
   var body: some View {
     ScreenScaffold {
       ScreenTitle("New baby")
-      FormField(label: "Name", text: $name, placeholder: "Nico")
+      FormField(label: "Name", text: $name, placeholder: "e.g. Nico")
       DateOfBirthField(value: $dateOfBirth)
       ToggleRow(label: "Sex (for UK growth charts)", options: [(Sex.boy, "Boy"), (Sex.girl, "Girl")], selection: $sex)
       WeightField(grams: $weightGrams)
       HeightField(cm: $heightCm)
-      FormField(label: "Notes (optional)", text: $notes, placeholder: "Prefers left side first")
+      FormField(label: "Notes (optional)", text: $notes, placeholder: "e.g. Prefers left side first")
 
       Button { careConsent.toggle() } label: {
         HStack(alignment: .top, spacing: 12) {
@@ -78,11 +89,11 @@ struct NewBabyView: View {
   }
 
   private func save() async {
-    guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return alert = FormAlert(title: "Name needed") }
+    guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return alert = FormAlert(title: "Add a name") }
     guard let dateOfBirth else { return alert = FormAlert(title: "Pick a date of birth") }
     guard let weightGrams else { return alert = FormAlert(title: "Pick a weight") }
     guard careConsent else {
-      return alert = FormAlert(title: "Consent needed", message: "Please confirm you agree to save this baby's details before continuing.")
+      return alert = FormAlert(title: "One more thing", message: String(localized: "Tick the box so Scrunch can keep these details safe for you."))
     }
     let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
     do {
@@ -95,9 +106,10 @@ struct NewBabyView: View {
         notes: trimmedNotes.isEmpty ? nil : trimmedNotes
       ))
       activeBaby.select(id)
+      saveFeedback.show("Welcome, \(name.trimmingCharacters(in: .whitespaces))")
       router.popToRoot(tab: .home)
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -107,6 +119,7 @@ struct EditBabyView: View {
   let babyId: BabyID
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(\.dismiss) private var dismiss
   @State private var baby = Live<Baby>()
   @State private var dash = Live<Dashboard>()
@@ -123,19 +136,21 @@ struct EditBabyView: View {
 
   var body: some View {
     ScreenScaffold {
-      ScreenTitle("Edit")
+      HeaderButton(label: "Save") { await save() }
+    } content: {
+      ScreenTitle("Edit baby")
+      BabyPhotoField(babyId: babyId, name: name)
       FormField(label: "Name", text: $name)
       DateOfBirthField(value: $dateOfBirth)
       ToggleRow(label: "Sex (for UK growth charts)", options: [(Sex.boy, "Boy"), (Sex.girl, "Girl")], selection: $sex)
       ToggleRow(label: "Delivery (optional)", options: [(DeliveryType.vaginal, "Vaginal"), (DeliveryType.cSection, "C-section")], selection: $deliveryType)
-      FormField(label: "Gestation weeks (optional)", text: $gestation, placeholder: "40", keyboard: .numberPad)
+      FormField(label: "Gestation weeks (optional)", text: $gestation, placeholder: "e.g. 40", keyboard: .numberPad)
       ToggleRow(
         label: "Feeding (optional)",
         options: [(FeedingMode.breast, "Breast"), (FeedingMode.bottle, "Bottle"), (FeedingMode.mixed, "Mixed")],
         selection: $feedingMode
       )
       FormField(label: "Notes", text: $notes)
-      PrimaryButton(label: "Save changes") { await save() }
     }
     .formAlert($alert)
     .task { await baby.bind(API.babies.get(babyId), convex) }
@@ -177,6 +192,7 @@ struct EditBabyView: View {
         gestationWeeks: gestationWeeks,
         feedingMode: feedingMode
       ))
+      saveFeedback.show("Changes saved")
       if let current = baby.value {
         let updated = Baby(
           id: babyId,
@@ -189,7 +205,7 @@ struct EditBabyView: View {
       }
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }

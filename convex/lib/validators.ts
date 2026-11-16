@@ -72,7 +72,7 @@ export const babyValidator = v.object({
   heightCm: v.optional(v.number()),
   sex: v.optional(sexValidator),
   notes: v.optional(v.string()),
-  inviteCode: v.string(),
+  inviteCode: v.optional(v.string()),
   lastRoomTempC: v.optional(v.number()),
   deliveryType: v.optional(deliveryTypeValidator),
   gestationWeeks: v.optional(v.number()),
@@ -82,6 +82,7 @@ export const babyValidator = v.object({
   createdBy: v.id("users"),
   careDataConsentAt: v.optional(v.number()),
   careDataConsentVersion: v.optional(v.string()),
+  photoId: v.optional(v.id("_storage")),
 });
 
 export const citationValidator = v.object({

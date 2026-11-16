@@ -9,7 +9,9 @@ struct GrowthLogView: View {
   let metric: GrowthMetric
 
   @Environment(ConvexService.self) private var convex
+  @Environment(SaveFeedback.self) private var saveFeedback
   @Environment(AppRouter.self) private var router
+  @Environment(LogGate.self) private var gate
   @Environment(\.dismiss) private var dismiss
   @State private var series = Live<GrowthSeries>()
   @State private var dash = Live<Dashboard>()
@@ -60,18 +62,25 @@ struct GrowthLogView: View {
     do {
       if isWeight {
         guard let grams, grams > 0 else { return alert = FormAlert(title: "Pick a weight") }
-        try await convex.mutation(API.events.logWeight(babyId: babyId, loggedAt: loggedAt, weightGrams: grams, note: noteValue))
+        let saved = try await gate.save(.growth, babyId: babyId) {
+          try await convex.mutation(API.events.logWeight(babyId: babyId, loggedAt: loggedAt, weightGrams: grams, note: noteValue))
+        }
+        guard saved != nil else { return }
         if let baby = series.value?.baby {
           let updated = Baby(id: baby.id, name: baby.name, dateOfBirth: baby.dateOfBirth, weightGrams: grams, feedingMode: baby.feedingMode)
           await Reminders.refreshFeed(baby: updated, lastFeedAt: dash.value?.lastFeed.map(FeedWindows.feedEndedAt))
         }
       } else {
         guard let cm, cm > 0 else { return alert = FormAlert(title: "Pick a height") }
-        try await convex.mutation(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
+        let saved = try await gate.save(.growth, babyId: babyId) {
+          try await convex.mutation(API.events.logHeight(babyId: babyId, loggedAt: loggedAt, heightCm: cm, note: noteValue))
+        }
+        guard saved != nil else { return }
       }
+      saveFeedback.logged(isWeight ? .weight : .height, babyId: babyId)
       dismiss()
     } catch {
-      alert = FormAlert(title: "Could not save", message: UserMessage.from(error, fallback: "Try again"))
+      alert = FormAlert(title: "That didn’t save", message: UserMessage.from(error, fallback: String(localized: "Try again")))
     }
   }
 }
@@ -105,7 +114,7 @@ struct GrowthChart: View {
       Text(metric == .weight ? "Weight for age" : "Length / height for age")
         .font(.app(.display, 18)).foregroundStyle(C.ink)
         .accessibilityAddTraits(.isHeader)
-      Text("UK Red Book centiles (WHO / UK-WHO standards)")
+      Text(HealthRegion.current.growthChartSource)
         .font(.app(.body, 12)).foregroundStyle(C.muted).padding(.bottom, 4)
 
       if let sex {
@@ -119,8 +128,9 @@ struct GrowthChart: View {
           Text("Lines: 0.4 · 9 · 50 · 91 · 99.6")
           Text("Dots: your logs (\(metric == .weight ? "kg" : "cm"))")
         }
-        .font(.app(.body, 11))
+        .font(.app(.body, 12, relativeTo: .caption))
         .foregroundStyle(C.muted)
+        .fixedSize(horizontal: false, vertical: true)
         .padding(.top, 4)
         if let band = status?.band, band == .veryLow || band == .veryHigh {
           Text(GrowthLMS.outsideRangeCaution).font(.app(.medium, 12)).foregroundStyle(C.danger).padding(.top, 6)
@@ -159,9 +169,15 @@ struct GrowthChart: View {
 
     return Chart {
       ForEach(centiles) { point in
-        LineMark(x: .value("Month", point.month), y: .value("Centile", point.value), series: .value("Centile", point.centile))
-          .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
-          .lineStyle(StrokeStyle(lineWidth: point.centile == "50th" ? 2 : 1))
+        if point.month == 0 {
+          PointMark(x: .value("Month", point.month), y: .value("Birth centile", point.value))
+            .symbolSize(12)
+            .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
+        } else {
+          LineMark(x: .value("Month", point.month), y: .value("Centile", point.value), series: .value("Centile", point.centile))
+            .foregroundStyle(point.centile == "50th" ? C.ink : C.line)
+            .lineStyle(StrokeStyle(lineWidth: point.centile == "50th" ? 2 : 1))
+        }
       }
       if logs.count > 1 {
         ForEach(logs) { point in

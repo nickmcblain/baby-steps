@@ -17,8 +17,6 @@ public struct DaySlice: Equatable, Sendable {
 }
 
 public enum WeekGrid {
-  static let dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
   /// Monday 00:00 local for the week containing `at`.
   public static func startOfWeekMonday(_ at: EpochMs, calendar: Calendar = .current) -> EpochMs {
     let weekday = calendar.component(.weekday, from: Date(epochMs: at)) // 1 Sun … 7 Sat
@@ -39,26 +37,20 @@ public enum WeekGrid {
   }
 
   public static func weekDayLabels(_ weekStartMs: EpochMs, calendar: Calendar = .current) -> [WeekDayLabel] {
-    dayNames.enumerated().map { index, label in
+    let format = DisplayFormat(calendar: calendar)
+    return (0..<7).map { index in
       let dayStartMs = calendar.addingDays(index, to: weekStartMs)
       return WeekDayLabel(
-        label: label,
+        label: format.weekdayShort(dayStartMs),
         dateNum: calendar.component(.day, from: Date(epochMs: dayStartMs)),
         dayStartMs: dayStartMs
       )
     }
   }
 
-  /// "3–9 Aug" or "28 Jul – 3 Aug".
+  /// "3–9 Aug" or "28 Jul – 3 Aug" (en-GB).
   public static func formatWeekRange(_ weekStartMs: EpochMs, calendar: Calendar = .current) -> String {
-    let start = calendar.dateComponents([.month, .day], from: Date(epochMs: weekStartMs))
-    let end = calendar.dateComponents([.month, .day], from: Date(epochMs: calendar.addingDays(6, to: weekStartMs)))
-    let startMonth = Clock.monthsShort[start.month! - 1]
-    let endMonth = Clock.monthsShort[end.month! - 1]
-    if start.month == end.month {
-      return "\(start.day!)–\(end.day!) \(startMonth)"
-    }
-    return "\(start.day!) \(startMonth) – \(end.day!) \(endMonth)"
+    DisplayFormat(calendar: calendar).dayRange(weekStartMs, calendar.addingDays(6, to: weekStartMs))
   }
 
   /// Split [startMs, endMs) into per-local-day slices.
@@ -80,11 +72,8 @@ public enum WeekGrid {
     return slices
   }
 
-  public static func formatHourLabel(_ hour: Int) -> String {
-    let h = ((hour % 24) + 24) % 24
-    if h == 0 { return "12am" }
-    if h == 12 { return "12pm" }
-    if h < 12 { return "\(h)am" }
-    return "\(h - 12)pm"
+  /// "15" on a 24-hour clock, "3 PM" on a 12-hour one.
+  public static func formatHourLabel(_ hour: Int, calendar: Calendar = .current) -> String {
+    DisplayFormat(calendar: calendar).hourLabel(hour)
   }
 }

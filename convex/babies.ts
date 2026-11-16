@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { authedMutation, authedQuery } from "./lib/functions";
-import { getMembership, requireBabyMember, uniqueInviteCode } from "./lib/access";
+import { requireBabyMember } from "./lib/access";
+import { createInvite as createInviteCode, redeemInvite, visibleBaby } from "./lib/sharing";
 import { patchRoomTemp } from "./lib/logEvents";
 import {
   babyValidator,
@@ -21,7 +22,7 @@ export const list = authedQuery({
     for (const membership of memberships) {
       const baby = await ctx.db.get(membership.babyId);
       if (baby) {
-        babies.push(baby);
+        babies.push(await visibleBaby(ctx, baby, ctx.user._id));
       }
     }
     babies.sort((a, b) => a.name.localeCompare(b.name));
@@ -33,7 +34,8 @@ export const get = authedQuery({
   args: { babyId: v.id("babies") },
   returns: babyValidator,
   handler: async (ctx, args) => {
-    return await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return await visibleBaby(ctx, baby, ctx.user._id);
   },
 });
 
@@ -74,7 +76,6 @@ export const create = authedMutation({
     }
     const heightCm = normalizeHeightCm(args.heightCm);
 
-    const inviteCode = await uniqueInviteCode(ctx);
     const weightGrams = Math.round(args.weightGrams);
     const babyId = await ctx.db.insert("babies", {
       name,
@@ -83,7 +84,6 @@ export const create = authedMutation({
       heightCm,
       sex: args.sex,
       notes: args.notes?.trim() || undefined,
-      inviteCode,
       createdBy: ctx.user._id,
       careDataConsentAt: Date.now(),
       careDataConsentVersion: CARE_DATA_CONSENT_VERSION,
@@ -199,28 +199,153 @@ export const saveRoomTemp = authedMutation({
   },
 });
 
+/** A share code for this baby. Each carer needs their own subscription to share. */
+export const createInvite = authedMutation({
+  args: { babyId: v.id("babies") },
+  returns: v.string(),
+  handler: async (ctx, args) => await createInviteCode(ctx, ctx.user._id, args.babyId),
+});
+
+/** Redeems a share code. The joining carer needs their own subscription. */
 export const joinByCode = authedMutation({
   args: { code: v.string() },
   returns: v.id("babies"),
+  handler: async (ctx, args) => await redeemInvite(ctx, ctx.user._id, args.code),
+});
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+export const photoUrl = authedQuery({
+  args: { babyId: v.id("babies") },
+  returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
-    const inviteCode = args.code.trim().toUpperCase();
-    if (inviteCode.length < 4) {
-      throw new ConvexError("Invite code looks too short");
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return baby.photoId ? await ctx.storage.getUrl(baby.photoId) : null;
+  },
+});
+
+export const generatePhotoUploadUrl = authedMutation({
+  args: { babyId: v.id("babies") },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const setPhoto = authedMutation({
+  args: { babyId: v.id("babies"), storageId: v.id("_storage") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const file = await ctx.db.system.get(args.storageId);
+    if (!file) {
+      throw new ConvexError("Photo upload not found");
     }
-    const baby = await ctx.db
-      .query("babies")
-      .withIndex("by_invite_code", (q) => q.eq("inviteCode", inviteCode))
+    if (!file.contentType?.startsWith("image/") || file.size > MAX_PHOTO_BYTES) {
+      await ctx.storage.delete(args.storageId);
+      throw new ConvexError("Photo must be an image under 5 MB");
+    }
+    if (baby.photoId && baby.photoId !== args.storageId) {
+      await ctx.storage.delete(baby.photoId);
+    }
+    await ctx.db.patch(args.babyId, { photoId: args.storageId });
+    return null;
+  },
+});
+
+export const removePhoto = authedMutation({
+  args: { babyId: v.id("babies") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    if (baby.photoId) {
+      await ctx.storage.delete(baby.photoId);
+      await ctx.db.patch(args.babyId, { photoId: undefined });
+    }
+    return null;
+  },
+});
+
+/** Kept in step with `Milestone` in ios-native ScrunchCore/Delight.swift. */
+const MILESTONE_KEYS = new Set([
+  "firstSmile",
+  "firstLaugh",
+  "rolledOver",
+  "satUp",
+  "firstTooth",
+  "firstFood",
+  "crawled",
+  "firstSteps",
+]);
+
+const milestoneMarkValidator = v.object({
+  key: v.string(),
+  reachedAt: v.number(),
+});
+
+export const milestones = authedQuery({
+  args: { babyId: v.id("babies") },
+  returns: v.array(milestoneMarkValidator),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const rows = await ctx.db
+      .query("milestones")
+      .withIndex("by_baby_and_key", (q) => q.eq("babyId", args.babyId))
+      .take(MILESTONE_KEYS.size * 2);
+    return rows.map((row) => ({ key: row.key, reachedAt: row.reachedAt }));
+  },
+});
+
+export const setMilestone = authedMutation({
+  args: { babyId: v.id("babies"), key: v.string(), reachedAt: v.number() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const baby = await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    if (!MILESTONE_KEYS.has(args.key)) {
+      throw new ConvexError("Unknown milestone");
+    }
+    if (
+      !Number.isFinite(args.reachedAt) ||
+      args.reachedAt < baby.dateOfBirth - 86_400_000 ||
+      args.reachedAt > Date.now() + 60_000
+    ) {
+      throw new ConvexError("Pick a date between birth and today");
+    }
+    const existing = await ctx.db
+      .query("milestones")
+      .withIndex("by_baby_and_key", (q) =>
+        q.eq("babyId", args.babyId).eq("key", args.key),
+      )
       .unique();
-    if (!baby) {
-      throw new ConvexError("No baby matches that code");
-    }
-    const existing = await getMembership(ctx, baby._id, ctx.user._id);
-    if (!existing) {
-      await ctx.db.insert("babyMembers", {
-        babyId: baby._id,
-        userId: ctx.user._id,
+    if (existing) {
+      await ctx.db.patch(existing._id, { reachedAt: args.reachedAt });
+    } else {
+      await ctx.db.insert("milestones", {
+        babyId: args.babyId,
+        key: args.key,
+        reachedAt: args.reachedAt,
+        createdBy: ctx.user._id,
       });
     }
-    return baby._id;
+    return null;
+  },
+});
+
+export const clearMilestone = authedMutation({
+  args: { babyId: v.id("babies"), key: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireBabyMember(ctx, args.babyId, ctx.user._id);
+    const existing = await ctx.db
+      .query("milestones")
+      .withIndex("by_baby_and_key", (q) =>
+        q.eq("babyId", args.babyId).eq("key", args.key),
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+    return null;
   },
 });

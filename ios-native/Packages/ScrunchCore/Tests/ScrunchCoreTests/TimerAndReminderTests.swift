@@ -151,7 +151,7 @@ final class ReminderPlanTests: XCTestCase {
     let plan = ReminderPlans.nap(babyId: "b1", babyName: "Nico", napAt: napAt, asleep: false, now: now, calendar: london)
     XCTAssertEqual(plan?.identifier, "nap-reminder:b1")
     XCTAssertEqual(plan?.title, "Nico · nap window soon")
-    XCTAssertEqual(plan?.body, "Often ready around 12:40 pm. Watch for cues.")
+    XCTAssertEqual(plan?.body, "Often ready around 12:40. Watch for cues.")
     XCTAssertEqual(plan?.fireAt, napAt - 10 * 60_000)
     XCTAssertNil(ReminderPlans.nap(babyId: "b1", babyName: "Nico", napAt: napAt, asleep: true, now: now, calendar: london))
     XCTAssertNil(ReminderPlans.nap(babyId: "b1", babyName: "Nico", napAt: now + 5 * 60_000, asleep: false, now: now, calendar: london))

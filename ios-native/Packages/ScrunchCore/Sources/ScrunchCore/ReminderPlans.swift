@@ -43,10 +43,10 @@ public enum ReminderPlans {
     let fireAt = max(dueAt, now + 60_000)
     return .schedule(NotificationPlan(
       identifier: feedIdentifier(baby.id),
-      title: "\(baby.name) · feed check",
+      title: String(localized: "\(baby.name) · feed check", bundle: .module),
       body: window.shouldWakeForFeeds
-        ? "Around \(window.label) since the last feed — time for a gentle check."
-        : "Around \(window.label) since the last feed — offer if they're stirring.",
+        ? String(localized: "Around \(window.label) since the last feed — time for a gentle check.", bundle: .module)
+        : String(localized: "Around \(window.label) since the last feed — offer if they're stirring.", bundle: .module),
       kind: "feed-reminder",
       babyId: baby.id,
       fireAt: fireAt
@@ -71,8 +71,8 @@ public enum ReminderPlans {
     guard !asleep, let napAt, napAt - napLeadMs > now else { return nil }
     return NotificationPlan(
       identifier: napIdentifier(babyId),
-      title: "\(babyName) · nap window soon",
-      body: "Often ready around \(Clock.h12(napAt, calendar: calendar)). Watch for cues.",
+      title: String(localized: "\(babyName) · nap window soon", bundle: .module),
+      body: String(localized: "Often ready around \(Clock.time(napAt, calendar: calendar)). Watch for cues.", bundle: .module),
       kind: "nap-reminder",
       babyId: babyId,
       fireAt: napAt - napLeadMs
@@ -106,7 +106,7 @@ public enum ReminderPlans {
     return NotificationPlan(
       identifier: medicineIdentifier(babyId: babyId, name: name),
       title: "\(babyName) · \(name)",
-      body: "Next dose due\(doseBit).",
+      body: String(localized: "Next dose due\(doseBit).", bundle: .module),
       kind: "medicine-reminder",
       babyId: babyId,
       fireAt: now + Double(hours) * hourMs
@@ -117,9 +117,9 @@ public enum ReminderPlans {
 
   public static func digestIdentifier(_ babyId: BabyID) -> String { "digest:\(babyId)" }
 
-  public static func digestTitle(_ babyName: String) -> String { "Your week with \(babyName) is ready" }
+  public static func digestTitle(_ babyName: String) -> String { String(localized: "Your week with \(babyName) is ready", bundle: .module) }
 
-  public static let digestBody = "Open Scrunch to see how sleep and feeds changed."
+  public static let digestBody = String(localized: "Open Scrunch to see how sleep and feeds changed.", bundle: .module)
 
   /// `DateComponents.weekday` for Sunday, and the hour/minute.
   public static let digestWeekday = 1

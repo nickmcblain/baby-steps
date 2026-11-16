@@ -141,7 +141,7 @@ export default function KidsTab() {
                 <Text style={styles.tileMeta}>
                   {formatAge(baby.dateOfBirth, now)} · {formatKg(baby.weightGrams)}
                 </Text>
-                <Text style={styles.invite}>Code {baby.inviteCode}</Text>
+                {baby.inviteCode ? <Text style={styles.invite}>Code {baby.inviteCode}</Text> : null}
               </Pressable>
             );
           })}

@@ -16,13 +16,19 @@ struct PatternsView: View {
   /// Stable window end so the query doesn't thrash every render.
   @State private var rangeEndMs = Date().epochMs
   @State private var sleep = Live<SleepPatterns>()
-  @State private var feed = Live<FeedPatterns>()
+  /// Feed totals come from the events themselves: pattern items carry no millilitres.
+  @State private var feedEvents = Live<EventPage>()
   @State private var tummy = Live<TummyPatterns>()
   @State private var nappy = Live<NappyPatterns>()
+
+  /// Enough for two weeks of a busy newborn's logs.
+  private static let feedEventLimit = 500
 
   private struct Summary {
     var items: [PatternItem]
     var stats: [(String, String)]
+    var loggedDays: Int
+    var feedTotals: FeedTotals? = nil
   }
 
   private var accent: Color {
@@ -52,7 +58,7 @@ struct PatternsView: View {
     }
   }
 
-  private var title: String {
+  private var title: LocalizedStringKey {
     switch kind {
     case .sleep: "Sleep patterns"
     case .feed: "Feed patterns"
@@ -61,7 +67,26 @@ struct PatternsView: View {
     }
   }
 
-  private var addLabel: String {
+  /// The same title as a String, for the chart's audio graph.
+  private var chartTitle: String {
+    switch kind {
+    case .sleep: String(localized: "Sleep patterns")
+    case .feed: String(localized: "Feed patterns")
+    case .tummy: String(localized: "Tummy patterns")
+    case .nappy: String(localized: "Nappy patterns")
+    }
+  }
+
+  private var kindSymbol: String {
+    switch kind {
+    case .sleep: EventKind.sleep.symbol
+    case .feed: EventKind.feed.symbol
+    case .tummy: EventKind.tummy.symbol
+    case .nappy: EventKind.nappy.symbol
+    }
+  }
+
+  private var addLabel: LocalizedStringKey {
     switch kind {
     case .sleep: "Add sleep"
     case .feed: "Add feed"
@@ -70,37 +95,44 @@ struct PatternsView: View {
     }
   }
 
-  private var emptyText: String {
+  private var empty: (title: LocalizedStringKey, message: LocalizedStringKey) {
     switch kind {
-    case .sleep: "No sleeps in this range yet."
-    case .feed: "No feeds in this range yet."
-    case .tummy: "No tummy time in this range yet."
-    case .nappy: "No nappies in this range yet."
+    case .sleep: ("No sleeps logged yet", "Time a nap or add one you remember. Patterns show up after a few days.")
+    case .feed: ("No feeds logged yet", "Log feeds as they happen to see feeds and bottle milk for each day.")
+    case .tummy: ("No tummy time yet", "A few minutes a day on their tummy helps. Time a session to start.")
+    case .nappy: ("No nappies logged yet", "Log each change to see wees and poos for each day.")
     }
+  }
+
+  private func loggedDays(_ items: [PatternItem]) -> Int {
+    Patterns.loggedDays(Patterns.days(items, days: days, rangeEndMs: rangeEndMs))
   }
 
   private var summary: Summary? {
     switch kind {
     case .sleep:
       sleep.value.map { Summary(items: $0.sleeps, stats: [
-        ("Avg sleep / day", Patterns.minutesPerDay($0.stats.avgSleepMinutesPerDay)),
-        ("Avg sessions / day", Patterns.sessionsPerDay($0.stats.avgSessionsPerDay)),
-      ]) }
+        ("Sleep a day", Patterns.minutesPerDay($0.stats.avgSleepMinutesPerDay)),
+        ("Sleeps a day", Patterns.sessionsPerDay($0.stats.avgSessionsPerDay)),
+      ], loggedDays: loggedDays($0.sleeps)) }
     case .feed:
-      feed.value.map { Summary(items: $0.feeds, stats: [
-        ("Avg feed / day", Patterns.minutesPerDay($0.stats.avgFeedMinutesPerDay)),
-        ("Avg sessions / day", Patterns.sessionsPerDay($0.stats.avgSessionsPerDay)),
-      ]) }
+      feedEvents.value.map { (page: EventPage) -> Summary in
+        let totals = Patterns.feedTotals(page.page, days: days, rangeEndMs: rangeEndMs)
+        return Summary(items: [], stats: [
+          ("Feeds a day", Patterns.perDay(totals.feedsPerDay)),
+          ("Bottle milk a day", totals.mlPerDay > 0 ? "\(jsNumber(jsRound(totals.mlPerDay))) ml" : "None logged"),
+        ], loggedDays: totals.loggedDays, feedTotals: totals)
+      }
     case .tummy:
       tummy.value.map { Summary(items: $0.tummies, stats: [
-        ("Avg tummy / day", Patterns.minutesPerDay($0.stats.avgTummyMinutesPerDay)),
-        ("Avg sessions / day", Patterns.sessionsPerDay($0.stats.avgSessionsPerDay)),
-      ]) }
+        ("Tummy time a day", Patterns.minutesPerDay($0.stats.avgTummyMinutesPerDay)),
+        ("Sessions a day", Patterns.sessionsPerDay($0.stats.avgSessionsPerDay)),
+      ], loggedDays: loggedDays($0.tummies)) }
     case .nappy:
       nappy.value.map { Summary(items: $0.nappies, stats: [
-        ("Avg / day", Patterns.sessionsPerDay($0.stats.avgSessionsPerDay)),
-        ("Wee · poo", "\(jsNumber($0.stats.weeCount)) · \(jsNumber($0.stats.pooCount))"),
-      ]) }
+        ("Nappies a day", Patterns.sessionsPerDay($0.stats.avgSessionsPerDay)),
+        ("Wees · poos", "\(jsNumber($0.stats.weeCount)) · \(jsNumber($0.stats.pooCount))"),
+      ], loggedDays: loggedDays($0.nappies)) }
     }
   }
 
@@ -136,21 +168,43 @@ struct PatternsView: View {
       }
 
       if let summary {
-        AdaptiveStack(spacing: 10) {
-          ForEach(summary.stats, id: \.0) { label, value in
-            VStack(alignment: .leading, spacing: 4) {
-              Text(label.uppercased()).font(.app(.medium, 12)).tracking(0.5).foregroundStyle(statInk).accessibilityLabel(label)
-              Text(value).font(.app(.bold, 20)).foregroundStyle(C.ink)
+        if summary.loggedDays == 0 {
+          EmptyState(
+            symbol: kindSymbol,
+            tint: accent,
+            title: empty.title,
+            message: empty.message,
+            actionLabel: addLabel,
+            action: add
+          )
+        } else {
+          AdaptiveStack(alignment: .top, spacing: 10) {
+            ForEach(summary.stats, id: \.0) { label, value in
+              VStack(alignment: .leading, spacing: 4) {
+                Text(label).font(.app(.medium, 13)).foregroundStyle(statInk)
+                Text(value).font(.app(.bold, 20)).foregroundStyle(C.ink)
+              }
+              .padding(14)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .background(soft, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+              .accessibilityElement(children: .combine)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(soft, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
-            .accessibilityElement(children: .combine)
+          }
+          if let note = Patterns.sparseNote(loggedDays: summary.loggedDays, days: days) {
+            Label(note, systemImage: "info.circle")
+              .font(.app(.body, 14))
+              .foregroundStyle(C.muted)
+              .fixedSize(horizontal: false, vertical: true)
+              .padding(.horizontal, 4)
+          }
+          if let totals = summary.feedTotals {
+            FeedDaysChart(totals: totals, color: accent)
+          } else {
+            PatternChart(title: chartTitle, items: summary.items, days: days, rangeEndMs: rangeEndMs, barColor: accent)
           }
         }
-        PatternChart(title: title, items: summary.items, days: days, rangeEndMs: rangeEndMs, barColor: accent, emptyText: emptyText)
       } else {
-        Text("Loading…").font(.app(.body, 15)).foregroundStyle(C.muted)
+        LoadingView().frame(minHeight: 200)
       }
 
       if let eventKind {
@@ -161,7 +215,7 @@ struct PatternsView: View {
     .task(id: days) {
       switch kind {
       case .sleep: await sleep.bind(API.events.sleepPatterns(babyId: babyId, days: days, rangeEndMs: rangeEndMs), convex)
-      case .feed: await feed.bind(API.events.feedPatterns(babyId: babyId, days: days, rangeEndMs: rangeEndMs), convex)
+      case .feed: await feedEvents.bind(API.events.list(babyId: babyId, numItems: Self.feedEventLimit), convex)
       case .tummy: await tummy.bind(API.events.tummyPatterns(babyId: babyId, days: days, rangeEndMs: rangeEndMs), convex)
       case .nappy: await nappy.bind(API.events.nappyPatterns(babyId: babyId, days: days, rangeEndMs: rangeEndMs), convex)
       }
@@ -185,7 +239,6 @@ struct PatternChart: View {
   let days: Int
   let rangeEndMs: EpochMs
   let barColor: Color
-  let emptyText: String
 
   @State private var showChart = false
   @Environment(\.dynamicTypeSize) private var typeSize
@@ -203,33 +256,23 @@ struct PatternChart: View {
   var body: some View {
     let rows = Patterns.days(items, days: days, rangeEndMs: rangeEndMs)
 
-    if items.isEmpty {
-      Text(emptyText)
-        .font(.app(.body, 15))
-        .foregroundStyle(C.muted)
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity)
-        .padding(28)
-        .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
-    } else {
-      VStack(alignment: .leading, spacing: 10) {
-        WrapLayout {
-          switchPill("Bars", selected: !showChart) { showChart = false }
-          switchPill("Chart", selected: showChart) { showChart = true }
-        }
-        Group {
-          if showChart { chart(rows) } else { bars(rows) }
-        }
-        .accessibilityChartDescriptor(PatternChartDescriptor(title: title, rows: rows, timed: timed))
-        Text(Spoken.patternSummary(rows))
-          .font(.app(.body, 13))
-          .foregroundStyle(C.muted)
-          .fixedSize(horizontal: false, vertical: true)
+    VStack(alignment: .leading, spacing: 10) {
+      WrapLayout {
+        switchPill("Rows", selected: !showChart) { showChart = false }
+        switchPill("Columns", selected: showChart) { showChart = true }
       }
+      Group {
+        if showChart { chart(rows) } else { bars(rows) }
+      }
+      .accessibilityChartDescriptor(PatternChartDescriptor(title: title, rows: rows, timed: timed))
+      Text(Spoken.patternSummary(rows))
+        .font(.app(.body, 13))
+        .foregroundStyle(C.muted)
+        .fixedSize(horizontal: false, vertical: true)
     }
   }
 
-  private func switchPill(_ label: String, selected: Bool, action: @escaping () -> Void) -> some View {
+  private func switchPill(_ label: LocalizedStringKey, selected: Bool, action: @escaping () -> Void) -> some View {
     Button(action: action) {
       Text(label)
         .font(.app(.bold, 14))
@@ -242,12 +285,16 @@ struct PatternChart: View {
     }
     .buttonStyle(PressScale())
     .accessibilityAddTraits(selected ? .isSelected : [])
-    .accessibilityHint(label == "Bars" ? "Shows a bar per day" : "Shows a day by time-of-day chart")
+    .accessibilityHint(label == "Rows" ? "Shows a row per day" : "Shows a day by time-of-day chart")
   }
 
   private func bars(_ rows: [PatternDay]) -> some View {
     let stacked = typeSize.isAccessibilitySize
-    return VStack(spacing: 8) {
+    return VStack(alignment: .leading, spacing: 8) {
+      Text("Each row is one day, midnight to midnight")
+        .font(.app(.medium, 12, relativeTo: .caption))
+        .foregroundStyle(C.muted)
+        .padding(.bottom, 2)
       ForEach(rows) { row in
         AdaptiveStack(spacing: stacked ? 4 : 8) {
           Text(row.label).font(.app(.bold, 12)).foregroundStyle(C.ink).frame(width: stacked ? nil : 58, alignment: .leading)
@@ -274,8 +321,8 @@ struct PatternChart: View {
       HStack(spacing: 0) {
         Color.clear.frame(width: stacked ? 0 : 66)
         GeometryReader { geo in
-          ForEach([("12am", 0.0), ("6am", 0.25), ("12pm", 0.5), ("6pm", 0.75)], id: \.0) { label, at in
-            Text(label).font(.app(.medium, 10)).foregroundStyle(C.muted).offset(x: geo.size.width * at)
+          ForEach([(0, 0.0), (6, 0.25), (12, 0.5), (18, 0.75)], id: \.0) { hour, at in
+            Text(WeekGrid.formatHourLabel(hour)).font(.app(.medium, 10)).foregroundStyle(C.muted).offset(x: geo.size.width * at)
           }
         }
         .frame(height: 16)
@@ -312,6 +359,7 @@ struct PatternChart: View {
     .chartXScale(domain: labels)
     // Minutes are negated so midnight sits at the top, like the RN chart.
     .chartYScale(domain: -1440...0)
+    .chartYAxisLabel("Time of day", position: .leading)
     .chartYAxis {
       AxisMarks(position: .leading, values: stride(from: 0.0, through: 1440, by: 180).map { -$0 }) { value in
         AxisGridLine().foregroundStyle(C.line)
@@ -368,5 +416,70 @@ struct PatternChartDescriptor: AXChartDescriptorRepresentable {
       additionalAxes: [],
       series: [series]
     )
+  }
+}
+
+/// Feeds per day as bars, with each day's feeds and bottle millilitres listed underneath.
+struct FeedDaysChart: View {
+  let totals: FeedTotals
+  let color: Color
+
+  var body: some View {
+    let labels = totals.days.map(\.label)
+    let every = totals.days.count > 7 ? 2 : 1
+    let logged = totals.days.filter { $0.feeds > 0 }.reversed()
+
+    VStack(alignment: .leading, spacing: 14) {
+      Text("Feeds each day").font(.app(.bold, 16)).foregroundStyle(C.ink)
+      Chart(totals.days) { day in
+        BarMark(x: .value("Day", day.label), y: .value("Feeds", day.feeds), width: .ratio(0.6))
+          .foregroundStyle(color)
+          .clipShape(RoundedRectangle(cornerRadius: 6))
+          .annotation(position: .top, spacing: 4) {
+            if day.feeds > 0 {
+              Text("\(day.feeds)").font(.app(.bold, 11)).foregroundStyle(C.ink)
+            }
+          }
+      }
+      .chartXScale(domain: labels)
+      .chartYAxisLabel("Feeds", position: .leading)
+      .chartYAxis {
+        AxisMarks(position: .leading) { _ in
+          AxisGridLine().foregroundStyle(C.line)
+          AxisValueLabel().font(.app(.medium, 10)).foregroundStyle(C.muted)
+        }
+      }
+      .chartXAxis {
+        AxisMarks(values: labels.enumerated().filter { $0.offset % every == 0 }.map(\.element)) { value in
+          AxisValueLabel {
+            if let label = value.as(String.self) {
+              Text(label).font(.app(.bold, every > 1 ? 9 : 11)).foregroundStyle(C.ink)
+            }
+          }
+        }
+      }
+      .frame(height: 200)
+      .accessibilityLabel("Feeds each day")
+      .accessibilityValue(logged.map { "\($0.label): \($0.feeds)" }.joined(separator: ", "))
+
+      VStack(spacing: 0) {
+        ForEach(Array(logged)) { day in
+          HStack {
+            Text(day.label).font(.app(.bold, 14)).foregroundStyle(C.ink)
+            Spacer()
+            Text(day.feeds == 1 ? "1 feed" : "\(day.feeds) feeds").font(.app(.medium, 14)).foregroundStyle(C.muted)
+            Text(day.ml > 0 ? "\(jsNumber(jsRound(day.ml))) ml" : "No bottles")
+              .font(.app(.bold, 14))
+              .foregroundStyle(day.ml > 0 ? C.ink : C.muted)
+              .frame(minWidth: 84, alignment: .trailing)
+          }
+          .padding(.vertical, 10)
+          .overlay(alignment: .top) { Rectangle().fill(C.line).frame(height: 1) }
+          .accessibilityElement(children: .combine)
+        }
+      }
+    }
+    .padding(16)
+    .background(C.card, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
   }
 }

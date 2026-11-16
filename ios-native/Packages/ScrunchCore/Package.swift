@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
   name: "ScrunchCore",
+  defaultLocalization: "en-GB",
   platforms: [
     .iOS(.v17),
     .macOS(.v14),
@@ -12,7 +13,7 @@ let package = Package(
     .library(name: "ScrunchCore", targets: ["ScrunchCore"]),
   ],
   targets: [
-    .target(name: "ScrunchCore"),
+    .target(name: "ScrunchCore", resources: [.process("Localizable.xcstrings"), .copy("Resources/free-allowance.json")]),
     .testTarget(name: "ScrunchCoreTests", dependencies: ["ScrunchCore"]),
   ]
 )

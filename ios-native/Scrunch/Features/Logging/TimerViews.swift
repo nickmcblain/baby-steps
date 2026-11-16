@@ -44,35 +44,35 @@ private struct ClockText: View {
 }
 
 /// The timer's next action with a shape cue, so running vs paused isn't carried by colour alone.
-private struct TimerVerb: View {
-  let running: Bool
-  let hasTime: Bool
-  let color: Color
-
-  var text: String { running ? "Pause" : hasTime ? "Resume" : "Start" }
-
-  var body: some View {
-    Label(text, systemImage: running ? "pause.fill" : "play.fill")
-      .font(.app(.medium, 15))
-      .foregroundStyle(color)
-  }
-}
-
 private struct TimerFooter: View {
-  let doneLabel: String
-  let canFinish: Bool
+  let doneLabel: LocalizedStringKey
+  let session: TimerSession?
   let showReset: Bool
   let onDone: () async -> Void
   let onSkip: () async -> Void
   let onReset: () async -> Void
 
   var body: some View {
-    VStack(spacing: 12) {
-      PrimaryButton(label: doneLabel, disabled: !canFinish) { await onDone() }
-      Button { Task { await onSkip() } } label: {
-        Text("Skip to manual entry").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8).frame(minHeight: 44)
+    // Done appears once something has been timed, so re-check while the clock runs.
+    if let session, session.isRunning {
+      SwiftUI.TimelineView(.periodic(from: .now, by: 1)) { context in
+        content(canFinish: session.canFinish(now: context.date.epochMs))
       }
-      .accessibilityInputLabels(["Skip to manual entry", "Skip", "Manual entry"])
+    } else {
+      content(canFinish: session?.canFinish(now: Date().epochMs) ?? false)
+    }
+  }
+
+  private func content(canFinish: Bool) -> some View {
+    VStack(spacing: 12) {
+      if canFinish {
+        PrimaryButton(label: doneLabel) { await onDone() }
+          .transition(.opacity.combined(with: .move(edge: .bottom)))
+      }
+      Button { Task { await onSkip() } } label: {
+        Text("Enter it by hand").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8).frame(minHeight: 44)
+      }
+      .accessibilityInputLabels(["Enter it by hand", "Manual entry", "Skip"])
       if showReset {
         Button { Task { await onReset() } } label: {
           Text("Reset").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8).frame(minHeight: 44)
@@ -81,6 +81,22 @@ private struct TimerFooter: View {
       }
     }
     .padding(.top, 8)
+    .animation(.easeOut(duration: 0.2), value: canFinish)
+  }
+}
+
+/// The big glyph that makes the whole timer card read as the Start button.
+private struct PlayPauseIcon: View {
+  let running: Bool
+  let tint: Color
+
+  var body: some View {
+    Image(systemName: running ? "pause.fill" : "play.fill")
+      .font(.system(size: 26, weight: .bold))
+      .foregroundStyle(running ? tint : C.onAccent)
+      .frame(width: 64, height: 64)
+      .background(running ? C.onAccent : tint, in: Circle())
+      .accessibilityHidden(true)
   }
 }
 
@@ -109,15 +125,18 @@ struct DurationTimerView: View {
     ScreenScaffold {
       ScreenTitle(isSleep ? "Sleep timer" : "Tummy time")
       Text(isSleep
-        ? "Start when they nod off. Keeps timing on the Lock Screen / Dynamic Island while the app is away."
-        : "Start when they go on their tummy. Keeps timing on the Lock Screen / Dynamic Island while the app is away.")
+        ? "Start when they nod off. It keeps counting on your Lock Screen if you leave the app."
+        : "Start when they go on their tummy. It keeps counting on your Lock Screen if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
-      let verb = TimerVerb(running: running, hasTime: elapsed > 0, color: running ? .white.opacity(0.9) : accent)
+      let verb = running ? "Pause" : elapsed > 0 ? "Resume" : "Start"
       Button { Task { await toggle() } } label: {
         VStack(spacing: 10) {
+          PlayPauseIcon(running: running, tint: accent)
           ClockText(session: session, value: { $0.elapsed(now: $1) }, font: .app(.displayBold, 48), color: running ? .white : C.ink)
-          verb
+          Text(running ? "Tap to pause" : elapsed > 0 ? "Tap to resume" : "Tap to start")
+            .font(.app(.bold, 15))
+            .foregroundStyle(running ? .white.opacity(0.9) : accent)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -129,11 +148,13 @@ struct DurationTimerView: View {
       .sensoryFeedback(.impact(weight: .light), trigger: running)
       .accessibilityElement(children: .combine)
       .accessibilityAddTraits(.updatesFrequently)
-      .accessibilityInputLabels([verb.text, "\(verb.text) timer"])
+      .accessibilityInputLabels([verb, "\(verb) timer"])
+
+      if let session { StartShiftChips(session: session) }
 
       TimerFooter(
         doneLabel: "Done — confirm details",
-        canFinish: session?.canFinish(now: Date().epochMs) ?? false,
+        session: session,
         showReset: elapsed > 0 && !running,
         onDone: finish,
         onSkip: skip,
@@ -147,7 +168,7 @@ struct DurationTimerView: View {
     .task(id: dash.value?.baby) {
       if running { await syncReminders() }
     }
-    .alert("Lock Screen timer unavailable", isPresented: Binding(get: { liveError != nil }, set: { if !$0 { liveError = nil } })) {
+    .alert("Lock Screen timer is off", isPresented: Binding(get: { liveError != nil }, set: { if !$0 { liveError = nil } })) {
       Button("OK", role: .cancel) {}
     } message: {
       Text(liveError ?? "")
@@ -159,7 +180,7 @@ struct DurationTimerView: View {
     if session.isRunning, let error {
       liveError = isSleep
         ? error
-        : "Could not start Dynamic Island / Lock Screen timer."
+        : "The timer is still running here, but it couldn’t show on your Lock Screen."
     }
   }
 
@@ -221,8 +242,8 @@ struct FeedTimerView: View {
     let rightMs = session?.sideElapsed(.right, now: now) ?? 0
 
     ScreenScaffold {
-      ScreenTitle(isPump ? "Pump" : "Timer")
-      Text("Time one side at a time. Island keeps the active side running if you leave the app.")
+      ScreenTitle(isPump ? "Pump timer" : "Feed timer")
+      Text("Time one side at a time. It keeps counting on your Lock Screen if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
       AdaptiveStack(spacing: 12) {
@@ -230,9 +251,11 @@ struct FeedTimerView: View {
         sideCard("Right", .right, session: session, ms: rightMs)
       }
 
+      if let session { StartShiftChips(session: session) }
+
       TimerFooter(
         doneLabel: isPump ? "Done — add amount" : "Done — fill in details",
-        canFinish: session?.canFinish(now: now) ?? false,
+        session: session,
         showReset: (leftMs > 0 || rightMs > 0) && session?.activeSide == nil,
         onDone: finish,
         onSkip: skip,
@@ -243,25 +266,28 @@ struct FeedTimerView: View {
     .task {
       if let session = model.session { await push(session) }
     }
-    .alert("Lock Screen timer unavailable", isPresented: Binding(get: { liveError != nil }, set: { if !$0 { liveError = nil } })) {
+    .alert("Lock Screen timer is off", isPresented: Binding(get: { liveError != nil }, set: { if !$0 { liveError = nil } })) {
       Button("OK", role: .cancel) {}
     } message: {
       Text(liveError ?? "")
     }
   }
 
-  private func sideCard(_ label: String, _ side: TimerSide, session: TimerSession?, ms: Double) -> some View {
+  private func sideCard(_ label: LocalizedStringKey, _ side: TimerSide, session: TimerSession?, ms: Double) -> some View {
     let running = session?.activeSide == side && session?.isRunning == true
-    let verb = TimerVerb(running: running, hasTime: ms > 0, color: running ? .white.opacity(0.9) : C.tealDark)
+    let sideName: LocalizedStringKey = side == .left ? "Left side" : "Right side"
     return Button { Task { await tap(side) } } label: {
       VStack(spacing: 8) {
-        Text(label.uppercased())
-          .font(.app(.bold, 13))
-          .tracking(0.6)
+        Text(label)
+          .font(.app(.bold, 15))
           .foregroundStyle(running ? .white.opacity(0.85) : C.muted)
-          .accessibilityLabel("\(label) side")
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityLabel(sideName)
+        PlayPauseIcon(running: running, tint: C.teal)
         ClockText(session: session, value: { $0.sideElapsed(side, now: $1) }, font: .app(.displayBold, 36), color: running ? .white : C.ink)
-        verb
+        Text(running ? "Tap to pause" : ms > 0 ? "Tap to resume" : "Tap to start")
+          .font(.app(.bold, 14))
+          .foregroundStyle(running ? .white.opacity(0.9) : C.tealDark)
       }
       .frame(maxWidth: .infinity)
       .padding(.vertical, 28)
@@ -273,13 +299,13 @@ struct FeedTimerView: View {
     .sensoryFeedback(.impact(weight: .light), trigger: running)
     .accessibilityElement(children: .combine)
     .accessibilityAddTraits(running ? [.isSelected, .updatesFrequently] : [])
-    .accessibilityInputLabels([label, "\(label) side", "\(verb.text) \(label.lowercased())"])
+    .accessibilityInputLabels([label, sideName])
   }
 
   private func push(_ session: TimerSession) async {
     let error = await timers.update(session)
     if session.isRunning, let error {
-      liveError = isPump ? "Could not start Dynamic Island / Lock Screen timer." : error
+      liveError = isPump ? "The timer is still running here, but it couldn’t show on your Lock Screen." : error
     }
   }
 

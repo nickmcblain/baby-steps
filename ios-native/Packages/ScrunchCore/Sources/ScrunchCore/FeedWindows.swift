@@ -27,16 +27,16 @@ public enum FeedWindows {
     let label: String
     if days < 28 {
       intervalMs = 2.5 * hourMs + bottleBias
-      label = bottleBias > 0 ? "about 3 hours" : "about 2.5 hours"
+      label = bottleBias > 0 ? String(localized: "about 3 hours", bundle: .module) : String(localized: "about 2.5 hours", bundle: .module)
     } else if days < 84 {
       intervalMs = 3 * hourMs + bottleBias
-      label = bottleBias > 0 ? "about 3.5 hours" : "about 3 hours"
+      label = bottleBias > 0 ? String(localized: "about 3.5 hours", bundle: .module) : String(localized: "about 3 hours", bundle: .module)
     } else if days < 180 {
       intervalMs = 3.5 * hourMs + bottleBias * 0.5
-      label = "about 3.5 hours"
+      label = String(localized: "about 3.5 hours", bundle: .module)
     } else {
       intervalMs = 4 * hourMs
-      label = "about 4 hours"
+      label = String(localized: "about 4 hours", bundle: .module)
     }
 
     // Err on waking: under ~8 weeks or under ~5 kg — still check / wake.
@@ -44,10 +44,10 @@ public enum FeedWindows {
     let reason: String
     if shouldWake {
       reason = days < 56
-        ? "Under 8 weeks — feed check-ins stay on even if they're asleep."
-        : "Under 5 kg — feed check-ins stay on even if they're asleep."
+        ? String(localized: "Under 8 weeks — feed check-ins stay on even if they're asleep.", bundle: .module)
+        : String(localized: "Under 5 kg — feed check-ins stay on even if they're asleep.", bundle: .module)
     } else {
-      reason = "At this age and weight, an active sleep timer pauses feed reminders so you can leave them sleeping."
+      reason = String(localized: "At this age and weight, an active sleep timer pauses feed reminders so you can leave them sleeping.", bundle: .module)
     }
     return FeedWindow(intervalMs: intervalMs, label: label, shouldWakeForFeeds: shouldWake, reason: reason)
   }

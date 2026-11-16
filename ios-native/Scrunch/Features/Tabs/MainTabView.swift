@@ -27,7 +27,7 @@ struct MainTabView: View {
     .toolbar(.hidden, for: .navigationBar)
     .sheet(isPresented: $router.addLogOpen) {
       AddLogSheet(babyId: activeBaby.babyId)
-        .adaptiveDetents([.medium, .large])
+        .adaptiveDetents([.height(AddLogSheet.detentHeight), .large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(32)
         .presentationBackground(C.bg)
@@ -79,7 +79,7 @@ struct FloatingDock: View {
     .padding(.bottom, 2)
   }
 
-  private func item(_ tab: Tab, _ label: String, _ symbol: String) -> some View {
+  private func item(_ tab: Tab, _ label: LocalizedStringKey, _ symbol: String) -> some View {
     let active = selected == tab
     return Button {
       selected = tab
@@ -87,7 +87,7 @@ struct FloatingDock: View {
       VStack(spacing: 3) {
         Image(systemName: symbol).font(.system(size: 18, weight: .semibold))
         if showsLabels {
-          Text(label).font(.app(.medium, 11, relativeTo: .caption2))
+          Text(label).font(.app(.medium, 11, relativeTo: .caption))
         }
       }
       .foregroundStyle(active ? C.ink : C.muted)
@@ -116,7 +116,7 @@ struct FloatingDock: View {
         .overlay(Circle().stroke(C.ink, lineWidth: active ? 1.5 : 0))
         .accessibilityHidden(true)
         if showsLabels {
-          Text("Profile").font(.app(.medium, 11, relativeTo: .caption2))
+          Text("Profile").font(.app(.medium, 11, relativeTo: .caption))
             .foregroundStyle(active ? C.ink : C.muted)
         }
       }

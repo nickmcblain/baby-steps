@@ -20,11 +20,12 @@ final class SpokenTests: XCTestCase {
   }
 
   func testTimeOfDay() {
-    XCTAssertEqual(Spoken.timeOfDay(minutes: 0), "12am")
-    XCTAssertEqual(Spoken.timeOfDay(minutes: 570), "9:30am")
-    XCTAssertEqual(Spoken.timeOfDay(minutes: 725), "12:05pm")
-    XCTAssertEqual(Spoken.timeOfDay(minutes: 1439), "11:59pm")
-    XCTAssertEqual(Spoken.timeOfDay(minutes: 1440), "midnight")
+    XCTAssertEqual(Spoken.timeOfDay(minutes: 0, calendar: london), "00:00")
+    XCTAssertEqual(Spoken.timeOfDay(minutes: 570, calendar: london), "09:30")
+    XCTAssertEqual(Spoken.timeOfDay(minutes: 1439, calendar: london), "23:59")
+    XCTAssertEqual(Spoken.timeOfDay(minutes: 1440, calendar: london), "midnight")
+    let us = calendar("en_US", timeZone: "America/New_York")
+    XCTAssertEqual(Spoken.timeOfDay(minutes: 725, calendar: us).replacingOccurrences(of: "\u{202F}", with: " "), "12:05 PM")
   }
 
   private func day(_ label: String, _ slices: [(Double, Double)]) -> PatternDay {

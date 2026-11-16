@@ -7,7 +7,7 @@ struct ClothingView: View {
 
   @Environment(ConvexService.self) private var convex
   @State private var baby = Live<Baby>()
-  @State private var fahrenheit = false
+  @State private var fahrenheit = DisplayFormat.current.temperatureUnit == .fahrenheit
   @State private var tempC = Clothing.defaultTempC
   @State private var hydrated = false
 
@@ -42,11 +42,11 @@ struct ClothingView: View {
           }
         HStack(spacing: 20) {
           arrow("chevron.left", "Decrease temperature") { tempC = Clothing.nudge(tempC, by: -Clothing.stepC) }
-          Text("±0.5°C")
+          Text(fahrenheit ? "±0.9°F" : "±0.5°C")
             .font(.app(.medium, 13))
             .foregroundStyle(C.muted)
             .frame(minWidth: 56)
-            .accessibilityLabel("Adjusts by 0.5 degrees Celsius")
+            .accessibilityLabel(fahrenheit ? "Adjusts by 0.9 degrees Fahrenheit" : "Adjusts by 0.5 degrees Celsius")
           arrow("chevron.right", "Increase temperature") { tempC = Clothing.nudge(tempC, by: Clothing.stepC) }
         }
       }
@@ -94,7 +94,7 @@ struct ClothingView: View {
     }
   }
 
-  private func arrow(_ symbol: String, _ label: String, action: @escaping () -> Void) -> some View {
+  private func arrow(_ symbol: String, _ label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
     Button(action: action) {
       Image(systemName: symbol)
         .font(.system(size: 22, weight: .bold))
@@ -104,6 +104,6 @@ struct ClothingView: View {
     }
     .buttonStyle(PressScale())
     .accessibilityLabel(label)
-    .accessibilityInputLabels([label, label.hasPrefix("Increase") ? "Warmer" : "Cooler"])
+    .accessibilityInputLabels([label, symbol == "chevron.right" ? "Warmer" : "Cooler"])
   }
 }

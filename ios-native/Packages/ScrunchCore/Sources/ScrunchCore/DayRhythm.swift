@@ -120,15 +120,15 @@ public enum DayRhythmEngine {
         segments: applyNightWindow(base, night),
         source: fromLogs != nil ? .logs : .nhs,
         caption: fromLogs != nil
-          ? "Their daytime sleep, with the night you set."
-          : "Night you set. Daytime naps still follow the age shape."
+          ? String(localized: "Their daytime sleep, with the night you set.", bundle: .module)
+          : String(localized: "Night you set. Daytime naps still follow the age shape.", bundle: .module)
       )
     }
     if let fromLogs {
       return DayRhythm(
         segments: fromLogs,
         source: .logs,
-        caption: "Where they usually sleep. Last 2 weeks. Cues first."
+        caption: String(localized: "Where they usually sleep. Last 2 weeks. Cues first.", bundle: .module)
       )
     }
     return DayRhythm(segments: nhsShape(days), source: .nhs, caption: nhsCaption(days))
@@ -171,11 +171,12 @@ public enum DayRhythmEngine {
   }
 
   static func nhsCaption(_ days: Double) -> String {
-    if days < 90 { return "About 18h in short bursts. NHS, not a timetable." }
-    if days < 180 { return "A longer night may start now. NHS, not a timetable." }
-    if days < 365 { return "About 15h, mostly at night. NHS, not a timetable." }
-    if days < 730 { return "About 12–15h, with a daytime nap. NHS, not a timetable." }
-    return "About 12–14h, nap included. NHS, not a timetable."
+    let source = HealthRegion.current.sleepGuidanceSource
+    if days < 90 { return String(localized: "About 18h in short bursts.", bundle: .module) + " " + source }
+    if days < 180 { return String(localized: "A longer night may start now.", bundle: .module) + " " + source }
+    if days < 365 { return String(localized: "About 15h, mostly at night.", bundle: .module) + " " + source }
+    if days < 730 { return String(localized: "About 12–15h, with a daytime nap.", bundle: .module) + " " + source }
+    return String(localized: "About 12–14h, nap included.", bundle: .module) + " " + source
   }
 
   /// Clock minutes → bar minutes. End of 7:00 is 1440, not 0.

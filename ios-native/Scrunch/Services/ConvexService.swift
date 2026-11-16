@@ -72,6 +72,7 @@ final class ConvexService {
   }
 
   func signOut() async {
+    PendingLogSender.publish(babies: [], activeId: nil)
     await client.logout()
   }
 }
@@ -108,10 +109,11 @@ final class Live<Value: Decodable> {
 enum UserMessage {
   /// Turns `ConvexError("No baby matches that code")` and friends into the plain message,
   /// the same text RN showed via `err.message`.
-  static func from(_ error: Error, fallback: String = "Something went wrong. Try again.") -> String {
+  static func from(_ error: Error, fallback: String = String(localized: "Something went wrong. Try again.")) -> String {
     if let client = error as? ClientError {
       switch client {
       case .ConvexError(let data):
+        if let refusal = ServerRefusal(errorData: data) { return refusal.message }
         if let text = try? JSONDecoder().decode(String.self, from: Data(data.utf8)) { return text }
         if let object = try? JSONDecoder().decode([String: String].self, from: Data(data.utf8)),
            let message = object["message"] { return message }

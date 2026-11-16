@@ -96,22 +96,22 @@ public enum SleepOffer {
     calendar: Calendar = .current
   ) -> NapOffer {
     if asleep || (lastSleepEndMs.map { $0 > now } ?? false) {
-      return NapOffer(label: "Asleep", subline: "")
+      return NapOffer(label: String(localized: "Asleep", bundle: .module), subline: "")
     }
     guard let nextOfferAt = predictedNapAt(sleeps: sleeps, lastSleepEndMs: lastSleepEndMs, calendar: calendar) else {
-      return NapOffer(label: "Watch cues", subline: "Not enough of a daytime pattern yet.")
+      return NapOffer(label: String(localized: "Watch cues", bundle: .module), subline: String(localized: "Not enough of a daytime pattern yet.", bundle: .module))
     }
     let shortNap = lastSleepMinutes.map { $0 < 30 } ?? false
-    let shortLine = "A short nap still counts."
+    let shortLine = String(localized: "A short nap still counts.", bundle: .module)
     if now >= nextOfferAt {
       return NapOffer(
-        label: "Offer a nap",
-        subline: shortNap ? shortLine : "A guess from their usual gap. Cues first."
+        label: String(localized: "Offer a nap", bundle: .module),
+        subline: shortNap ? shortLine : String(localized: "A guess from their usual gap. Cues first.", bundle: .module)
       )
     }
     return NapOffer(
-      label: "Often ready around \(Clock.h12(nextOfferAt, calendar: calendar))",
-      subline: shortNap ? shortLine : "From their last two weeks"
+      label: String(localized: "Often ready around \(Clock.time(nextOfferAt, calendar: calendar))", bundle: .module),
+      subline: shortNap ? shortLine : String(localized: "From their last two weeks", bundle: .module)
     )
   }
 }

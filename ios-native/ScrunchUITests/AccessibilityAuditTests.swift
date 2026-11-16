@@ -14,11 +14,11 @@ final class AccessibilityAuditTests: XCTestCase {
   private static let screens = [
     Screen(path: "tab/home", ready: "Log"),
     Screen(path: "tab/timeline", ready: "Timeline"),
-    Screen(path: "tab/kids", ready: "Add baby"),
+    Screen(path: "tab/kids", ready: "Add a baby"),
     Screen(path: "tab/profile", ready: "Profile"),
     Screen(path: "sheet/addlog", ready: "Nappy"),
-    Screen(path: "baby/home", ready: "Edit"),
-    Screen(path: "baby/feedTimer", ready: "Timer"),
+    Screen(path: "baby/edit", ready: "Edit baby"),
+    Screen(path: "baby/feedTimer", ready: "Feed timer"),
     Screen(path: "baby/sleepTimer", ready: "Sleep timer"),
     Screen(path: "baby/feedManual", ready: "Log feed"),
     Screen(path: "baby/nappy", ready: "Nappy"),
@@ -55,7 +55,7 @@ final class AccessibilityAuditTests: XCTestCase {
           return
         }
         try app.performAccessibilityAudit(for: Self.auditTypes) { issue in
-          Self.isKnownSystemIssue(issue)
+          Self.isKnownSystemIssue(issue) || Self.isTextBehindSheet(issue, on: screen)
         }
       }
     }
@@ -73,6 +73,12 @@ final class AccessibilityAuditTests: XCTestCase {
     // Let reactive queries fill the screen before auditing.
     Thread.sleep(forTimeInterval: 2)
     return app
+  }
+
+  /// A part-height sheet leaves the dimmed screen behind it visible. The audit reads that text
+  /// from the screenshot, but VoiceOver rightly skips it while the sheet is modal.
+  private static func isTextBehindSheet(_ issue: XCUIAccessibilityAuditIssue, on screen: Screen) -> Bool {
+    screen.path.hasPrefix("sheet/") && issue.auditType == .elementDetection && issue.element == nil
   }
 
   /// Issues raised on system chrome we don't control (status bar, keyboard).

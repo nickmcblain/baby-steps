@@ -29,12 +29,25 @@ struct GlanceProvider: TimelineProvider {
 struct BabyGlanceWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: GlanceStore.widgetKind, provider: GlanceProvider()) { entry in
-      GlanceView(snapshot: entry.snapshot)
+      GlanceRouter(snapshot: entry.snapshot)
         .containerBackground(for: .widget) { Color(.systemBackground) }
     }
     .configurationDisplayName("Scrunch")
     .description("Next nap, last feed and nappy at a glance")
-    .supportedFamilies([.systemSmall, .systemMedium])
+    .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline])
+  }
+}
+
+private struct GlanceRouter: View {
+  let snapshot: GlanceSnapshot
+
+  @Environment(\.widgetFamily) private var family
+
+  var body: some View {
+    switch family {
+    case .accessoryRectangular, .accessoryInline: GlanceAccessoryView(snapshot: snapshot)
+    default: GlanceView(snapshot: snapshot)
+    }
   }
 }
 
@@ -65,7 +78,7 @@ struct GlanceView: View {
           header
           Spacer()
           Text(snapshot.sleepToday)
-            .font(.caption.weight(.semibold))
+            .font(.custom("Nunito-SemiBold", size: 12, relativeTo: .caption))
             .foregroundStyle(muted)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
@@ -87,19 +100,19 @@ struct GlanceView: View {
 
   private var header: some View {
     Text(snapshot.babyName)
-      .font(.subheadline.weight(.bold))
+      .font(.custom("Fredoka-Bold", size: 17, relativeTo: .subheadline))
       .foregroundStyle(ink)
       .lineLimit(1)
       .minimumScaleFactor(0.7)
       .accessibilityAddTraits(.isHeader)
   }
 
-  private func row(_ symbol: String, _ color: Color, _ label: String, _ value: String) -> some View {
+  private func row(_ symbol: String, _ color: Color, _ label: LocalizedStringKey, _ value: String) -> some View {
     HStack(spacing: 8) {
       Image(systemName: symbol).foregroundStyle(color).accessibilityHidden(true)
       VStack(alignment: .leading, spacing: 0) {
-        Text(label).font(.caption2.weight(.semibold)).foregroundStyle(color).lineLimit(1).minimumScaleFactor(0.7)
-        Text(value).font(.footnote.weight(.bold)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.6)
+        Text(label).font(.custom("Nunito-SemiBold", size: 11, relativeTo: .caption)).foregroundStyle(color).lineLimit(1).minimumScaleFactor(0.8)
+        Text(value).font(.custom("Nunito-Bold", size: 13, relativeTo: .footnote)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.8)
       }
       Spacer(minLength: 0)
     }

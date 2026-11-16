@@ -16,22 +16,21 @@ struct TimelineTab: View {
           TimelineView(babyId: id, showsBack: false).id(id)
         } else {
           ScreenScaffold(showsBack: false, clearDock: true) {
-            Text("Timeline").font(.app(.displayBold, 28)).foregroundStyle(C.ink)
-            Text("Pick a kid first.").font(.app(.body, 16)).foregroundStyle(C.muted)
-            Button { router.tab = .kids } label: {
-              Text("Go to Kids")
-                .font(.app(.bold, 16))
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(C.ink, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            }
-            .buttonStyle(PressScale())
+            ScreenTitle("Timeline")
+            EmptyState(
+              symbol: "list.bullet.rectangle.fill",
+              tint: C.amber,
+              title: "Add your baby first",
+              message: "Every feed, sleep and nappy you log shows up here, newest first.",
+              actionLabel: "Add your baby",
+              action: { router.path.append(.newBaby) }
+            )
           }
         }
       } else {
         ScreenScaffold(showsBack: false, clearDock: true) {
-          Text("Loading…").font(.app(.body, 16)).foregroundStyle(C.muted)
+          ScreenTitle("Timeline")
+          LoadingView().frame(minHeight: 240)
         }
       }
     }
@@ -45,6 +44,7 @@ struct TimelineView: View {
   var showsBack = true
 
   @Environment(ConvexService.self) private var convex
+  @Environment(AppRouter.self) private var router
   @State private var mode: Mode = .list
   @State private var weekStartMs = WeekGrid.startOfWeekMonday(Date().epochMs)
   @State private var week = Live<WeekGridData>()
@@ -65,7 +65,11 @@ struct TimelineView: View {
 
       switch mode {
       case .list:
-        EventListView(babyId: babyId, emptyText: "Nothing yet. Log care, or tap + to add a midwife visit or jab date.")
+        EventListView(
+          babyId: babyId,
+          emptyText: "Feeds, sleeps and nappies show up here as you log them. Midwife visits and jab dates too.",
+          onEmptyAdd: showsBack ? nil : { router.addLogOpen = true }
+        )
       case .week:
         if let grid = week.value {
           WeekRhythmChart(
@@ -74,7 +78,7 @@ struct TimelineView: View {
             onNextWeek: { weekStartMs = WeekGrid.addDays(weekStartMs, 7) }
           )
         } else {
-          Text("Loading week…").font(.app(.body, 15)).foregroundStyle(C.muted)
+          LoadingView(label: "Loading the week…").frame(minHeight: 240)
         }
       }
     }
@@ -84,7 +88,7 @@ struct TimelineView: View {
     }
   }
 
-  private func modePill(_ label: String, _ value: Mode) -> some View {
+  private func modePill(_ label: LocalizedStringKey, _ value: Mode) -> some View {
     Button { mode = value } label: {
       Text(label)
         .font(.app(.bold, 14))
@@ -105,25 +109,32 @@ struct TimelineView: View {
 // MARK: - Event list
 
 extension EventKind {
-  var tint: Color {
+  /// Icon well colour and symbol, matching the add-log sheet tiles.
+  var well: Color {
     switch self {
-    case .feed, .pump: C.tealSoft
-    case .nappy, .potty: C.peachSoft
-    case .weight, .medicine: C.amberSoft
-    case .height, .tummy: C.skySoft
-    case .sleep, .activity: C.purpleSoft
-    case .custom: C.roseSoft
-    }
-  }
-
-  var ink: Color {
-    switch self {
-    case .feed, .pump: C.tealDark
+    case .feed: C.teal
+    case .pump: C.tealDark
     case .nappy, .potty: C.peach
     case .weight, .medicine: C.amber
     case .height, .tummy: C.sky
     case .sleep, .activity: C.purple
     case .custom: C.rose
+    }
+  }
+
+  var symbol: String {
+    switch self {
+    case .feed: "drop.fill"
+    case .pump: "drop.halffull"
+    case .nappy: "circle.grid.2x2.fill"
+    case .potty: "toilet.fill"
+    case .weight: "scalemass.fill"
+    case .medicine: "pills.fill"
+    case .height: "ruler.fill"
+    case .tummy: "figure.arms.open"
+    case .sleep: "moon.fill"
+    case .activity: "figure.play"
+    case .custom: "calendar.badge.plus"
     }
   }
 }
@@ -134,12 +145,13 @@ struct EventListView: View {
   let babyId: BabyID
   var kind: EventKind? = nil
   var window: (startMs: EpochMs, endMs: EpochMs)? = nil
-  var emptyText: String? = nil
+  var emptyText: LocalizedStringKey? = nil
+  var onEmptyAdd: (() -> Void)? = nil
 
   @Environment(ConvexService.self) private var convex
   @State private var page = Live<EventPage>()
+  @Environment(UndoCenter.self) private var undo
   @State private var numItems: Int?
-  @State private var pendingDelete: Event?
 
   private var pageSize: Int {
     numItems ?? (kind != nil || window != nil ? Timeline.filteredPageSize : Timeline.initialPageSize)
@@ -148,20 +160,22 @@ struct EventListView: View {
   var body: some View {
     let now = Date().epochMs
     let events = Timeline.filter(page.value?.page ?? [], kind: kind, window: window)
+      .filter { !undo.hiddenEventIds.contains($0.id) }
+    let gaps = Timeline.gaps(events, now: now)
 
-    VStack(alignment: .leading, spacing: 16) {
+    VStack(alignment: .leading, spacing: 20) {
+      if page.value == nil {
+        LoadingView().frame(minHeight: 160)
+      }
       ForEach(Timeline.sections(events, now: now)) { section in
-        VStack(alignment: .leading, spacing: 12) {
-          Text(section.label.uppercased())
-            .font(.app(.bold, 13))
-            .tracking(0.7)
-            .foregroundStyle(C.tealDark)
-            .accessibilityLabel(section.label)
+        VStack(alignment: .leading, spacing: 10) {
+          Text(section.label)
+            .font(.app(.displayBold, 18, relativeTo: .headline))
+            .foregroundStyle(C.ink)
+            .padding(.leading, 4)
             .accessibilityAddTraits(.isHeader)
-          VStack(spacing: 0) {
-            ForEach(Array(section.items.enumerated()), id: \.element.id) { index, event in
-              row(event, now: now, last: index == section.items.count - 1)
-            }
+          ForEach(section.items) { event in
+            row(event, now: now, gap: gaps[event.id])
           }
         }
       }
@@ -179,118 +193,97 @@ struct EventListView: View {
       }
 
       if page.value != nil, events.isEmpty, let emptyText {
-        Text(emptyText).font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4)
+        EmptyState(
+          symbol: "list.bullet.rectangle.fill",
+          tint: C.amber,
+          title: "Nothing logged yet",
+          message: emptyText,
+          actionLabel: onEmptyAdd == nil ? nil : "Log something",
+          action: onEmptyAdd
+        )
       }
     }
     .task(id: pageSize) { await page.bind(API.events.list(babyId: babyId, numItems: pageSize), convex) }
-    .sheet(item: $pendingDelete) { event in
-      DeleteEventSheet(event: event) { pendingDelete = nil }
-    }
   }
 
-  private func row(_ event: Event, now: EpochMs, last: Bool) -> some View {
-    let kind = EventCopy.kindLabel(event, now: now)
-    let time = LoggedAt.format(event.loggedAt).components(separatedBy: " · ").last ?? ""
-    let note = event.note.flatMap { $0.isEmpty ? nil : $0 }
-    return HStack(alignment: .top, spacing: 12) {
-      VStack(spacing: 4) {
-        Circle().fill(event.kind.ink).frame(width: 12, height: 12).padding(.top, 18)
-        if !last {
-          Rectangle().fill(C.line).frame(width: 2).frame(maxHeight: .infinity)
-        }
-      }
-      .frame(width: 18)
-      .accessibilityHidden(true)
-
-      VStack(alignment: .leading, spacing: 4) {
-        AdaptiveStack(spacing: 2) {
-          Text(kind.uppercased())
-            .font(.app(.bold, 12))
-            .tracking(0.6)
-            .foregroundStyle(event.kind.ink)
+  private func row(_ event: Event, now: EpochMs, gap: String?) -> some View {
+    HStack(alignment: .top, spacing: 12) {
+      IconWell(systemImage: event.kind.symbol, tint: event.kind.well, size: 40)
+      VStack(alignment: .leading, spacing: 3) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+          Text(EventCopy.title(event))
+            .font(.app(.bold, 16))
+            .foregroundStyle(C.ink)
+            .fixedSize(horizontal: false, vertical: true)
           Spacer(minLength: 0)
-          Text(time)
-            .font(.app(.medium, 13))
+          Text(Clock.time(event.loggedAt))
+            .font(.app(.medium, 14))
+            .monospacedDigit()
             .foregroundStyle(C.muted)
         }
-        Text(EventCopy.title(event))
-          .font(.app(.bold, 17))
-          .foregroundStyle(C.ink)
+        Text([EventCopy.kindLabel(event, now: now), gap].compactMap { $0 }.joined(separator: " · "))
+          .font(.app(.medium, 13))
+          .foregroundStyle(C.muted)
           .fixedSize(horizontal: false, vertical: true)
-        if let note {
-          Text(note).font(.app(.body, 15)).foregroundStyle(C.ink.opacity(0.75)).padding(.top, 2)
+        if let note = event.note, !note.isEmpty {
+          Text(note)
+            .font(.app(.body, 15))
+            .foregroundStyle(C.ink.opacity(0.8))
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, 3)
         }
       }
-      .padding(.horizontal, 16)
-      .padding(.vertical, 14)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .background(event.kind.tint, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-      .padding(.bottom, 12)
-      .contentShape(Rectangle())
-      .onLongPressGesture(minimumDuration: 0.38) { pendingDelete = event }
-      .sensoryFeedback(.impact(weight: .light), trigger: pendingDelete?.id == event.id)
-      .accessibilityElement(children: .ignore)
-      .accessibilityLabel("\(kind), \(EventCopy.title(event)), \(time)\(note.map { ". \($0)" } ?? "")")
-      .accessibilityAction(named: "Delete") { pendingDelete = event }
     }
-    .frame(minHeight: 72)
+    .padding(14)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(C.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    .cardShadow(opacity: 0.05)
+    .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 22, style: .continuous))
+    .contextMenu {
+      Button(role: .destructive) { undo.delete(event, convex: convex) } label: {
+        Label("Delete", systemImage: "trash")
+      }
+    }
+    .modifier(SwipeToDelete { undo.delete(event, convex: convex) })
+    .accessibilityElement(children: .combine)
+    .accessibilityHint("Swipe left to delete")
+    .accessibilityAction(named: "Delete") { undo.delete(event, convex: convex) }
   }
 }
 
-private struct DeleteEventSheet: View {
-  let event: Event
-  let onClose: () -> Void
+/// Swipe left to delete, Mail-style: past the threshold the row goes and the toast offers Undo.
+private struct SwipeToDelete: ViewModifier {
+  let onDelete: () -> Void
 
-  @Environment(ConvexService.self) private var convex
-  @State private var deleting = false
-  @State private var alert: FormAlert?
-  @State private var deletedTick = 0
+  @State private var offset: CGFloat = 0
+  private let threshold: CGFloat = 110
 
-  var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text(EventCopy.kindLabel(event, now: Date().epochMs).uppercased())
-        .font(.app(.bold, 12)).tracking(0.6).foregroundStyle(C.muted)
-      Text(EventCopy.title(event)).font(.app(.bold, 20)).foregroundStyle(C.ink)
-      Text(LoggedAt.format(event.loggedAt)).font(.app(.body, 15)).foregroundStyle(C.muted)
-      Text("This can’t be undone.").font(.app(.body, 14)).foregroundStyle(C.muted).padding(.top, 4).padding(.bottom, 8)
-      Button { Task { await confirm() } } label: {
-        Text(deleting ? "Deleting…" : "Delete")
-          .font(.app(.bold, 17))
-          .foregroundStyle(C.onAccent)
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 16)
-          .background(C.danger, in: Capsule())
-          .opacity(deleting ? 0.45 : 1)
+  func body(content: Content) -> some View {
+    content
+      .offset(x: offset)
+      .background(alignment: .trailing) {
+        Image(systemName: "trash.fill")
+          .font(.system(size: 18, weight: .bold))
+          .foregroundStyle(offset < -threshold ? C.onAccent : C.danger)
+          .frame(width: max(0, -offset), alignment: .center)
+          .frame(maxHeight: .infinity)
+          .background(offset < -threshold ? C.danger : C.danger.opacity(0.15), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+          .opacity(offset < 0 ? 1 : 0)
+          .accessibilityHidden(true)
       }
-      .buttonStyle(PressScale())
-      .disabled(deleting)
-      Button(action: onClose) {
-        Text("Cancel").font(.app(.bold, 16)).foregroundStyle(C.muted).frame(maxWidth: .infinity).padding(.vertical, 12)
-      }
-      .disabled(deleting)
-    }
-    .padding(.horizontal, 20)
-    .padding(.top, 28)
-    .sensoryFeedback(.impact(weight: .medium), trigger: deletedTick)
-    .interactiveDismissDisabled(deleting)
-    .adaptiveDetents([.height(330)])
-    .presentationDragIndicator(.visible)
-    .presentationCornerRadius(32)
-    .presentationBackground(C.bg)
-    .formAlert($alert)
-  }
-
-  private func confirm() async {
-    guard !deleting else { return }
-    deleting = true
-    deletedTick += 1
-    defer { deleting = false }
-    do {
-      try await convex.mutation(API.events.remove(event.id))
-      onClose()
-    } catch {
-      alert = FormAlert(title: "Couldn’t delete", message: UserMessage.from(error, fallback: "Try again"))
-    }
+      .simultaneousGesture(
+        DragGesture(minimumDistance: 24)
+          .onChanged { value in
+            guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+            offset = min(0, value.translation.width)
+          }
+          .onEnded { _ in
+            let delete = offset < -threshold
+            withAnimation(.snappy(duration: 0.2)) { offset = 0 }
+            if delete { onDelete() }
+          }
+      )
+      .sensoryFeedback(.impact(weight: .light), trigger: offset < -threshold)
   }
 }
 
@@ -333,16 +326,23 @@ struct WeekRhythmChart: View {
     }
   }
 
-  /// `nil` kind = a sleep / tummy bar (sleep is drawn wider than tummy).
-  private static let legend: [LegendItem] = [
-    LegendItem(label: "Sleep", color: C.purple, kind: nil, barWidth: 12),
-    LegendItem(label: "Tummy", color: C.sky, kind: nil, barWidth: 6),
-    LegendItem(label: "Feed", color: C.teal, kind: .feed), LegendItem(label: "Nappy", color: C.peach, kind: .nappy),
-    LegendItem(label: "Weight", color: C.amber, kind: .weight), LegendItem(label: "Height", color: C.sky, kind: .height),
-    LegendItem(label: "Event", color: C.rose, kind: .custom), LegendItem(label: "Pump", color: C.tealDark, kind: .pump),
-    LegendItem(label: "Meds", color: C.amber, kind: .medicine), LegendItem(label: "Potty", color: C.peach, kind: .potty),
-    LegendItem(label: "Play", color: C.purple, kind: .activity),
+  private static let markerLegend: [(WeekMarkerKind, LocalizedStringKey)] = [
+    (.feed, "Feed"), (.nappy, "Nappy"), (.weight, "Weight"), (.height, "Height"), (.custom, "Event"),
+    (.pump, "Pump"), (.medicine, "Medicine"), (.potty, "Potty"), (.activity, "Activity"),
   ]
+
+  /// Only the types that appear this week, so the key stays short.
+  /// `nil` kind = a sleep / tummy bar (sleep is drawn wider than tummy).
+  private var legend: [LegendItem] {
+    let kinds = Set(data.markers.map(\.kind))
+    var items: [LegendItem] = []
+    if !data.sleeps.isEmpty { items.append(LegendItem(label: "Sleep", color: C.purple, kind: nil, barWidth: 12)) }
+    if !data.tummies.isEmpty { items.append(LegendItem(label: "Tummy time", color: C.sky, kind: nil, barWidth: 6)) }
+    for (kind, label) in Self.markerLegend where kinds.contains(kind) {
+      items.append(LegendItem(label: label, color: Self.markerColor(kind), kind: kind))
+    }
+    return items
+  }
 
   @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
 
@@ -374,7 +374,11 @@ struct WeekRhythmChart: View {
         .accessibilityInputLabels(["Next week", "Forward a week", "Next"])
       }
 
-      FlowLegend(items: Self.legend, glyphs: glyphs)
+      if legend.isEmpty {
+        Text("Nothing logged this week").font(.app(.medium, 13)).foregroundStyle(C.muted)
+      } else {
+        FlowLegend(items: legend, glyphs: glyphs)
+      }
 
       Canvas { context, size in
         draw(context: context, size: size, days: days, glyphs: glyphs)
@@ -468,7 +472,7 @@ struct WeekRhythmChart: View {
 }
 
 private struct LegendItem {
-  let label: String
+  let label: LocalizedStringKey
   let color: Color
   let kind: WeekMarkerKind?
   var barWidth: CGFloat = 12
@@ -481,7 +485,8 @@ private struct FlowLegend: View {
 
   var body: some View {
     WrapLayout(spacing: 10, rowSpacing: 6, centered: true) {
-      ForEach(items, id: \.label) { item in
+      ForEach(items.indices, id: \.self) { index in
+        let item = items[index]
         HStack(spacing: 5) {
           if let kind = item.kind {
             if glyphs {
