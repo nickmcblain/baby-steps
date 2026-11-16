@@ -191,7 +191,7 @@ struct ConsentCheckbox: View {
             .fill(isOn ? C.teal : C.card)
             .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(isOn ? C.teal : C.tealDark, lineWidth: 2))
           if isOn {
-            Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+            Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).foregroundStyle(C.onAccent)
           }
         }
         .frame(width: 24, height: 24)

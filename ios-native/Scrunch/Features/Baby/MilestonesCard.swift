@@ -62,7 +62,7 @@ struct MilestonesCard: View {
         Text(reachedAt.map { "\(milestone.title) · \(Self.day($0))" } ?? milestone.title)
           .font(.app(.bold, 14))
       }
-      .foregroundStyle(reachedAt != nil ? C.rose : C.ink)
+      .foregroundStyle(reachedAt != nil ? C.roseInk : C.ink)
       .padding(.horizontal, 14)
       .padding(.vertical, 10)
       .background(reachedAt != nil ? C.roseSoft : C.bg, in: Capsule())

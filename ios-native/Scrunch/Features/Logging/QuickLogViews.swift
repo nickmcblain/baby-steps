@@ -23,7 +23,7 @@ struct NappyView: View {
       LoggedAtField(value: $loggedAt)
       WrapLayout {
         Pill(label: "Wee", selected: kind == .wee, tint: C.amberSoft, ink: C.ink) { kind = .wee }
-        Pill(label: "Poo", selected: kind == .poo, tint: C.peachSoft, ink: C.peach) { kind = .poo }
+        Pill(label: "Poo", selected: kind == .poo, tint: C.peachSoft, ink: C.peachInk) { kind = .poo }
         Pill(label: "Both", selected: kind == .both) { kind = .both }
       }
       .accessibilityElement(children: .contain)
@@ -163,7 +163,7 @@ struct ActivityLogView: View {
       FieldLabel("Type")
       WrapLayout {
         ForEach(Self.presets, id: \.self) { item in
-          Pill(label: LocalizedStringKey(item), selected: preset == item, tint: C.purpleSoft, ink: C.purple) { preset = item }
+          Pill(label: LocalizedStringKey(item), selected: preset == item, tint: C.purpleSoft, ink: C.purpleInk) { preset = item }
         }
       }
       if preset == "Other" {
@@ -172,7 +172,7 @@ struct ActivityLogView: View {
       FieldLabel("Duration")
       WrapLayout {
         ForEach(Self.quick, id: \.self) { m in
-          Pill(label: "\(m)m", selected: Double(minutes) == Double(m), tint: C.purpleSoft, ink: C.purple) { minutes = String(m) }
+          Pill(label: "\(m)m", selected: Double(minutes) == Double(m), tint: C.purpleSoft, ink: C.purpleInk) { minutes = String(m) }
         }
       }
       FormField(label: "Minutes", text: $minutes, placeholder: "Optional", keyboard: .numberPad)

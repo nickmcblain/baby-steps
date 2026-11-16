@@ -63,7 +63,7 @@ struct FloatingDock: View {
       Button(action: onAdd) {
         Image(systemName: "plus")
           .font(.system(size: 20, weight: .semibold))
-          .foregroundStyle(.white)
+          .foregroundStyle(C.onAccent)
           .frame(width: height, height: height)
           .background(C.teal, in: Circle())
           .cardShadow(opacity: 0.2)

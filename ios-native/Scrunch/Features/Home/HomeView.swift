@@ -304,7 +304,7 @@ struct HomeView: View {
       if let nextWindow, let baby {
         Button { router.push(baby.id, .sleepTimer) } label: {
           AdaptiveStack(spacing: 4) {
-            Text(HomeCopy.countdownLabel(nextWindow)).font(.app(.medium, 13)).foregroundStyle(C.purple)
+            Text(HomeCopy.countdownLabel(nextWindow)).font(.app(.medium, 13)).foregroundStyle(C.purpleInk)
             Spacer(minLength: 0)
             Text(HomeCopy.countdown(nextWindow.inMs)).font(.app(.bold, 16)).foregroundStyle(C.ink)
           }

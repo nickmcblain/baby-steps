@@ -50,7 +50,7 @@ struct PickerSheet<Content: View>: View {
       Button(action: onConfirm) {
         Text(confirm)
           .font(.app(.bold, 16))
-          .foregroundStyle(.white)
+          .foregroundStyle(C.onAccent)
           .frame(maxWidth: .infinity, minHeight: 52)
           .background(C.teal, in: Capsule())
       }
@@ -170,7 +170,7 @@ struct WeightField: View {
       PickerSheet(confirm: "Use this weight", onConfirm: { open = false }) {
         WrapLayout {
           Pill(label: "Kilograms", selected: unit == .kg) { switchUnit(.kg) }
-          Pill(label: "Pounds & oz", selected: unit == .lb, tint: C.peachSoft, ink: C.peach) { switchUnit(.lb) }
+          Pill(label: "Pounds & oz", selected: unit == .lb, tint: C.peachSoft, ink: C.peachInk) { switchUnit(.lb) }
         }
         HStack(spacing: 4) {
           if unit == .kg {
@@ -241,7 +241,7 @@ struct HeightField: View {
       PickerSheet(confirm: "Use this height", onConfirm: { open = false }) {
         WrapLayout {
           Pill(label: "Centimetres", selected: unit == .cm) { switchUnit(.cm) }
-          Pill(label: "Feet & in", selected: unit == .inches, tint: C.skySoft, ink: C.sky) { switchUnit(.inches) }
+          Pill(label: "Feet & in", selected: unit == .inches, tint: C.skySoft, ink: C.skyInk) { switchUnit(.inches) }
         }
         HStack(spacing: 4) {
           if unit == .cm {

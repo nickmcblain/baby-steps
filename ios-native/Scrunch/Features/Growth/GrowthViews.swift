@@ -189,7 +189,7 @@ struct GrowthChart: View {
       ForEach(logs) { point in
         PointMark(x: .value("Month", min(point.month, maxMonth)), y: .value("Logged", point.value))
           .symbol {
-            Circle().fill(C.teal).frame(width: 10, height: 10).overlay(Circle().stroke(.white, lineWidth: 2))
+            Circle().fill(C.teal).frame(width: 10, height: 10).overlay(Circle().stroke(C.card, lineWidth: 2))
           }
       }
     }

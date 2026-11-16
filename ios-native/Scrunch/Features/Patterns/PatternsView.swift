@@ -51,10 +51,10 @@ struct PatternsView: View {
 
   private var statInk: Color {
     switch kind {
-    case .sleep: C.purple
+    case .sleep: C.purpleInk
     case .feed: C.tealDark
-    case .tummy: C.sky
-    case .nappy: C.peach
+    case .tummy: C.skyInk
+    case .nappy: C.peachInk
     }
   }
 
@@ -155,7 +155,7 @@ struct PatternsView: View {
           Button { days = range } label: {
             Text("\(range) days")
               .font(.app(.bold, 14))
-              .foregroundStyle(days == range ? C.card : C.muted)
+              .foregroundStyle(days == range ? C.onAccent : C.muted)
               .padding(.horizontal, 16)
               .padding(.vertical, 8)
               .background(days == range ? accent : C.card, in: Capsule())

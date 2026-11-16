@@ -59,10 +59,11 @@ struct GlanceView: View {
 
   private var dark: Bool { scheme == .dark }
   private var ink: Color { dark ? Color(hex: 0xF3F4F6) : Color(hex: 0x12141A) }
-  private var muted: Color { dark ? Color(hex: 0x9AA0A8) : Color(hex: 0x8A9099) }
-  private var purple: Color { dark ? Color(hex: 0x8B80FF) : Color(hex: 0x6D5EF5) }
-  private var teal: Color { dark ? Color(hex: 0x5EE0D2) : Color(hex: 0x0B9E90) }
-  private let peach = Color(hex: 0xFF8A65)
+  // Text colours match the app's `muted` and `…Ink` tokens: 4.5:1 on the widget background.
+  private var muted: Color { dark ? Color(hex: 0xA3A9B1) : Color(hex: 0x646A74) }
+  private var purple: Color { dark ? Color(hex: 0xA59DFF) : Color(hex: 0x5B4FE0) }
+  private var teal: Color { dark ? Color(hex: 0x5EE0D2) : Color(hex: 0x0F766E) }
+  private var peach: Color { dark ? Color(hex: 0xFF9E7F) : Color(hex: 0xB8461F) }
 
   var body: some View {
     content

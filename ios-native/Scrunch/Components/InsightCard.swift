@@ -62,8 +62,8 @@ struct InsightCard: View {
     switch kind {
     case .nextFeed: ("drop.fill", C.tealSoft, C.tealDark)
     case .breastSide: ("arrow.left.arrow.right", C.tealSoft, C.tealDark)
-    case .lastNappy: ("circle.grid.2x2.fill", C.peachSoft, C.peach)
-    case .awake: ("sun.max.fill", C.purpleSoft, C.purple)
+    case .lastNappy: ("circle.grid.2x2.fill", C.peachSoft, C.peachInk)
+    case .awake: ("sun.max.fill", C.purpleSoft, C.purpleInk)
     case .tonightTog: ("moon.stars.fill", C.amberSoft, C.ink)
     }
   }

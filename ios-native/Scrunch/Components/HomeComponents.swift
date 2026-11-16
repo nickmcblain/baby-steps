@@ -67,7 +67,7 @@ struct WeekStrip: View {
             if selected {
               RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(C.card)
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color(hex: 0xE4E6EA), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(C.line, lineWidth: 1))
             }
           }
           // Unselected days have no fill, so without this only the glyphs are tappable.
@@ -92,7 +92,7 @@ struct DayRhythmBar: View {
   var embedded = true
   let onTap: () -> Void
 
-  private let napFill = Color(hex: 0xC4BEF8)
+  private let napFill = C.napFill
   private let ticks = [7, 13, 19, 1].map { WeekGrid.formatHourLabel($0) }
 
   var body: some View {
@@ -100,7 +100,7 @@ struct DayRhythmBar: View {
       if !embedded {
         Text(rhythm.source == .logs ? "Usual day" : "Typical day")
           .font(.app(.medium, 12))
-          .foregroundStyle(C.purple)
+          .foregroundStyle(C.purpleInk)
       }
       Button(action: onTap) {
         GeometryReader { geo in

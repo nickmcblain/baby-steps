@@ -66,7 +66,7 @@ struct NewBabyView: View {
               .fill(careConsent ? C.teal : C.card)
               .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(careConsent ? C.teal : C.tealDark, lineWidth: 2))
             if careConsent {
-              Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+              Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).foregroundStyle(C.onAccent)
             }
           }
           .frame(width: 24, height: 24)
