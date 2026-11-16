@@ -173,7 +173,7 @@ struct AskView: View {
         Button { Task { await send(nil) } } label: {
           Image(systemName: "arrow.up")
             .font(.system(size: 20, weight: .bold))
-            .foregroundStyle(.white)
+            .foregroundStyle(C.onAccent)
             .frame(width: 48, height: 48)
             .background(C.teal, in: Circle())
             .opacity(canSend ? 1 : 0.45)
@@ -247,7 +247,7 @@ struct AskView: View {
   private func userBubble(_ text: String) -> some View {
     Text(text)
       .font(.app(.body, 15))
-      .foregroundStyle(.white)
+      .foregroundStyle(C.onAccent)
       .lineSpacing(4)
       .padding(.horizontal, 14)
       .padding(.vertical, 12)

@@ -45,7 +45,6 @@ struct ScrunchApp: App {
           MissingConfigView()
         }
       }
-      .preferredColorScheme(.light)
       .tint(C.teal)
       .task { entitlements.start() }
       #if DEBUG

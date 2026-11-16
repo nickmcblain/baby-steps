@@ -414,7 +414,7 @@ struct IconWell: View {
   let systemImage: String
   let tint: Color
   var size: CGFloat = 40
-  var ink: Color = C.onInk
+  var ink: Color = C.onAccent
 
   var body: some View {
     Image(systemName: systemImage)

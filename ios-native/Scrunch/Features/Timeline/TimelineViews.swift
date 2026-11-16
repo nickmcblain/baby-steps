@@ -264,7 +264,7 @@ private struct SwipeToDelete: ViewModifier {
       .background(alignment: .trailing) {
         Image(systemName: "trash.fill")
           .font(.system(size: 18, weight: .bold))
-          .foregroundStyle(offset < -threshold ? C.onAccent : C.danger)
+          .foregroundStyle(offset < -threshold ? C.onDanger : C.danger)
           .frame(width: max(0, -offset), alignment: .center)
           .frame(maxHeight: .infinity)
           .background(offset < -threshold ? C.danger : C.danger.opacity(0.15), in: RoundedRectangle(cornerRadius: 22, style: .continuous))

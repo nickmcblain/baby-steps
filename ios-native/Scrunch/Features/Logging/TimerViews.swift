@@ -116,6 +116,7 @@ struct DurationTimerView: View {
   private var model: TimerScreenModel { TimerScreenModel(babyId: babyId, kind: kind, timers: timers) }
   private var isSleep: Bool { kind == .sleep }
   private var accent: Color { isSleep ? C.purple : C.sky }
+  private var accentInk: Color { isSleep ? C.purpleInk : C.skyInk }
 
   var body: some View {
     let session = model.session
@@ -133,10 +134,10 @@ struct DurationTimerView: View {
       Button { Task { await toggle() } } label: {
         VStack(spacing: 10) {
           PlayPauseIcon(running: running, tint: accent)
-          ClockText(session: session, value: { $0.elapsed(now: $1) }, font: .app(.displayBold, 48), color: running ? .white : C.ink)
+          ClockText(session: session, value: { $0.elapsed(now: $1) }, font: .app(.displayBold, 48), color: running ? C.onAccent : C.ink)
           Text(running ? "Tap to pause" : elapsed > 0 ? "Tap to resume" : "Tap to start")
             .font(.app(.bold, 15))
-            .foregroundStyle(running ? .white.opacity(0.9) : accent)
+            .foregroundStyle(running ? C.onAccent : accentInk)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -280,14 +281,14 @@ struct FeedTimerView: View {
       VStack(spacing: 8) {
         Text(label)
           .font(.app(.bold, 15))
-          .foregroundStyle(running ? .white.opacity(0.85) : C.muted)
+          .foregroundStyle(running ? C.onAccent : C.muted)
           .fixedSize(horizontal: false, vertical: true)
           .accessibilityLabel(sideName)
         PlayPauseIcon(running: running, tint: C.teal)
-        ClockText(session: session, value: { $0.sideElapsed(side, now: $1) }, font: .app(.displayBold, 36), color: running ? .white : C.ink)
+        ClockText(session: session, value: { $0.sideElapsed(side, now: $1) }, font: .app(.displayBold, 36), color: running ? C.onAccent : C.ink)
         Text(running ? "Tap to pause" : ms > 0 ? "Tap to resume" : "Tap to start")
           .font(.app(.bold, 14))
-          .foregroundStyle(running ? .white.opacity(0.9) : C.tealDark)
+          .foregroundStyle(running ? C.onAccent : C.tealDark)
       }
       .frame(maxWidth: .infinity)
       .padding(.vertical, 28)

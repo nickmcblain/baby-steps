@@ -126,7 +126,7 @@ struct UndoToastView: View {
     Button { Task { await action() } } label: {
       Text(text)
         .font(.app(.bold, 15))
-        .foregroundStyle(C.teal)
+        .foregroundStyle(C.tealDark)
         .padding(.horizontal, 12)
         .frame(minHeight: 44)
         .contentShape(Rectangle())

@@ -17,7 +17,7 @@ struct ClothingView: View {
 
       WrapLayout(centered: true) {
         Pill(label: "°C", selected: !fahrenheit) { fahrenheit = false }
-        Pill(label: "°F", selected: fahrenheit, tint: C.peachSoft, ink: C.peach) { fahrenheit = true }
+        Pill(label: "°F", selected: fahrenheit, tint: C.peachSoft, ink: C.peachInk) { fahrenheit = true }
       }
       .frame(maxWidth: .infinity)
 
@@ -70,7 +70,7 @@ struct ClothingView: View {
           if advice.overheat {
             Text(Clothing.overheatCheck)
               .font(.app(.bold, 15))
-              .foregroundStyle(C.peach)
+              .foregroundStyle(C.peachInk)
               .padding(12)
               .frame(maxWidth: .infinity, alignment: .leading)
               .background(C.peachSoft, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))

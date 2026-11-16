@@ -17,7 +17,7 @@ struct BabyAvatar: View {
       Circle().fill(C.purpleSoft)
       Text(name.prefix(1).uppercased())
         .font(.app(.displayBold, size * 0.45))
-        .foregroundStyle(C.purple)
+        .foregroundStyle(C.purpleInk)
       if let url = (photo.value ?? nil).flatMap({ URL(string: $0) }) {
         AsyncImage(url: url) { image in
           image.resizable().scaledToFill()

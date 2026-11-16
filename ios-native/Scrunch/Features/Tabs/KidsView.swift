@@ -153,7 +153,7 @@ struct KidsView: View {
   private func shareLabel(_ title: LocalizedStringKey, systemImage: String) -> some View {
     Label(title, systemImage: systemImage)
       .font(.app(.bold, 15))
-      .foregroundStyle(C.purple)
+      .foregroundStyle(C.purpleInk)
       .padding(.horizontal, 16)
       .frame(minHeight: 40)
       .background(C.purpleSoft, in: Capsule())

@@ -29,7 +29,10 @@ final class AccessibilityAuditTests: XCTestCase {
     Screen(path: "baby/clothing", ready: "Clothing"),
   ]
 
-  /// Colour contrast is owned by the "Dark mode and AA contrast" PR; drop this once it lands.
+  /// Contrast stays excluded: Xcode's audit flags custom-font text and capsule buttons even
+  /// when the token pair is ≥4.5:1 (e.g. ink/muted on bg, onAccent on teal). Those ratios
+  /// were checked against WCAG and confirmed on a screenshot. Re-enable once the audit
+  /// can measure them reliably.
   private static let auditTypes: XCUIAccessibilityAuditType = XCUIAccessibilityAuditType.all.subtracting(.contrast)
 
   override func setUp() {

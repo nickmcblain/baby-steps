@@ -55,7 +55,7 @@ struct QuickLogPanel: View {
         starter("Right", detail: suggested == .right ? "Next side" : "Breastfeed", accessibility: "Start breastfeed, right side", symbol: "play.fill", filled: suggested == .right, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
           await start(.feed, side: .right)
         }
-        starter("Sleep", detail: "Start timer", accessibility: "Start sleep timer", symbol: "moon.fill", filled: false, tint: C.purple, soft: C.purpleSoft, ink: C.purple) {
+        starter("Sleep", detail: "Start timer", accessibility: "Start sleep timer", symbol: "moon.fill", filled: false, tint: C.purple, soft: C.purpleSoft, ink: C.purpleInk) {
           await start(.sleep)
         }
       }
@@ -146,14 +146,14 @@ struct QuickLogPanel: View {
       .resizable()
       .scaledToFit()
       .frame(width: nappyIconSize, height: nappyIconSize)
-      .foregroundStyle(C.peach)
+      .foregroundStyle(C.peachInk)
       .overlay(alignment: .bottomTrailing) {
         HStack(spacing: 1) {
           if nappy != .dirty { Image(systemName: "drop.fill") }
           if nappy != .wet { Image(systemName: "circle.fill").scaleEffect(0.7) }
         }
         .font(.system(size: nappyIconSize * 0.4, weight: .bold))
-        .foregroundStyle(C.peach)
+        .foregroundStyle(C.peachInk)
         .padding(1.5)
         .background(C.peachSoft, in: Capsule())
         .offset(x: nappyIconSize * 0.3, y: nappyIconSize * 0.15)
