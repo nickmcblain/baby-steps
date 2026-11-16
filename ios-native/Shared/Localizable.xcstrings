@@ -501,6 +501,9 @@
     "Dots: your logs (%@)" : {
 
     },
+    "Double tap to change." : {
+
+    },
     "Dream feed" : {
 
     },
@@ -1336,6 +1339,9 @@
 
     },
     "Seedy mustard" : {
+
+    },
+    "Selected date, %@" : {
 
     },
     "Send" : {

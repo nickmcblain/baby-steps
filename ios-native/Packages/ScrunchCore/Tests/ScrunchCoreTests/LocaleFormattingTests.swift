@@ -93,6 +93,9 @@ final class LocaleFormattingTests: XCTestCase {
     XCTAssertEqual(gb.dayMonthTime(at(2026, 7, 20, 14, 30)), "20 Aug · 14:30")
     XCTAssertEqual(us.dayMonthTime(at(2026, 7, 20, 14, 30)), "Aug 20 · 2:30\u{202F}PM")
     XCTAssertEqual(Format.dob(Format.dobMs(year: 2026, month: 1, day: 3), calendar: calendar("en_US")), "Jan 3, 2026")
+    XCTAssertEqual(gb.weekdayDate(at(2026, 10, 16, 9), now: at(2026, 10, 16, 15)), "Monday 16 November")
+    XCTAssertEqual(us.weekdayDate(at(2026, 10, 16, 9), now: at(2026, 10, 16, 15)), "Monday, November 16")
+    XCTAssertEqual(gb.weekdayDate(at(2025, 10, 7, 9), now: at(2026, 10, 16, 15)), "Friday, 7 November 2025")
   }
 
   func testWeekRange() {
