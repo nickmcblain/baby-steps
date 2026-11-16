@@ -23,65 +23,48 @@ struct ProgressRing: View {
   }
 }
 
-/// Port of components/WeekStrip.tsx (Monday-first week of the selected day).
-struct WeekStrip: View {
-  let selectedDayStart: EpochMs
-  let onSelect: (EpochMs) -> Void
+/// Month calendar for picking the day Home is showing.
+struct HomeDatePickerSheet: View {
+  @Binding var dayStart: EpochMs
+  @Environment(\.dismiss) private var dismiss
+  @State private var pickerDate: Date
 
-  @Environment(\.dynamicTypeSize) private var typeSize
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  init(dayStart: Binding<EpochMs>) {
+    self._dayStart = dayStart
+    self._pickerDate = State(initialValue: Date(epochMs: dayStart.wrappedValue))
+  }
 
   var body: some View {
-    if typeSize.isAccessibilitySize {
-      ScrollViewReader { proxy in
-        ScrollView(.horizontal, showsIndicators: false) { days }
-          .scrollClipDisabled()
-          .onAppear { proxy.scrollTo(selectedDayStart, anchor: .center) }
-          .onChange(of: selectedDayStart) { _, day in
-            withAnimation(reduceMotion ? nil : .default) { proxy.scrollTo(day, anchor: .center) }
-          }
+    NavigationStack {
+      DatePicker(selection: $pickerDate, in: ...Date(), displayedComponents: .date) {
+        Text("Pick a date")
       }
-    } else {
-      days
+      .datePickerStyle(.graphical)
+      .labelsHidden()
+      .tint(C.teal)
+      .padding(.horizontal, 8)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+      .background(C.bg.ignoresSafeArea())
+      .navigationTitle("Pick a date")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .topBarLeading) {
+          Button("Today") { select(Date()) }
+        }
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Done") { dismiss() }
+            .fontWeight(.semibold)
+        }
+      }
+      .onChange(of: pickerDate) { _, date in
+        select(date)
+      }
     }
   }
 
-  private var days: some View {
-    let weekStart = WeekGrid.startOfWeekMonday(selectedDayStart)
-    let todayStart = WeekGrid.startOfLocalDay(Date().epochMs)
-    let wide = typeSize.isAccessibilitySize
-    return HStack(spacing: 4) {
-      ForEach(WeekGrid.weekDayLabels(weekStart), id: \.dayStartMs) { day in
-        let selected = day.dayStartMs == selectedDayStart
-        let isToday = day.dayStartMs == todayStart
-        let ink: Color = selected ? C.ink : (isToday ? C.tealDark : C.muted)
-        Button { onSelect(day.dayStartMs) } label: {
-          VStack(spacing: 4) {
-            Text(day.label).font(.app(.medium, 12, relativeTo: .caption))
-            Text("\(day.dateNum)").font(.app(.bold, 16))
-          }
-          .foregroundStyle(ink)
-          .frame(minWidth: wide ? 96 : nil, maxWidth: .infinity)
-          .padding(.vertical, 10)
-          .background {
-            if selected {
-              RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(C.card)
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(C.line, lineWidth: 1))
-            }
-          }
-          // Unselected days have no fill, so without this only the glyphs are tappable.
-          .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .sensoryFeedback(.selection, trigger: selected)
-        .accessibilityLabel(Text(Date(epochMs: day.dayStartMs), format: .dateTime.weekday(.wide).day().month(.wide)))
-        .accessibilityValue(isToday ? "Today" : "")
-        .accessibilityInputLabels([day.label, "\(day.label) \(day.dateNum)"])
-        .accessibilityAddTraits(selected ? .isSelected : [])
-        .id(day.dayStartMs)
-      }
-    }
+  private func select(_ date: Date) {
+    dayStart = WeekGrid.startOfLocalDay(date.epochMs)
+    dismiss()
   }
 }
 

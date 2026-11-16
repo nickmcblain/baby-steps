@@ -161,6 +161,16 @@ public struct DisplayFormat: Sendable {
     Date(epochMs: ms).formatted(dateStyle.weekday(.abbreviated))
   }
 
+  /// "Monday 16 November" (en-GB), with the year added when it isn't this year.
+  public func weekdayDate(_ ms: EpochMs, now: EpochMs = Date().epochMs) -> String {
+    let thisYear = calendar.component(.year, from: Date(epochMs: now))
+    let year = calendar.component(.year, from: Date(epochMs: ms))
+    let style = year == thisYear
+      ? dateStyle.weekday(.wide).day().month(.wide)
+      : dateStyle.weekday(.wide).day().month(.wide).year()
+    return Date(epochMs: ms).formatted(style)
+  }
+
   /// "3–9 Aug" or "27 Jul – 2 Aug" (en-GB); "Aug 3 – 9" (en-US).
   public func dayRange(_ startMs: EpochMs, _ endMs: EpochMs) -> String {
     let style = Date.IntervalFormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone).day().month(.abbreviated)

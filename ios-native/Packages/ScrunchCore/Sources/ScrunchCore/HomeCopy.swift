@@ -68,6 +68,14 @@ public enum HomeCopy {
     countdown.kind == .night && countdown.inMs > 0 ? String(localized: "Bedtime", bundle: .module) : String(localized: "Next nap", bundle: .module)
   }
 
+  /// "Today", or a short date such as "Mon 16 Nov" (en-GB).
+  public static func selectedDayLabel(dayStart: EpochMs, now: EpochMs, calendar: Calendar = .current) -> String {
+    if calendar.localMidnight(dayStart) == calendar.localMidnight(now) {
+      return String(localized: "Today", bundle: .module)
+    }
+    return LoggedAt.shortDay(dayStart, now: now, calendar: calendar)
+  }
+
   // MARK: Freshness
 
   public enum Freshness: Equatable, Sendable {

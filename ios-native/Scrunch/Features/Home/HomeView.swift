@@ -14,6 +14,7 @@ struct HomeView: View {
   @State private var dash = Live<Dashboard>()
   @State private var patterns = Live<SleepPatterns>()
   @State private var dayStart = WeekGrid.startOfLocalDay(Date().epochMs)
+  @State private var pickingDate = false
   @State private var now = Date().epochMs
   @State private var rangeEndMs = Date().epochMs
 
@@ -100,6 +101,13 @@ struct HomeView: View {
     .task(id: SideEffectKey(baby: baby, napAt: napAt, asleep: asleep, lastFeed: dash.value?.lastFeed, lastNappy: dash.value?.lastNappy, sleepMinutes: summary.value?.sleepMinutes)) {
       await syncSideEffects()
     }
+    .sheet(isPresented: $pickingDate) {
+      HomeDatePickerSheet(dayStart: $dayStart)
+        .adaptiveDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(32)
+        .presentationBackground(C.bg)
+    }
   }
 
   /// The floating dock's height, so the quick-log panel sits just above it.
@@ -165,6 +173,37 @@ struct HomeView: View {
     }
   }
 
+  private var homeHeader: some View {
+    AdaptiveStack(alignment: .firstTextBaseline, spacing: 12) {
+      brandHeader(baby?.name ?? " ")
+        .layoutPriority(1)
+      dateButton
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+  }
+
+  private var dateButton: some View {
+    let fullDate = DisplayFormat.current.weekdayDate(dayStart, now: now)
+    return Button { pickingDate = true } label: {
+      HStack(spacing: 4) {
+        Text(HomeCopy.selectedDayLabel(dayStart: dayStart, now: now))
+          .font(.app(.medium, 16, relativeTo: .subheadline))
+        Image(systemName: "chevron.down")
+          .font(.app(.medium, 11, relativeTo: .caption))
+          .accessibilityHidden(true)
+      }
+      .foregroundStyle(C.tealDark)
+      .padding(.vertical, 10)
+      .padding(.leading, 8)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .sensoryFeedback(.selection, trigger: dayStart)
+    .accessibilityLabel(Text("Selected date, \(fullDate)"))
+    .accessibilityHint("Double tap to change.")
+    .accessibilityInputLabels(["Today", "Pick a date"])
+  }
+
   @ViewBuilder
   private func freshnessCard(_ baby: Baby) -> some View {
     switch freshness {
@@ -192,7 +231,7 @@ struct HomeView: View {
 
   @ViewBuilder
   private var content: some View {
-    brandHeader(baby?.name ?? " ")
+    homeHeader
 
     if let baby {
       AdaptiveStack(spacing: 8) {
@@ -203,8 +242,6 @@ struct HomeView: View {
       freshnessCard(baby)
       insightCard(baby)
     }
-
-    WeekStrip(selectedDayStart: dayStart) { dayStart = $0 }
 
     sleepBlock
 
