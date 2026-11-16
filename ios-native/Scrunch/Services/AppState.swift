@@ -32,7 +32,7 @@ enum Route: Hashable {
 
 enum BabyScreen: Hashable {
   case edit, customEvent
-  case feedTimer, feedManual(TimerSession.Handoff?), feedPatterns
+  case feedTimer, feedManual(TimerSession.Handoff?, FeedKind), feedPatterns
   case sleepTimer, sleepManual(TimerSession.Handoff?), sleepPatterns
   case tummyTimer, tummyManual(TimerSession.Handoff?), tummyPatterns
   case pumpTimer, pumpManual(TimerSession.Handoff?)

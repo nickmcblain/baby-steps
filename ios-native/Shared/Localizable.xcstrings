@@ -312,10 +312,16 @@
     "Bottle" : {
 
     },
+    "Bottle feed" : {
+
+    },
     "Boy" : {
 
     },
     "Breast" : {
+
+    },
+    "Breast feed" : {
 
     },
     "Breastfeed" : {
@@ -499,6 +505,9 @@
 
     },
     "Dots: your logs (%@)" : {
+
+    },
+    "Double tap to change." : {
 
     },
     "Dream feed" : {
@@ -1109,6 +1118,9 @@
     "Opens the add log sheet" : {
 
     },
+    "Opens the amount entry" : {
+
+    },
     "Opens the sleep timer" : {
 
     },
@@ -1338,6 +1350,9 @@
     "Seedy mustard" : {
 
     },
+    "Selected date, %@" : {
+
+    },
     "Send" : {
 
     },
@@ -1489,6 +1504,15 @@
 
     },
     "Starts a sleep timer for your baby." : {
+
+    },
+    "Starts timer" : {
+
+    },
+    "Starts timer on left side" : {
+
+    },
+    "Starts timer on right side" : {
 
     },
     "Stop" : {
