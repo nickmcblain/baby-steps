@@ -15,10 +15,13 @@ struct SignInView: View {
         Text("Scrunch")
           .font(.app(.displayBold, 18))
           .foregroundStyle(C.tealDark)
+          .accessibilityLabel("Scrunch")
         Text("Keep the little hours in one place.")
           .font(.app(.displayBold, 32, relativeTo: .largeTitle))
           .foregroundStyle(C.ink)
           .lineSpacing(2)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityAddTraits(.isHeader)
       }
       .padding(.horizontal, 24)
       .padding(.top, 28)

@@ -28,10 +28,29 @@ struct WeekStrip: View {
   let selectedDayStart: EpochMs
   let onSelect: (EpochMs) -> Void
 
+  @Environment(\.dynamicTypeSize) private var typeSize
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
   var body: some View {
+    if typeSize.isAccessibilitySize {
+      ScrollViewReader { proxy in
+        ScrollView(.horizontal, showsIndicators: false) { days }
+          .scrollClipDisabled()
+          .onAppear { proxy.scrollTo(selectedDayStart, anchor: .center) }
+          .onChange(of: selectedDayStart) { _, day in
+            withAnimation(reduceMotion ? nil : .default) { proxy.scrollTo(day, anchor: .center) }
+          }
+      }
+    } else {
+      days
+    }
+  }
+
+  private var days: some View {
     let weekStart = WeekGrid.startOfWeekMonday(selectedDayStart)
     let todayStart = WeekGrid.startOfLocalDay(Date().epochMs)
-    HStack(spacing: 4) {
+    let wide = typeSize.isAccessibilitySize
+    return HStack(spacing: 4) {
       ForEach(WeekGrid.weekDayLabels(weekStart), id: \.dayStartMs) { day in
         let selected = day.dayStartMs == selectedDayStart
         let isToday = day.dayStartMs == todayStart
@@ -42,7 +61,7 @@ struct WeekStrip: View {
             Text("\(day.dateNum)").font(.app(.bold, 16))
           }
           .foregroundStyle(ink)
-          .frame(maxWidth: .infinity)
+          .frame(minWidth: wide ? 96 : nil, maxWidth: .infinity)
           .padding(.vertical, 10)
           .background {
             if selected {
@@ -54,7 +73,11 @@ struct WeekStrip: View {
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.selection, trigger: selected)
+        .accessibilityLabel(Text(Date(epochMs: day.dayStartMs), format: .dateTime.weekday(.wide).day().month(.wide)))
+        .accessibilityValue(isToday ? "Today" : "")
+        .accessibilityInputLabels([day.label, "\(day.label) \(day.dateNum)"])
         .accessibilityAddTraits(selected ? .isSelected : [])
+        .id(day.dayStartMs)
       }
     }
   }
@@ -96,19 +119,36 @@ struct DayRhythmBar: View {
         .background(C.line)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
       }
+      .frame(minHeight: 44)
+      .contentShape(Rectangle())
       .buttonStyle(.plain)
-      .accessibilityLabel(rhythm.caption)
-      HStack {
-        ForEach(ticks, id: \.self) { tick in
-          Text(tick).font(.app(.medium, 11, relativeTo: .caption2)).foregroundStyle(C.muted)
-          if tick != ticks.last { Spacer() }
-        }
+      .accessibilityLabel(rhythm.source == .logs ? "Usual day" : "Typical day")
+      .accessibilityValue(rhythm.caption)
+      .accessibilityHint("Opens sleep patterns")
+      .accessibilityInputLabels(["Day rhythm", "Usual day", "Typical day"])
+      ViewThatFits(in: .horizontal) {
+        tickRow(ticks)
+        tickRow(ticks.enumerated().filter { $0.offset.isMultiple(of: 2) }.map(\.element))
+        tickRow([ticks[0]])
       }
+      .accessibilityHidden(true)
     }
     .padding(embedded ? 0 : 16)
     .background {
       if !embedded {
         RoundedRectangle(cornerRadius: Radius.tile, style: .continuous).fill(C.card).cardShadow()
+      }
+    }
+  }
+
+  private func tickRow(_ labels: [String]) -> some View {
+    HStack {
+      ForEach(labels, id: \.self) { tick in
+        Text(tick)
+          .font(.app(.medium, 11, relativeTo: .caption))
+          .foregroundStyle(C.muted)
+          .fixedSize()
+        if tick != labels.last { Spacer(minLength: 4) }
       }
     }
   }
@@ -122,7 +162,7 @@ struct DayRhythmBar: View {
   }
 }
 
-/// Hairline-topped one-line footer used under the home cards.
+/// Hairline-topped footer used under the home cards.
 struct LastStrip: View {
   let text: String
   var inset: CGFloat = 12
@@ -131,7 +171,7 @@ struct LastStrip: View {
 
   var body: some View {
     Text(text)
-      .font(.app(.medium, 11, relativeTo: .caption2))
+      .font(.app(.medium, 11, relativeTo: .caption))
       .foregroundStyle(C.muted)
       .lineLimit(2, reservesSpace: reservesTwoLines)
       .fixedSize(horizontal: false, vertical: true)

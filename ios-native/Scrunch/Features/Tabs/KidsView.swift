@@ -28,7 +28,8 @@ struct KidsView: View {
             .cardShadow()
         }
         .buttonStyle(PressScale())
-        CircleIconButton(systemImage: "plus", label: "Add a baby") { router.path.append(.newBaby) }
+        .accessibilityInputLabels(["Join with a code", "Join", "Partner"])
+        CircleIconButton(systemImage: "plus", label: "Add a baby", spokenNames: ["Add", "Plus", "New baby"]) { router.path.append(.newBaby) }
           .padding(.leading, 8)
       }
 
@@ -71,7 +72,7 @@ struct KidsView: View {
         joinOpen = false
         open(id)
       }
-      .presentationDetents([.height(360)])
+      .adaptiveDetents([.height(360)])
       .presentationDragIndicator(.visible)
       .presentationCornerRadius(32)
       .presentationBackground(C.bg)
@@ -190,7 +191,7 @@ struct JoinPartnerSheet: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text("Join with a code").font(.app(.bold, 22)).foregroundStyle(C.ink)
+      Text("Join with a code").font(.app(.bold, 22)).foregroundStyle(C.ink).accessibilityAddTraits(.isHeader)
       Text("Enter the 6-character code your partner sent. You'll both see the same feeds, sleeps and nappies.")
         .font(.app(.body, 15)).foregroundStyle(C.muted)
         .fixedSize(horizontal: false, vertical: true)

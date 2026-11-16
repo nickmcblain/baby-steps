@@ -65,14 +65,23 @@ struct GlanceView: View {
   private let peach = Color(hex: 0xFF8A65)
 
   var body: some View {
+    content
+      // A widget has a fixed size, so text scales with Dynamic Type up to what still fits.
+      .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+  }
+
+  @ViewBuilder
+  private var content: some View {
     if family == .systemMedium {
       VStack(alignment: .leading, spacing: 8) {
         HStack {
           header
           Spacer()
           Text(snapshot.sleepToday)
-            .font(.custom("Nunito-SemiBold", size: 12))
+            .font(.custom("Nunito-SemiBold", size: 12, relativeTo: .caption))
             .foregroundStyle(muted)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
         }
         HStack(spacing: 12) {
           row("moon.fill", purple, "Next nap", snapshot.nextNap)
@@ -91,21 +100,24 @@ struct GlanceView: View {
 
   private var header: some View {
     Text(snapshot.babyName)
-      .font(.custom("Fredoka-Bold", size: 17))
+      .font(.custom("Fredoka-Bold", size: 17, relativeTo: .subheadline))
       .foregroundStyle(ink)
       .lineLimit(1)
+      .minimumScaleFactor(0.7)
+      .accessibilityAddTraits(.isHeader)
   }
 
   private func row(_ symbol: String, _ color: Color, _ label: LocalizedStringKey, _ value: String) -> some View {
     HStack(spacing: 8) {
-      Image(systemName: symbol).foregroundStyle(color)
+      Image(systemName: symbol).foregroundStyle(color).accessibilityHidden(true)
       VStack(alignment: .leading, spacing: 0) {
-        Text(label).font(.custom("Nunito-SemiBold", size: 11)).foregroundStyle(color)
-        Text(value).font(.custom("Nunito-Bold", size: 13)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.8)
+        Text(label).font(.custom("Nunito-SemiBold", size: 11, relativeTo: .caption)).foregroundStyle(color).lineLimit(1).minimumScaleFactor(0.8)
+        Text(value).font(.custom("Nunito-Bold", size: 13, relativeTo: .footnote)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.8)
       }
       Spacer(minLength: 0)
     }
-    .accessibilityElement(children: .combine)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("\(label): \(value)")
   }
 }
 

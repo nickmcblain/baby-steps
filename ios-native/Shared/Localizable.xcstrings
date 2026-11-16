@@ -33,10 +33,33 @@
         }
       }
     },
+    "%@ degrees %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ degrees %2$@"
+          }
+        }
+      }
+    },
     "%@ ml" : {
 
     },
     "%@ side" : {
+
+    },
+    "%@ to %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ to %2$@"
+          }
+        }
+      }
+    },
+    "%@ view" : {
 
     },
     "%@ · %@" : {
@@ -63,6 +86,16 @@
     },
     "%@. Lock Screen timer is off in Settings." : {
 
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "en-GB" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
     },
     "%@: %@ of %@%@. %@" : {
       "localizations" : {
@@ -153,6 +186,9 @@
     "Activity" : {
 
     },
+    "Add" : {
+
+    },
     "Add a baby" : {
 
     },
@@ -180,10 +216,16 @@
     "Add boy / girl on Edit →" : {
 
     },
+    "Add boy or girl on Edit" : {
+
+    },
     "Add event" : {
 
     },
     "Add feed" : {
+
+    },
+    "Add log" : {
 
     },
     "Add nappy" : {
@@ -196,6 +238,12 @@
 
     },
     "Add your baby" : {
+
+    },
+    "Adjusts by 0.5 degrees Celsius" : {
+
+    },
+    "Adjusts by 0.9 degrees Fahrenheit" : {
 
     },
     "After bath" : {
@@ -247,6 +295,9 @@
 
     },
     "Back" : {
+
+    },
+    "Back a week" : {
 
     },
     "Bars" : {
@@ -306,6 +357,9 @@
     "Checkbox" : {
 
     },
+    "Clears the timer" : {
+
+    },
     "Clinic visit" : {
 
     },
@@ -321,10 +375,16 @@
     "Connecting…" : {
 
     },
+    "Consent" : {
+
+    },
     "Consent needed" : {
 
     },
     "Continue" : {
+
+    },
+    "Cooler" : {
 
     },
     "Could not log" : {
@@ -391,6 +451,9 @@
 
     },
     "Day" : {
+
+    },
+    "Day rhythm" : {
 
     },
     "Decrease temperature" : {
@@ -534,6 +597,9 @@
     "Formula" : {
 
     },
+    "Forward a week" : {
+
+    },
     "Free nappies used. Open Scrunch to subscribe" : {
 
     },
@@ -567,6 +633,9 @@
     "Hide little firsts" : {
 
     },
+    "History" : {
+
+    },
     "Home" : {
 
     },
@@ -577,6 +646,9 @@
 
     },
     "I am a parent or guardian and I consent to Scrunch storing this baby's care details (such as name, date of birth, growth, and logs) so the app can work. Scrunch is not a medical or healthcare service." : {
+
+    },
+    "I consent" : {
 
     },
     "If you subscribe through the App Store, deleting your account doesn't cancel it. Cancel in your iPhone's Settings first." : {
@@ -595,6 +667,9 @@
 
     },
     "Invite partner" : {
+
+    },
+    "Join" : {
 
     },
     "Join with a code" : {
@@ -622,6 +697,9 @@
 
     },
     "Left" : {
+
+    },
+    "Left side" : {
 
     },
     "Length" : {
@@ -845,6 +923,9 @@
     "Make a copy of everything logged for your baby. A PDF is easy to show your health visitor or GP. A CSV opens in Numbers, Excel or Google Sheets." : {
 
     },
+    "Manual entry" : {
+
+    },
     "Medicine" : {
 
     },
@@ -855,6 +936,9 @@
 
     },
     "Mic produced an empty clip. Check mic permission and try again." : {
+
+    },
+    "Microphone" : {
 
     },
     "Microphone needed" : {
@@ -899,10 +983,19 @@
     "Nappy patterns" : {
 
     },
+    "Nappy type" : {
+
+    },
+    "New" : {
+
+    },
     "New baby" : {
 
     },
     "New chat" : {
+
+    },
+    "Next" : {
 
     },
     "Next nap" : {
@@ -992,10 +1085,25 @@
     "Open Scrunch to do that." : {
 
     },
+    "Opens %@ patterns" : {
+
+    },
     "Opens %@’s home" : {
 
     },
+    "Opens a picker" : {
+
+    },
     "Opens in Safari" : {
+
+    },
+    "Opens sleep patterns" : {
+
+    },
+    "Opens the add log sheet" : {
+
+    },
+    "Opens the sleep timer" : {
 
     },
     "Opens the timer" : {
@@ -1005,6 +1113,9 @@
 
     },
     "Ounces" : {
+
+    },
+    "Partner" : {
 
     },
     "Past chats" : {
@@ -1055,6 +1166,9 @@
     "Please confirm you agree to save this baby's details before continuing." : {
 
     },
+    "Plus" : {
+
+    },
     "Poo" : {
 
     },
@@ -1062,6 +1176,9 @@
 
     },
     "Potty" : {
+
+    },
+    "Potty type" : {
 
     },
     "Pounds" : {
@@ -1076,6 +1193,9 @@
     "Prefers left side first" : {
 
     },
+    "Previous" : {
+
+    },
     "Previous week" : {
 
     },
@@ -1086,6 +1206,9 @@
 
     },
     "Pump timer" : {
+
+    },
+    "Question" : {
 
     },
     "Quick log" : {
@@ -1113,6 +1236,12 @@
 
     },
     "Right now" : {
+
+    },
+    "Right side" : {
+
+    },
+    "Room temperature" : {
 
     },
     "Rows" : {
@@ -1182,6 +1311,9 @@
     "Saved, but no reminder" : {
 
     },
+    "Saving" : {
+
+    },
     "Scrunch" : {
 
     },
@@ -1224,6 +1356,12 @@
     "Show weights in" : {
 
     },
+    "Shows a day by time-of-day chart" : {
+
+    },
+    "Shows a row per day" : {
+
+    },
     "Side" : {
 
     },
@@ -1231,6 +1369,9 @@
 
     },
     "Sign out of Scrunch?" : {
+
+    },
+    "Skip" : {
 
     },
     "Skip to manual entry" : {
@@ -1338,6 +1479,9 @@
     "Starts a sleep timer for your baby." : {
 
     },
+    "Stop" : {
+
+    },
     "Stop and save" : {
 
     },
@@ -1363,6 +1507,9 @@
 
     },
     "Suggested next side" : {
+
+    },
+    "Summary for %@" : {
 
     },
     "Swimming" : {
@@ -1452,6 +1599,12 @@
     "Title" : {
 
     },
+    "Today" : {
+
+    },
+    "Today's summary" : {
+
+    },
     "Too short" : {
 
     },
@@ -1522,7 +1675,13 @@
     "Vaginal" : {
 
     },
+    "Voice" : {
+
+    },
     "Voice log" : {
+
+    },
+    "Warmer" : {
 
     },
     "We didn’t hear anything. Check Scrunch can use the microphone, then try again." : {
@@ -1583,6 +1742,9 @@
 
     },
     "You'll be asked again before you next use them. Past Ask chats stay in the app until you delete your account." : {
+
+    },
+    "You: %@" : {
 
     },
     "Your logs stay saved to your account. The widget, reminders and any running timer on this phone are cleared." : {

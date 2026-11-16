@@ -9,6 +9,7 @@ struct AddLogSheet: View {
   @Environment(ConvexService.self) private var convex
   @Environment(SaveFeedback.self) private var saveFeedback
   @State private var voice = VoiceLogRecorder()
+  @Environment(\.dynamicTypeSize) private var typeSize
   @Environment(UndoCenter.self) private var undo
   @State private var baby = Live<Baby>()
   @State private var aiConsentOpen = false
@@ -56,7 +57,7 @@ struct AddLogSheet: View {
   var body: some View {
     ScrollView {
       VStack(spacing: 12) {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: typeSize.isAccessibilitySize ? 1 : 3), spacing: 10) {
           ForEach(topTiles) { tileButton($0) }
           Button { Task { await speak() } } label: {
             tileLabel(voice.recording ? "Listening" : "Speak") {
@@ -73,6 +74,7 @@ struct AddLogSheet: View {
           .buttonStyle(PressScale())
           .disabled(voice.busy)
           .accessibilityLabel(voice.recording ? "Stop and send" : "Speak a log or question")
+          .accessibilityInputLabels(voice.recording ? ["Listening", "Stop", "Send"] : ["Speak", "Voice", "Microphone"])
           ForEach(visibleMoreTiles) { tileButton($0) }
         }
         if let status = voice.status {
@@ -80,6 +82,7 @@ struct AddLogSheet: View {
             .font(.app(.medium, 14))
             .foregroundStyle(C.muted)
             .multilineTextAlignment(.center)
+            .accessibilityAddTraits(.updatesFrequently)
         }
       }
       .padding(.horizontal, 16)
@@ -91,6 +94,9 @@ struct AddLogSheet: View {
       await baby.bind(API.babies.get(babyId), convex)
     }
     .onDisappear { voice.cancel() }
+    .onChange(of: voice.status) { _, status in
+      if let status { AccessibilityNotification.Announcement(status).post() }
+    }
     .sheet(isPresented: $aiConsentOpen) {
       AIConsentView(title: "Before you use Speak", onAgree: { aiConsentOpen = false }, onCancel: { aiConsentOpen = false })
         .presentationCornerRadius(32)

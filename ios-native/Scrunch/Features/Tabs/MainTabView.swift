@@ -27,7 +27,7 @@ struct MainTabView: View {
     .toolbar(.hidden, for: .navigationBar)
     .sheet(isPresented: $router.addLogOpen) {
       AddLogSheet(babyId: activeBaby.babyId)
-        .presentationDetents([.height(AddLogSheet.detentHeight), .large])
+        .adaptiveDetents([.height(AddLogSheet.detentHeight), .large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(32)
         .presentationBackground(C.bg)
@@ -40,8 +40,13 @@ struct FloatingDock: View {
   let onAdd: () -> Void
 
   @Environment(Clerk.self) private var clerk
+  @Environment(\.dynamicTypeSize) private var typeSize
 
   private let height: CGFloat = 56
+
+  /// Like the system tab bar: at accessibility sizes the dock shows icons only and
+  /// press-and-hold brings up the Large Content Viewer.
+  private var showsLabels: Bool { !typeSize.isAccessibilitySize }
 
   var body: some View {
     HStack(spacing: 10) {
@@ -65,6 +70,9 @@ struct FloatingDock: View {
       }
       .buttonStyle(PressScale())
       .accessibilityLabel("Log")
+      .accessibilityHint("Opens the add log sheet")
+      .accessibilityInputLabels(["Log", "Add", "Plus", "Add log"])
+      .accessibilityShowsLargeContentViewer { Label("Log", systemImage: "plus") }
     }
     .padding(.horizontal, 16)
     .padding(.top, 8)
@@ -78,7 +86,9 @@ struct FloatingDock: View {
     } label: {
       VStack(spacing: 3) {
         Image(systemName: symbol).font(.system(size: 18, weight: .semibold))
-        Text(label).font(.app(.medium, 11, relativeTo: .caption2))
+        if showsLabels {
+          Text(label).font(.app(.medium, 11, relativeTo: .caption))
+        }
       }
       .foregroundStyle(active ? C.ink : C.muted)
       .frame(maxWidth: .infinity, minHeight: 44)
@@ -87,6 +97,7 @@ struct FloatingDock: View {
     .buttonStyle(PressScale())
     .accessibilityLabel(label)
     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+    .accessibilityShowsLargeContentViewer { Label(label, systemImage: symbol) }
   }
 
   private var profileItem: some View {
@@ -103,8 +114,11 @@ struct FloatingDock: View {
         .frame(width: 22, height: 22)
         .clipShape(Circle())
         .overlay(Circle().stroke(C.ink, lineWidth: active ? 1.5 : 0))
-        Text("Profile").font(.app(.medium, 11, relativeTo: .caption2))
-          .foregroundStyle(active ? C.ink : C.muted)
+        .accessibilityHidden(true)
+        if showsLabels {
+          Text("Profile").font(.app(.medium, 11, relativeTo: .caption))
+            .foregroundStyle(active ? C.ink : C.muted)
+        }
       }
       .frame(maxWidth: .infinity, minHeight: 44)
       .contentShape(Rectangle())
@@ -112,5 +126,6 @@ struct FloatingDock: View {
     .buttonStyle(PressScale())
     .accessibilityLabel("Profile")
     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+    .accessibilityShowsLargeContentViewer { Label("Profile", systemImage: "person.crop.circle") }
   }
 }

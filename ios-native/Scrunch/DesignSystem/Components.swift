@@ -64,14 +64,20 @@ struct Pill: View {
   var selectedInk: Color = C.onInk
   let action: () -> Void
 
+  @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
+
   var body: some View {
     Button(action: action) {
-      Text(label)
-        .font(.app(.bold, 15))
-        .foregroundStyle(selected ? selectedInk : ink)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(selected ? selectedTint : tint, in: Capsule())
+      HStack(spacing: 6) {
+        if selected && differentiateWithoutColor {
+          Image(systemName: "checkmark").font(.system(size: 13, weight: .bold))
+        }
+        Text(label).font(.app(.bold, 15))
+      }
+      .foregroundStyle(selected ? selectedInk : ink)
+      .padding(.horizontal, 16)
+      .padding(.vertical, 12)
+      .background(selected ? selectedTint : tint, in: Capsule())
     }
     .buttonStyle(PressScale())
     .accessibilityAddTraits(selected ? .isSelected : [])
@@ -110,6 +116,8 @@ struct PrimaryButton: View {
     }
     .buttonStyle(PressScale())
     .disabled(disabled || busy)
+    .accessibilityLabel(label)
+    .accessibilityValue(busy ? "Saving" : "")
   }
 }
 
@@ -135,6 +143,8 @@ struct SecondaryButton: View {
 struct CircleIconButton: View {
   let systemImage: String
   let label: LocalizedStringKey
+  /// Extra names Voice Control accepts, e.g. "Add" for a plus.
+  var spokenNames: [LocalizedStringKey] = []
   var ink: Color = C.ink
   let action: () -> Void
 
@@ -149,6 +159,10 @@ struct CircleIconButton: View {
     }
     .buttonStyle(PressScale())
     .accessibilityLabel(label)
+    .accessibilityInputLabels([label] + spokenNames)
+    .accessibilityShowsLargeContentViewer {
+      Label(label, systemImage: systemImage)
+    }
   }
 }
 
@@ -159,27 +173,44 @@ struct FormField: View {
   var axis: Axis = .horizontal
   var keyboard: UIKeyboardType = .default
 
+  @Environment(\.dynamicTypeSize) private var typeSize
+
   var body: some View {
+    // Text fields grow downwards instead of clipping at larger text sizes.
+    let axis: Axis = keyboard == .default || typeSize.isAccessibilitySize ? .vertical : axis
     VStack(alignment: .leading, spacing: 8) {
-      FieldLabel(label)
+      FieldLabel(label).accessibilityHidden(true)
       TextField(placeholder, text: $text, axis: axis)
         .font(.app(.medium, 16))
         .foregroundStyle(C.ink)
         .keyboardType(keyboard)
-        .lineLimit(axis == .vertical ? 3...6 : 1...1)
+        .lineLimit(axis == .vertical ? (self.axis == .vertical ? 3...6 : 1...4) : 1...1)
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
         .background(C.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .cardShadow()
+        .accessibilityLabel(label)
     }
   }
 }
 
 struct PressScale: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .scaleEffect(configuration.isPressed ? 0.97 : 1)
-      .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    PressScaleLabel(label: configuration.label, isPressed: configuration.isPressed)
+  }
+}
+
+/// Reduce Motion swaps the press shrink for a dim.
+private struct PressScaleLabel<Label: View>: View {
+  let label: Label
+  let isPressed: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+  var body: some View {
+    label
+      .scaleEffect(isPressed && !reduceMotion ? 0.97 : 1)
+      .opacity(isPressed && reduceMotion ? 0.7 : 1)
+      .animation(.easeOut(duration: 0.12), value: isPressed)
   }
 }
 

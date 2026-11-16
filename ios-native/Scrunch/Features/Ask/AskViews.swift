@@ -19,6 +19,7 @@ struct AskView: View {
   @State private var aboutAIOpen = false
   @AppStorage(AIDisclosure.consentKey) private var aiConsent = ""
   @FocusState private var composerFocused: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   init(babyId: BabyID, initialQuestion: String?, threadId: ThreadID? = nil) {
     self.babyId = babyId
@@ -66,6 +67,7 @@ struct AskView: View {
               }
               .frame(maxWidth: .infinity, alignment: .leading)
               .padding(.vertical, 8)
+              .accessibilityElement(children: .combine)
             }
             Color.clear.frame(height: 1).id("bottom")
           }
@@ -139,8 +141,8 @@ struct AskView: View {
         .accessibilityAddTraits(.isHeader)
       Spacer()
       CircleIconButton(systemImage: "info.circle", label: LocalizedStringKey(AIDisclosure.title)) { aboutAIOpen = true }
-      CircleIconButton(systemImage: "plus", label: "New chat") { Task { await startNewChat() } }
-      CircleIconButton(systemImage: "list.bullet", label: "Past chats") { router.push(babyId, .askHistory) }
+      CircleIconButton(systemImage: "plus", label: "New chat", spokenNames: ["New", "Plus"]) { Task { await startNewChat() } }
+      CircleIconButton(systemImage: "list.bullet", label: "Past chats", spokenNames: ["Chats", "History"]) { router.push(babyId, .askHistory) }
     }
     .padding(.horizontal, 16)
     .padding(.top, 4)
@@ -167,6 +169,7 @@ struct AskView: View {
           .frame(minHeight: 48)
           .background(C.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
           .cardShadow()
+          .accessibilityLabel("Question")
         Button { Task { await send(nil) } } label: {
           Image(systemName: "arrow.up")
             .font(.system(size: 20, weight: .bold))
@@ -177,6 +180,7 @@ struct AskView: View {
         }
         .disabled(!canSend)
         .accessibilityLabel("Send")
+        .accessibilityInputLabels(["Send", "Ask"])
       }
     }
     .padding(.horizontal, 20)
@@ -216,6 +220,8 @@ struct AskView: View {
       .cardShadow()
       .containerRelativeFrame(.horizontal, alignment: .leading) { width, _ in width * 0.92 }
       .frame(maxWidth: .infinity, alignment: .leading)
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel("Scrunch")
     }
   }
 
@@ -248,10 +254,15 @@ struct AskView: View {
       .background(C.teal, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
       .frame(maxWidth: .infinity, alignment: .trailing)
       .padding(.leading, 28)
+      .accessibilityLabel("You: \(text)")
   }
 
   private func scrollToEnd(_ proxy: ScrollViewProxy) {
-    withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+    if reduceMotion {
+      proxy.scrollTo("bottom", anchor: .bottom)
+    } else {
+      withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+    }
   }
 
   private func send(_ textArg: String?) async {

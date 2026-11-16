@@ -36,10 +36,14 @@ private struct ClockText: View {
       .font(font)
       .monospacedDigit()
       .foregroundStyle(color)
-      .contentTransition(.numericText())
+      .lineLimit(1)
+      .minimumScaleFactor(0.4)
+      .numericTextTransition()
+      .accessibilityLabel(Spoken.clock(ms))
   }
 }
 
+/// The timer's next action with a shape cue, so running vs paused isn't carried by colour alone.
 private struct TimerFooter: View {
   let doneLabel: LocalizedStringKey
   let session: TimerSession?
@@ -66,13 +70,14 @@ private struct TimerFooter: View {
           .transition(.opacity.combined(with: .move(edge: .bottom)))
       }
       Button { Task { await onSkip() } } label: {
-        Text("Enter it by hand").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8)
+        Text("Enter it by hand").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8).frame(minHeight: 44)
       }
-      .accessibilityAddTraits(.isLink)
+      .accessibilityInputLabels(["Enter it by hand", "Manual entry", "Skip"])
       if showReset {
         Button { Task { await onReset() } } label: {
-          Text("Reset").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8)
+          Text("Reset").font(.app(.medium, 15)).foregroundStyle(C.muted).padding(.vertical, 8).frame(minHeight: 44)
         }
+        .accessibilityHint("Clears the timer")
       }
     }
     .padding(.top, 8)
@@ -124,6 +129,7 @@ struct DurationTimerView: View {
         : "Start when they go on their tummy. It keeps counting on your Lock Screen if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
+      let verb = running ? "Pause" : elapsed > 0 ? "Resume" : "Start"
       Button { Task { await toggle() } } label: {
         VStack(spacing: 10) {
           PlayPauseIcon(running: running, tint: accent)
@@ -140,7 +146,9 @@ struct DurationTimerView: View {
       }
       .buttonStyle(PressScale())
       .sensoryFeedback(.impact(weight: .light), trigger: running)
-      .accessibilityLabel(running ? (isSleep ? "Pause sleep" : "Pause tummy time") : (isSleep ? "Start sleep" : "Start tummy time"))
+      .accessibilityElement(children: .combine)
+      .accessibilityAddTraits(.updatesFrequently)
+      .accessibilityInputLabels([verb, "\(verb) timer"])
 
       if let session { StartShiftChips(session: session) }
 
@@ -238,7 +246,7 @@ struct FeedTimerView: View {
       Text("Time one side at a time. It keeps counting on your Lock Screen if you leave the app.")
         .font(.app(.body, 15)).foregroundStyle(C.muted).lineSpacing(4).padding(.top, -4)
 
-      HStack(spacing: 12) {
+      AdaptiveStack(spacing: 12) {
         sideCard("Left", .left, session: session, ms: leftMs)
         sideCard("Right", .right, session: session, ms: rightMs)
       }
@@ -267,15 +275,16 @@ struct FeedTimerView: View {
 
   private func sideCard(_ label: LocalizedStringKey, _ side: TimerSide, session: TimerSession?, ms: Double) -> some View {
     let running = session?.activeSide == side && session?.isRunning == true
+    let sideName: LocalizedStringKey = side == .left ? "Left side" : "Right side"
     return Button { Task { await tap(side) } } label: {
       VStack(spacing: 8) {
         Text(label)
           .font(.app(.bold, 15))
           .foregroundStyle(running ? .white.opacity(0.85) : C.muted)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityLabel(sideName)
         PlayPauseIcon(running: running, tint: C.teal)
         ClockText(session: session, value: { $0.sideElapsed(side, now: $1) }, font: .app(.displayBold, 36), color: running ? .white : C.ink)
-          .lineLimit(1)
-          .minimumScaleFactor(0.6)
         Text(running ? "Tap to pause" : ms > 0 ? "Tap to resume" : "Tap to start")
           .font(.app(.bold, 14))
           .foregroundStyle(running ? .white.opacity(0.9) : C.tealDark)
@@ -288,7 +297,9 @@ struct FeedTimerView: View {
     }
     .buttonStyle(PressScale())
     .sensoryFeedback(.impact(weight: .light), trigger: running)
-    .accessibilityLabel("\(label) side")
+    .accessibilityElement(children: .combine)
+    .accessibilityAddTraits(running ? [.isSelected, .updatesFrequently] : [])
+    .accessibilityInputLabels([label, sideName])
   }
 
   private func push(_ session: TimerSession) async {

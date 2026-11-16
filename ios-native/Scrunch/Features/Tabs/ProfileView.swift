@@ -167,8 +167,8 @@ struct ProfileView: View {
       .clipShape(Circle())
       .accessibilityHidden(true)
       VStack(alignment: .leading, spacing: 2) {
-        Text(displayName).font(.app(.bold, 18)).foregroundStyle(C.ink).lineLimit(1)
-        Text(email).font(.app(.medium, 14)).foregroundStyle(C.muted).lineLimit(1)
+        Text(displayName).font(.app(.bold, 18)).foregroundStyle(C.ink).fixedSize(horizontal: false, vertical: true)
+        Text(email).font(.app(.medium, 14)).foregroundStyle(C.muted).fixedSize(horizontal: false, vertical: true)
       }
       Spacer(minLength: 0)
     }

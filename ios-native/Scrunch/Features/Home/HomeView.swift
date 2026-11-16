@@ -152,8 +152,8 @@ struct HomeView: View {
       Text(title)
         .font(.app(.displayBold, 26))
         .foregroundStyle(C.ink)
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
+        .lineLimit(2)
+        .accessibilityAddTraits(.isHeader)
     }
   }
 
@@ -187,7 +187,7 @@ struct HomeView: View {
     brandHeader(baby?.name ?? " ")
 
     if let baby {
-      HStack(spacing: 8) {
+      AdaptiveStack(spacing: 8) {
         vital("Age", Format.age(dateOfBirth: baby.dateOfBirth, now: now)) { router.push(baby.id, .edit) }
         vital("Height", baby.heightCm.map { Format.height($0) } ?? "—") { router.push(baby.id, .height) }
         vital("Weight", Format.weight(baby.weightGrams)) { router.push(baby.id, .weight) }
@@ -200,7 +200,24 @@ struct HomeView: View {
 
     sleepBlock
 
-    HStack(alignment: .top, spacing: 10) {
+    if let day = summary.value {
+      let isToday = dayStart == WeekGrid.startOfLocalDay(now)
+      Text(isToday ? "Today" : Date(epochMs: dayStart).formatted(.dateTime.weekday(.wide).day().month(.wide)))
+        .font(.app(.bold, 13, relativeTo: .footnote))
+        .foregroundStyle(C.muted)
+        .padding(.leading, 8)
+        .padding(.bottom, -8)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityLabel(isToday ? "Today's summary" : "Summary for \(Date(epochMs: dayStart).formatted(.dateTime.weekday(.wide).day().month(.wide)))")
+        .accessibilityValue(Spoken.daySummary(
+          feeds: day.feedCount,
+          nappies: day.nappyCount,
+          sleepMinutes: day.sleepMinutes,
+          tummyMinutes: day.tummyMinutes
+        ))
+    }
+
+    AdaptiveStack(alignment: .top, spacing: 10) {
       macro(
         value: summary.value?.feedCount ?? 0,
         goal: baby.map { Double(SleepGoals.typicalFeedCount(dateOfBirth: $0.dateOfBirth, now: now)) } ?? 6,
@@ -278,16 +295,20 @@ struct HomeView: View {
     VStack(spacing: 0) {
       if let nextWindow, let baby {
         Button { router.push(baby.id, .sleepTimer) } label: {
-          HStack {
+          AdaptiveStack(spacing: 4) {
             Text(HomeCopy.countdownLabel(nextWindow)).font(.app(.medium, 13)).foregroundStyle(C.purple)
-            Spacer()
+            Spacer(minLength: 0)
             Text(HomeCopy.countdown(nextWindow.inMs)).font(.app(.bold, 16)).foregroundStyle(C.ink)
           }
           .padding(.horizontal, 10)
           .padding(.vertical, 12)
+          .frame(maxWidth: .infinity, alignment: .leading)
           .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Opens the sleep timer")
+        .accessibilityInputLabels(["Sleep timer", HomeCopy.countdownLabel(nextWindow)])
       }
 
       VStack(alignment: .leading, spacing: 0) {
@@ -308,6 +329,9 @@ struct HomeView: View {
           .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Opens sleep patterns")
+        .accessibilityInputLabels(["Sleep today", "Sleep patterns"])
 
         if let rhythm, let baby {
           DayRhythmBar(rhythm: rhythm, now: now) { router.push(baby.id, .sleepPatterns) }
@@ -328,9 +352,10 @@ struct HomeView: View {
   private func vital(_ label: LocalizedStringKey, _ value: String, action: @escaping () -> Void) -> some View {
     Button(action: action) {
       VStack(spacing: 2) {
-        Text(label).font(.app(.medium, 11, relativeTo: .caption2)).foregroundStyle(C.muted)
-        Text(value).font(.app(.bold, 14)).foregroundStyle(C.ink).lineLimit(1).minimumScaleFactor(0.8)
+        Text(label).font(.app(.medium, 11, relativeTo: .caption)).foregroundStyle(C.muted)
+        Text(value).font(.app(.bold, 14)).foregroundStyle(C.ink)
       }
+      .multilineTextAlignment(.center)
       .frame(maxWidth: .infinity)
       .padding(10)
       .background(C.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -338,6 +363,7 @@ struct HomeView: View {
     }
     .buttonStyle(PressScale())
     .accessibilityElement(children: .combine)
+    .accessibilityInputLabels([label])
   }
 
   private func macro(
@@ -365,5 +391,7 @@ struct HomeView: View {
     .buttonStyle(PressScale())
     .accessibilityElement(children: .combine)
     .accessibilityLabel("\(label): \(jsNumber(value)) of \(jsNumber(goal))\(unit.map { " \($0)" } ?? ""). \(last)")
+    .accessibilityHint("Opens \(label.lowercased()) patterns")
+    .accessibilityInputLabels([label, "\(label) patterns"])
   }
 }

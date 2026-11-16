@@ -48,7 +48,7 @@ struct QuickLogPanel: View {
           .foregroundStyle(C.muted)
           .padding(.leading, 4)
       }
-      HStack(spacing: 8) {
+      AdaptiveStack(spacing: 8) {
         starter("Left", detail: suggested == .left ? "Next side" : "Breastfeed", accessibility: "Start breastfeed, left side", symbol: "play.fill", filled: suggested == .left, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
           await start(.feed, side: .left)
         }
@@ -73,10 +73,9 @@ struct QuickLogPanel: View {
           .foregroundStyle(filled ? C.onAccent : ink)
         VStack(alignment: .leading, spacing: 0) {
           Text(label).font(.app(.bold, 16)).foregroundStyle(filled ? C.onAccent : C.ink)
-          Text(detail).font(.app(.medium, 11, relativeTo: .caption2)).foregroundStyle(filled ? C.onAccent.opacity(0.9) : ink)
+          Text(detail).font(.app(.medium, 11, relativeTo: .caption)).foregroundStyle(filled ? C.onAccent.opacity(0.9) : ink)
         }
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
+        .fixedSize(horizontal: false, vertical: true)
       }
       .frame(maxWidth: .infinity, minHeight: 60)
       .padding(.horizontal, 6)
@@ -106,7 +105,7 @@ struct QuickLogPanel: View {
   // MARK: Nappy
 
   private var nappyRow: some View {
-    HStack(spacing: 8) {
+    AdaptiveStack(spacing: 8) {
       ForEach(QuickLog.Nappy.allCases, id: \.self) { nappy in
         Button { Task { await log(nappy) } } label: {
           ZStack {
@@ -116,9 +115,8 @@ struct QuickLogPanel: View {
               HStack(spacing: 8) {
                 nappyIcon(nappy)
                 Text(nappy.label).font(.app(.bold, 15)).foregroundStyle(C.ink)
+                  .fixedSize(horizontal: false, vertical: true)
               }
-              .lineLimit(1)
-              .minimumScaleFactor(0.8)
             }
           }
           .frame(maxWidth: .infinity, minHeight: 48)

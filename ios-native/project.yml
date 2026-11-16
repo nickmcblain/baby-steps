@@ -155,6 +155,19 @@ targets:
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/Scrunch.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Scrunch
         BUNDLE_LOADER: $(TEST_HOST)
 
+  ScrunchUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: ScrunchUITests
+    dependencies:
+      - target: Scrunch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nickmcblain.babysteps.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Scrunch
+
 schemes:
   Scrunch:
     build:
@@ -168,6 +181,7 @@ schemes:
       config: Debug
       targets:
         - ScrunchTests
+        - ScrunchUITests
         - package: ScrunchCore/ScrunchCoreTests
     archive:
       config: Release
