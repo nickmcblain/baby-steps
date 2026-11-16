@@ -312,10 +312,16 @@
     "Bottle" : {
 
     },
+    "Bottle feed" : {
+
+    },
     "Boy" : {
 
     },
     "Breast" : {
+
+    },
+    "Breast feed" : {
 
     },
     "Breastfeed" : {
@@ -1112,6 +1118,9 @@
     "Opens the add log sheet" : {
 
     },
+    "Opens the amount entry" : {
+
+    },
     "Opens the sleep timer" : {
 
     },
@@ -1495,6 +1504,15 @@
 
     },
     "Starts a sleep timer for your baby." : {
+
+    },
+    "Starts timer" : {
+
+    },
+    "Starts timer on left side" : {
+
+    },
+    "Starts timer on right side" : {
 
     },
     "Stop" : {

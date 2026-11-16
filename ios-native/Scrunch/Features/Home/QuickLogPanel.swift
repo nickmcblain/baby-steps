@@ -1,7 +1,8 @@
 import ScrunchCore
 import SwiftUI
 
-/// Home's thumb-reach logging: one tap starts a breastfeed or sleep, or logs a nappy.
+/// Home's thumb-reach logging: Breast starts a timer on the suggested side, Bottle opens
+/// the amount entry, Sleep starts a timer, and the bottom row logs a nappy.
 /// While a timer runs it shows here with side switching, "−5 min" and Done.
 struct QuickLogPanel: View {
   let baby: Baby
@@ -49,43 +50,89 @@ struct QuickLogPanel: View {
           .padding(.leading, 4)
       }
       AdaptiveStack(spacing: 8) {
-        starter("Left", detail: suggested == .left ? "Next side" : "Breastfeed", accessibility: "Start breastfeed, left side", symbol: "play.fill", filled: suggested == .left, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
-          await start(.feed, side: .left)
+        starter(
+          "Breast",
+          accessibility: "Breast feed",
+          hint: suggested == .left ? "Starts timer on left side" : "Starts timer on right side",
+          soft: C.tealSoft,
+          ink: C.tealDark,
+          action: { await startBreast(side: suggested) }
+        ) {
+          Image(systemName: "heart.fill")
         }
-        starter("Right", detail: suggested == .right ? "Next side" : "Breastfeed", accessibility: "Start breastfeed, right side", symbol: "play.fill", filled: suggested == .right, tint: C.teal, soft: C.tealSoft, ink: C.tealDark) {
-          await start(.feed, side: .right)
+        starter(
+          "Bottle",
+          accessibility: "Bottle feed",
+          hint: "Opens the amount entry",
+          soft: C.skySoft,
+          ink: C.skyInk,
+          action: { await openBottle() }
+        ) {
+          Image("BottleGlyph")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 18, height: 18)
         }
-        starter("Sleep", detail: "Start timer", accessibility: "Start sleep timer", symbol: "moon.fill", filled: false, tint: C.purple, soft: C.purpleSoft, ink: C.purpleInk) {
-          await start(.sleep)
+        starter(
+          "Sleep",
+          accessibility: "Sleep",
+          hint: "Starts timer",
+          soft: C.purpleSoft,
+          ink: C.purpleInk,
+          action: { await start(.sleep) }
+        ) {
+          Image(systemName: "moon.fill")
         }
       }
     }
   }
 
-  private func starter(
-    _ label: LocalizedStringKey, detail: LocalizedStringKey, accessibility: LocalizedStringKey, symbol: String, filled: Bool,
-    tint: Color, soft: Color, ink: Color, action: @escaping () async -> Void
+  private func starter<Icon: View>(
+    _ label: LocalizedStringKey,
+    accessibility: LocalizedStringKey,
+    hint: LocalizedStringKey,
+    soft: Color,
+    ink: Color,
+    action: @escaping () async -> Void,
+    @ViewBuilder icon: () -> Icon
   ) -> some View {
     Button { Task { await action() } } label: {
       HStack(spacing: 8) {
-        Image(systemName: symbol)
+        icon()
           .font(.system(size: 18, weight: .bold))
-          .foregroundStyle(filled ? C.onAccent : ink)
-        VStack(alignment: .leading, spacing: 0) {
-          Text(label).font(.app(.bold, 16)).foregroundStyle(filled ? C.onAccent : C.ink)
-          Text(detail).font(.app(.medium, 11, relativeTo: .caption)).foregroundStyle(filled ? C.onAccent.opacity(0.9) : ink)
-        }
-        .fixedSize(horizontal: false, vertical: true)
+          .foregroundStyle(ink)
+        Text(label).font(.app(.bold, 16)).foregroundStyle(C.ink)
+          .fixedSize(horizontal: false, vertical: true)
       }
       .frame(maxWidth: .infinity, minHeight: 60)
       .padding(.horizontal, 6)
-      .background(filled ? tint : soft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+      .background(soft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
       .contentShape(Rectangle())
     }
     .buttonStyle(PressScale())
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(accessibility)
-    .accessibilityHint(filled ? "Suggested next side" : "")
+    .accessibilityHint(hint)
+  }
+
+  private func startBreast(side: TimerSide) async {
+    guard await ensureCanLogFeed() else { return }
+    await start(.feed, side: side)
+  }
+
+  private func openBottle() async {
+    guard await ensureCanLogFeed() else { return }
+    router.push(baby.id, .feedManual(nil, .bottle))
+  }
+
+  /// Breast and bottle share the feeds allowance. Sleep is free and is not checked here.
+  private func ensureCanLogFeed() async -> Bool {
+    if let allowance = gate.allowances[baby.id],
+       !FreeAllowance.canLog(.feed, used: allowance.used(.feed), unlocked: gate.unlocked(baby.id)) {
+      return await gate.askToSubscribe(.feed)
+    }
+    return true
   }
 
   private func start(_ kind: TimerKind, side: TimerSide = .left) async {
@@ -321,7 +368,7 @@ struct RunningTimerControls: View {
     let screen: BabyScreen = switch session.kind {
     case .sleep: .sleepManual(handoff)
     case .tummy: .tummyManual(handoff)
-    case .feed: .feedManual(handoff)
+    case .feed: .feedManual(handoff, .breast)
     case .pump: .pumpManual(handoff)
     }
     router.push(session.babyId, screen)

@@ -145,7 +145,7 @@ struct BabyDestination: View {
     case .customEvent: CustomEventView(babyId: babyId)
     case .feedTimer: FeedTimerView(babyId: babyId, kind: .feed)
     case .pumpTimer: FeedTimerView(babyId: babyId, kind: .pump)
-    case .feedManual(let handoff): FeedManualView(babyId: babyId, handoff: handoff)
+    case .feedManual(let handoff, let kind): FeedManualView(babyId: babyId, handoff: handoff, kind: kind)
     case .pumpManual(let handoff): PumpManualView(babyId: babyId, handoff: handoff)
     case .sleepTimer: DurationTimerView(babyId: babyId, kind: .sleep)
     case .tummyTimer: DurationTimerView(babyId: babyId, kind: .tummy)
